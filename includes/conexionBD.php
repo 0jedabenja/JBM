@@ -1,7 +1,7 @@
 <?php
 $host = 'localhost';
-$usuario = 'lode_app';
-$contra = 'contraparaapp2026';
+$usuario = 'root';
+$contra = '';
 $db   = 'lodetorres';
 $conexion = mysqli_connect($host, $usuario, $contra, $db);
 if (!$conexion) {

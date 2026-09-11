@@ -1,5 +1,5 @@
 <?php
-require_once 'includes/coneccionBD.php';
+require_once 'includes/conexionBD.php';
 $mensaje = '';
 $tipo_alerta = '';
 $script_consola = '';
