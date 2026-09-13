@@ -23,34 +23,39 @@ if (!isset($_GET["pagina"])) {
 $desdequeelemento = ($pagina - 1) * $limite;
 
 if (isset($_GET["filtro"]) && $_GET["filtro"] !== "undefined" && trim($_GET["filtro"]) !== "") {
-        $sql = "SELECT i.id_insumo, i.nombre, i.cantidad_actual, i.stock_minimo, i.costo, i.id_medida, m.unidad
-            FROM Insumo i
-            LEFT JOIN Medida m ON m.id_medida = i.id_medida
-            WHERE i.activo = TRUE
-              AND (nombre LIKE ? 
-               OR id_insumo LIKE ? 
-               OR costo LIKE ?)
-            ORDER BY nombre 
-            LIMIT ? OFFSET ?";     
+    $sql = "SELECT p.id_producto, p.nombre, p.precio, p.id_categoria,
+                   c.titulo AS categoria
+            FROM Producto p
+            LEFT JOIN Categoria c ON c.id_categoria = p.id_categoria
+            WHERE p.activo = TRUE
+              AND (p.nombre LIKE ?
+               OR p.id_producto LIKE ?
+               OR p.precio LIKE ?
+               OR c.titulo LIKE ?)
+            ORDER BY p.nombre
+            LIMIT ? OFFSET ?";
     $stmt = mysqli_prepare($conexion, $sql);
     $filtro = "%" . $_GET["filtro"] . "%";
-    mysqli_stmt_bind_param($stmt, "sssii", $filtro, $filtro, $filtro, $limite, $desdequeelemento);
+    mysqli_stmt_bind_param($stmt, "ssssii", $filtro, $filtro, $filtro, $filtro, $limite, $desdequeelemento);
 } else {
-        $sql = "SELECT i.id_insumo, i.nombre, i.cantidad_actual, i.stock_minimo, i.costo, i.id_medida, m.unidad
-            FROM Insumo i
-            LEFT JOIN Medida m ON m.id_medida = i.id_medida
-            WHERE i.activo = TRUE
-            ORDER BY nombre 
-            LIMIT ? OFFSET ?";        
+    $sql = "SELECT p.id_producto, p.nombre, p.precio, p.id_categoria,
+                   c.titulo AS categoria
+            FROM Producto p
+            LEFT JOIN Categoria c ON c.id_categoria = p.id_categoria
+            WHERE p.activo = TRUE
+            ORDER BY p.nombre
+            LIMIT ? OFFSET ?";
     $stmt = mysqli_prepare($conexion, $sql);
     mysqli_stmt_bind_param($stmt, "ii", $limite, $desdequeelemento);
 }
+
 mysqli_stmt_execute($stmt);
 $resultado = mysqli_stmt_get_result($stmt);
 
-$insumos = array();
+$productos = array();
 while ($row = mysqli_fetch_assoc($resultado)) {
-    $insumos[] = $row;
+    $productos[] = $row;
 }
+
 mysqli_stmt_close($stmt);
-echo json_encode($insumos, JSON_UNESCAPED_UNICODE);
+echo json_encode($productos, JSON_UNESCAPED_UNICODE);

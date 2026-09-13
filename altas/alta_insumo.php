@@ -1,6 +1,7 @@
 <?php
 include_once("../includes/conexionBD.php");
 include_once("../includes/funciones.php");
+verificar_sesion();
 $mensaje = "";
 $tipoMensaje = "";
 

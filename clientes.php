@@ -6,35 +6,34 @@ verificar_sesion();
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Gestión de Insumos</title>
+    <title>Gestión de Clientes</title>
 </head>
 <body>
 
-    <h2>Listado de Insumos</h2>
+    <h2>Listado de Clientes</h2>
 
     <div class="controles">
-        <input type="text" id="inputFiltro" placeholder="Ingrese Insumo a buscar" onkeyup="buscarInsumos()">
-        <a href="altas/alta_insumo.php">+</a>
+        <input type="text" id="inputFiltro" placeholder="Ingrese cliente a buscar" onkeyup="buscarClientes()">
+        <a href="altas/alta_cliente.php">+</a>
     </div>
+
     <table>
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Nombre</th>
-                <th>Unidad de Medida</th>
-                <th>Cant. Actual</th>
-                <th>Stock Mínimo</th>
-                <th>Costo</th>
+                <th>Apellido</th>
+                <th>Teléfono</th>
+                <th>Dirección</th>
                 <th>Acciones</th>
             </tr>
         </thead>
-        <tbody id="tablaInsumos">
+        <tbody id="tablaClientes">
             <tr>
-                <td colspan="7" style="text-align:center;">No se encontraron insumos.</td>
+                <td colspan="6" style="text-align:center;">No se encontraron clientes.</td>
             </tr>
         </tbody>
     </table>
-
 
     <div class="paginacion">
         <button id="btnAnterior" onclick="cambiarPagina(-1)">Anterior</button>
@@ -48,81 +47,77 @@ verificar_sesion();
         let timeoutBusqueda = null;
 
         document.addEventListener("DOMContentLoaded", () => {
-            cargarInsumos();
+            cargarClientes();
         });
 
-        function cargarInsumos() {
+        function cargarClientes() {
             const filtro = document.getElementById("inputFiltro").value.trim();
-            const tbody = document.getElementById("tablaInsumos");
+            const tbody = document.getElementById("tablaClientes");
 
-            fetch(`apis/api_insumos.php?pagina=${paginaActual}&limite=${limitePorPagina}&filtro=${encodeURIComponent(filtro)}`)
+            fetch(`apis/api_clientes.php?pagina=${paginaActual}&limite=${limitePorPagina}&filtro=${encodeURIComponent(filtro)}`)
                 .then(response => response.json())
-                .then(insumos => {
+                .then(clientes => {
                     tbody.innerHTML = "";
 
-                    if (insumos.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No se encontraron insumos.</td></tr>`;
+                    if (clientes.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No se encontraron clientes.</td></tr>`;
                         document.getElementById("btnSiguiente").disabled = true;
                         return;
                     }
 
-                    insumos.forEach(insumo => {
+                    clientes.forEach(cliente => {
                         const tr = document.createElement("tr");
 
                         tr.innerHTML = `
-                            <td>${escapeHTML(insumo.id_insumo)}</td>
-                            <td>${escapeHTML(insumo.nombre)}</td>
-                            <td>${escapeHTML(insumo.unidad)}</td>
-                            <td>${escapeHTML(insumo.cantidad_actual)}</td>
-                            <td>${escapeHTML(insumo.stock_minimo)}</td>
-                            <td>$ ${escapeHTML(insumo.costo)}</td>
+                            <td>${escapeHTML(cliente.id_cliente)}</td>
+                            <td>${escapeHTML(cliente.nombre)}</td>
+                            <td>${escapeHTML(cliente.apellido)}</td>
+                            <td>${escapeHTML(cliente.telefono)}</td>
+                            <td>${escapeHTML(cliente.direccion)}</td>
                             <td>
-                                <a href="modificar_insumo.php?id=${insumo.id_insumo}" title="Editar">
-                                    <img src="imagenes/acciones/editar.png" class="accion" alt="Editar">
-                                </a>
-                                <img src="imagenes/acciones/borrar.png" class="accion" title="Eliminar" onclick="eliminarInsumo(${insumo.id_insumo})">
+                                <img src="imagenes/acciones/borrar.png" class="accion" title="Eliminar" onclick="eliminarCliente(${cliente.id_cliente})">
                             </td>
                         `;
                         tbody.appendChild(tr);
                     });
 
                     document.getElementById("btnAnterior").disabled = (paginaActual === 1);
-                    document.getElementById("btnSiguiente").disabled = (insumos.length < limitePorPagina);
+                    document.getElementById("btnSiguiente").disabled = (clientes.length < limitePorPagina);
                     document.getElementById("infoPagina").textContent = `Página ${paginaActual}`;
                 })
                 .catch(error => {
-                    console.error("Error al cargar los insumos:", error);
+                    console.error("Error al cargar los clientes:", error);
                 });
         }
 
         function cambiarPagina(delta) {
             paginaActual += delta;
-            cargarInsumos();
+            cargarClientes();
         }
 
-        function buscarInsumos() {
+        function buscarClientes() {
             clearTimeout(timeoutBusqueda);
             timeoutBusqueda = setTimeout(() => {
                 paginaActual = 1;
-                cargarInsumos();
+                cargarClientes();
             }, 300);
         }
 
-        function eliminarInsumo(id) {
-            if (confirm("¿Está seguro de que desea eliminar este insumo?")) {
-                fetch(`apis/eliminar.php?tipo=insumo&id=${id}`)
+        function eliminarCliente(id) {
+            if (confirm("¿Está seguro de que desea eliminar este cliente?")) {
+                fetch(`apis/eliminar.php?tipo=cliente&id=${id}`)
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error("No se pudo desactivar el insumo.");
+                            throw new Error("No se pudo desactivar el cliente.");
                         }
                         return response.json();
                     })
                     .then(() => {
-                        cargarInsumos();
+                        cargarClientes();
                     })
                     .catch(error => {
-                        console.error("Error al desactivar el insumo:", error);
-                        alert("No se pudo desactivar el insumo.");
+                        console.error("Error al desactivar el cliente:", error);
+                        alert("No se pudo desactivar el cliente.");
                     });
             }
         }
@@ -133,7 +128,7 @@ verificar_sesion();
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
+                .replace(/\"/g, "&quot;")
                 .replace(/'/g, "&#039;");
         }
     </script>
