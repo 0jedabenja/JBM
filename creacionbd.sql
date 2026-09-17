@@ -25,6 +25,7 @@ CREATE TABLE Empleado (
     id_empleado INT AUTO_INCREMENT,
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
     usuario VARCHAR(50) NOT NULL UNIQUE,
     contraseña VARCHAR(255) NOT NULL,
     token_recuperacion VARCHAR(64) DEFAULT NULL,
@@ -49,6 +50,7 @@ CREATE TABLE Cliente (
     id_cliente INT AUTO_INCREMENT,
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100) NOT NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
     telefono VARCHAR(20),
     direccion VARCHAR(255),
     PRIMARY KEY (id_cliente)
@@ -84,6 +86,7 @@ CREATE TABLE Metodo_pago (
 CREATE TABLE Insumo (
     id_insumo INT AUTO_INCREMENT,
     nombre VARCHAR(100) NOT NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
     cantidad_actual DECIMAL(10,2) NOT NULL,
     stock_minimo DECIMAL(10,2) NOT NULL,
     costo DECIMAL(10,2) NOT NULL,
@@ -95,6 +98,7 @@ CREATE TABLE Insumo (
 CREATE TABLE Producto (
     id_producto INT AUTO_INCREMENT,
     nombre VARCHAR(100) NOT NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
     precio DECIMAL(10,2) NOT NULL,
     id_categoria INT,
     PRIMARY KEY (id_producto),

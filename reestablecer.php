@@ -1,5 +1,6 @@
 <?php
-require_once 'includes/coneccionBD.php';
+require_once 'includes/conexionBD.php';
+
 $token = filter_var(trim($_GET['token'] ?? $_POST['token'] ?? ''), FILTER_SANITIZE_SPECIAL_CHARS);
 $mensaje = '';
 $tipo_alerta = '';
