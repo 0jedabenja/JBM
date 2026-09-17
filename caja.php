@@ -49,7 +49,7 @@
     <?php include_once 'includes/sidebar.php'; ?>
 
     <div class="main">
-        <div class="topbasr">
+        <div class="topbar">
             <div class="toggle">
                 <img src="assets/img/sidebar/dark-menu.svg">
             </div>

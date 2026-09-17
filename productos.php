@@ -54,23 +54,27 @@
                 <img src="assets/img/sidebar/dark-menu.svg">
             </div>
 
-            <div class="search">
-                <label>
-                    <input type="text" placeholder="Buscar aquí" id="search-input">
-                    <img src="assets/img/search-line.svg">
-                </label>
+            <div class="search-group">
+                <div class="search">
+                    <label>
+                        <input type="text" placeholder="Buscar aquí" id="search-input">
+                        <img src="assets/img/sidebar/dark-search.svg">
+                    </label>
+                </div>
+
                 <div class="filter">
-                    <img src="assets/img/filter-line.svg">
-                    <select class="filter-select">
-                        <option value="1">Filtro</option>
-                        <option value="2"></option>
-                    </select>
+                    <label>
+                        <img src="assets/img/sidebar/dark-filter.svg">
+                        <select id="filter-select">
+                            <option value="1">Filtro</option>
+                            <option value="2">Opción 2</option>
+                        </select>
+                    </label>
                 </div>
             </div>
-        </div>
 
-        <?php include_once 'includes/profile.php'; ?>
-    </div>
+            <?php include_once 'includes/profile.php'; ?>
+        </div>
 
 </body>
 
