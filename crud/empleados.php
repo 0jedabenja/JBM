@@ -14,7 +14,7 @@ verificar_sesion();
 
     <div class="controles">
         <input type="text" id="inputFiltro" placeholder="Ingrese empleado a buscar" onkeyup="buscarEmpleados()">
-        <a href="altas/alta_empleado.php">+</a>
+        <a href="../altas/alta_empleado.php">+</a>
     </div>
 
     <table>

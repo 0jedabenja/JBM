@@ -1,3 +1,7 @@
+<?php
+include_once("includes/funciones.php");
+verificar_sesion();
+?>
 <!DOCTYPE html>
 <html lang="es">
 
@@ -67,6 +71,24 @@
                     </select>
                 </div>
             </div>
+            <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Apellido</th>
+                <th>Teléfono</th>
+                <th>Dirección</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tablaClientes">
+            <tr>
+                <td colspan="6" style="text-align:center;">No se encontraron clientes.</td>
+            </tr>
+        </tbody>
+    </table>
+            
 
             <?php include_once 'includes/profile.php'; ?>
         </div>

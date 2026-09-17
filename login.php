@@ -1,3 +1,54 @@
+<?php
+include_once "includes/conexionBD.php";
+include_once "includes/funciones.php";
+
+iniciar_sesion_segura();
+$mensaje = "";
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $usuario = trim($_POST["username"] ?? "");
+    $contrasena = $_POST["password"] ?? "";
+    $token_csrf = $_POST["csrf_token"] ?? "";
+
+    if (!validar_token_csrf($token_csrf)) {
+        $mensaje = "La solicitud no es válida. Intente nuevamente.";
+    } elseif ($usuario === "" || $contrasena === "") {
+        $mensaje = "Ingrese su usuario y contraseña.";
+    } elseif (strlen($usuario) > 50) {
+        $mensaje = "El usuario no es válido.";
+    } else {
+        $sql = "SELECT id_empleado, nombre, apellido, usuario, contraseña, id_rol
+                FROM Empleado
+                WHERE usuario = ? AND activo = 1
+                LIMIT 1";
+        $stmt = mysqli_prepare($conexion, $sql);
+
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "s", $usuario);
+            mysqli_stmt_execute($stmt);
+            $resultado = mysqli_stmt_get_result($stmt);
+            $empleado = mysqli_fetch_assoc($resultado);
+            mysqli_stmt_close($stmt);
+
+            if ($empleado && password_verify($contrasena, $empleado["contraseña"])) {
+                session_regenerate_id(true);
+                $_SESSION["usuario_id"] = (int) $empleado["id_empleado"];
+                $_SESSION["usuario"] = $empleado["usuario"];
+                $_SESSION["nombre_usuario"] = $empleado["nombre"] . " " . $empleado["apellido"];
+                $_SESSION["id_rol"] = (int) $empleado["id_rol"];
+                header("Location: index.php");
+                exit();
+            }
+
+            $mensaje = "Usuario o contraseña incorrectos.";
+        } else {
+            error_log("Error MySQL al preparar login: " . mysqli_error($conexion));
+            $mensaje = "No se pudo procesar el inicio de sesión.";
+        }
+    }
+}
+?>
+<!DOCTYPE html>
 <!DOCTYPE html>
 <html lang="es">
 
@@ -14,8 +65,13 @@
         <form action="login.php" method="POST">
             <h2 class="form-title">Iniciar sesión</h2>
             <p class="form-description">Bienvenido, ingresa tus datos para acceder<br>a tu cuenta.</p>
+                <?php if ($mensaje !== ""): ?>
+                    <p class="form-error" role="alert"><?php echo htmlspecialchars($mensaje, ENT_QUOTES, "UTF-8"); ?></p>
+                <?php endif; ?>
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(obtener_token_csrf(), ENT_QUOTES, "UTF-8"); ?>">
             <div class="input-container">
-                <input type="text" name="username" placeholder="Usuario" required>
+                    <input type="text" name="username" placeholder="Usuario" maxlength="50" required
+                           value="<?php echo htmlspecialchars($_POST["username"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
                 <img src="assets/img/login/light-user.svg" class="icon-user">
             </div>
             <div class="input-container">
