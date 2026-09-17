@@ -1,0 +1,27 @@
+{
+    "es": {
+        "title": "Inicio de sesión",
+        "description": "Bienvenido, ingresa tus datos para acceder<br>a tu cuenta.",
+        "username": "Usuario",
+        "password": "Contraseña",
+        "help": "¿Olvidaste tu contraseña?",
+        "button": "Iniciar sesión",
+        "about-us": "Sobre nosotros",
+        "company": "Somos un equipo apasionado por la tecnología y la innovación, enfocado en desarrollar soluciones de software eficientes y a la medida de nuestros clientes.",
+        "language": "ES",
+        "copyright": "&copy; 2026 JBM. Todos los derechos reservados."
+    },
+
+    "en": {
+        "title": "Login",
+        "description": "Welcome, enter your details to access<br>your account.",
+        "username": "Username",
+        "password": "Password",
+        "help": "Forgot your password?",
+        "button": "Log In",
+        "about-us": "About Us",
+        "company": "We are a team passionate about technology and innovation, focused on developing efficient software solutions tailored to our client's needs.",
+        "language": "EN",
+        "copyright": "&copy; 2026 JBM. All rights reserved."
+    }
+}

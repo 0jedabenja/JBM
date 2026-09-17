@@ -1,136 +1,81 @@
-<?php
-include_once("includes/funciones.php");
-verificar_sesion();
-?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
-    <title>Gestión de Empleados</title>
-</head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="assets/js/sidebar.js" defer></script>
+    <style>
+    .navigation ul li:nth-child(8) {
+        background-color: #fff;
+    }
+
+    .navigation ul li:nth-child(8) a {
+        color: #001f47;
+    }
+
+    .navigation ul li:nth-child(8) a::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: -50px;
+        width: 50px;
+        height: 50px;
+        background-color: transparent;
+        border-radius: 50%;
+        box-shadow: 35px 35px 0 10px #fff;
+        pointer-events: none;
+    }
+
+    .navigation ul li:nth-child(8) a::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: -50px;
+        width: 50px;
+        height: 50px;
+        background-color: transparent;
+        border-radius: 50%;
+        box-shadow: 35px -35px 0 10px #fff;
+        pointer-events: none;
+    }
+
+    .navigation ul li:nth-child(8) a .icon img {
+        content: url('assets/img/sidebar/theme-team.svg');
+    }
+    </style>
+
 <body>
+    <?php include_once 'includes/sidebar.php'; ?>
 
-    <h2>Listado de Empleados</h2>
+    <div class="main">
+        <div class="topbar">
+            <div class="toggle">
+                <img src="assets/img/sidebar/dark-menu.svg">
+            </div>
 
-    <div class="controles">
-        <input type="text" id="inputFiltro" placeholder="Ingrese empleado a buscar" onkeyup="buscarEmpleados()">
-        <a href="altas/alta_empleado.php">+</a>
-    </div>
+            <div class="search-group">
+                <div class="search">
+                    <label>
+                        <input type="text" placeholder="Buscar aquí" id="search-input">
+                        <img src="assets/img/sidebar/dark-search.svg">
+                    </label>
+                </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Apellido</th>
-                <th>Usuario</th>
-                <th>Rol</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody id="tablaEmpleados">
-            <tr>
-                <td colspan="6" style="text-align:center;">No se encontraron empleados.</td>
-            </tr>
-        </tbody>
-    </table>
+                <div class="filter">
+                    <label>
+                        <img src="assets/img/sidebar/dark-filter.svg">
+                        <select id="filter-select">
+                            <option value="1">Filtro</option>
+                            <option value="2">Opción 2</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
 
-    <div class="paginacion">
-        <button id="btnAnterior" onclick="cambiarPagina(-1)">Anterior</button>
-        <span id="infoPagina">Página 1</span>
-        <button id="btnSiguiente" onclick="cambiarPagina(1)">Siguiente</button>
-    </div>
+            <?php include_once 'includes/profile.php'; ?>
+        </div>
 
-    <script>
-        let paginaActual = 1;
-        const limitePorPagina = 15;
-        let timeoutBusqueda = null;
-
-        document.addEventListener("DOMContentLoaded", () => {
-            cargarEmpleados();
-        });
-
-        function cargarEmpleados() {
-            const filtro = document.getElementById("inputFiltro").value.trim();
-            const tbody = document.getElementById("tablaEmpleados");
-
-            fetch(`apis/api_empleados.php?pagina=${paginaActual}&limite=${limitePorPagina}&filtro=${encodeURIComponent(filtro)}`)
-                .then(response => response.json())
-                .then(empleados => {
-                    tbody.innerHTML = "";
-
-                    if (empleados.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No se encontraron empleados.</td></tr>`;
-                        document.getElementById("btnSiguiente").disabled = true;
-                        return;
-                    }
-
-                    empleados.forEach(empleado => {
-                        const tr = document.createElement("tr");
-
-                        tr.innerHTML = `
-                            <td>${escapeHTML(empleado.id_empleado)}</td>
-                            <td>${escapeHTML(empleado.nombre)}</td>
-                            <td>${escapeHTML(empleado.apellido)}</td>
-                            <td>${escapeHTML(empleado.usuario)}</td>
-                            <td>${escapeHTML(empleado.rol)}</td>
-                            <td>
-                                <img src="imagenes/acciones/borrar.png" class="accion" title="Eliminar" onclick="eliminarEmpleado(${empleado.id_empleado})">
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-
-                    document.getElementById("btnAnterior").disabled = (paginaActual === 1);
-                    document.getElementById("btnSiguiente").disabled = (empleados.length < limitePorPagina);
-                    document.getElementById("infoPagina").textContent = `Página ${paginaActual}`;
-                })
-                .catch(error => {
-                    console.error("Error al cargar los empleados:", error);
-                });
-        }
-
-        function cambiarPagina(delta) {
-            paginaActual += delta;
-            cargarEmpleados();
-        }
-
-        function buscarEmpleados() {
-            clearTimeout(timeoutBusqueda);
-            timeoutBusqueda = setTimeout(() => {
-                paginaActual = 1;
-                cargarEmpleados();
-            }, 300);
-        }
-
-        function eliminarEmpleado(id) {
-            if (confirm("¿Está seguro de que desea eliminar este empleado?")) {
-                fetch(`apis/eliminar.php?tipo=empleado&id=${id}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error("No se pudo desactivar el empleado.");
-                        }
-                        return response.json();
-                    })
-                    .then(() => {
-                        cargarEmpleados();
-                    })
-                    .catch(error => {
-                        console.error("Error al desactivar el empleado:", error);
-                        alert("No se pudo desactivar el empleado.");
-                    });
-            }
-        }
-
-        function escapeHTML(str) {
-            if (str === null || str === undefined) return '';
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/\"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-    </script>
 </body>
+
 </html>

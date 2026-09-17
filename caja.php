@@ -6,15 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="assets/js/sidebar.js" defer></script>
     <style>
-    .navigation ul li:nth-child(5) {
+    .navigation ul li:nth-child(4) {
         background-color: #fff;
     }
 
-    .navigation ul li:nth-child(5) a {
+    .navigation ul li:nth-child(4) a {
         color: #001f47;
     }
 
-    .navigation ul li:nth-child(5) a::before {
+    .navigation ul li:nth-child(4) a::before {
         content: "";
         position: absolute;
         right: 0;
@@ -27,7 +27,7 @@
         pointer-events: none;
     }
 
-    .navigation ul li:nth-child(5) a::after {
+    .navigation ul li:nth-child(4) a::after {
         content: "";
         position: absolute;
         right: 0;
@@ -40,8 +40,8 @@
         pointer-events: none;
     }
 
-    .navigation ul li:nth-child(5) a .icon img {
-        content: url('assets/img/sidebar/theme-person.svg');
+    .navigation ul li:nth-child(4) a .icon img {
+    content: url('assets/img/sidebar/theme-payments.svg');
     }
     </style>
 
@@ -49,23 +49,9 @@
     <?php include_once 'includes/sidebar.php'; ?>
 
     <div class="main">
-        <div class="topbar">
+        <div class="topbasr">
             <div class="toggle">
                 <img src="assets/img/sidebar/dark-menu.svg">
-            </div>
-
-            <div class="search">
-                <label>
-                    <input type="text" placeholder="Buscar aquí" id="search-input">
-                    <img src="assets/img/search-line.svg">
-                </label>
-                <div class="filter">
-                    <img src="assets/img/filter-line.svg">
-                    <select class="filter-select">
-                        <option value="1">Filtro</option>
-                        <option value="2"></option>
-                    </select>
-                </div>
             </div>
 
             <?php include_once 'includes/profile.php'; ?>
