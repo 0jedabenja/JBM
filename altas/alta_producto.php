@@ -2,8 +2,10 @@
 include_once("../includes/conexionBD.php");
 include_once("../includes/funciones.php");
 verificar_sesion();
+verificar_permiso("productos");
 
 $mensaje = "";
+$rutaBase = "../";
 $categorias = array();
 $consultaCategorias = mysqli_query($conexion, "SELECT id_categoria, titulo FROM Categoria ORDER BY titulo ASC");
 if ($consultaCategorias) {
@@ -93,14 +95,33 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nuevo Producto</title>
+    <link rel="stylesheet" href="../assets/css/alta.css">
+    <script src="../assets/js/sidebar.js" defer></script>
+    <style>
+        .navigation ul li:nth-child(7) { background-color: #fff; }
+        .navigation ul li:nth-child(7) a { color: #001f47; }
+        .navigation ul li:nth-child(7) a .icon img { content: url('../assets/img/sidebar/theme-shopping.svg'); }
+    </style>
 </head>
 <body>
-    <h2>Registrar Nuevo Producto</h2>
-    <?php if ($mensaje !== ""): ?>
-        <p><?php echo htmlspecialchars($mensaje, ENT_QUOTES, "UTF-8"); ?></p>
-    <?php endif; ?>
-    <form action="alta_producto.php" method="POST">
+    <?php include_once "../includes/sidebar.php"; ?>
+
+    <div class="main">
+        <div class="topbar">
+            <div class="toggle"><img src="../assets/img/sidebar/dark-menu.svg" alt="Abrir menú"></div>
+            <?php include_once "../includes/profile.php"; ?>
+        </div>
+
+        <main class="alta-content">
+            <section class="alta-panel">
+                <h1>Registrar nuevo producto</h1>
+                <p>Completa los datos del producto y sus insumos.</p>
+                <?php if ($mensaje !== ""): ?>
+                    <p class="alta-error" role="alert"><?php echo htmlspecialchars($mensaje, ENT_QUOTES, "UTF-8"); ?></p>
+                <?php endif; ?>
+    <form class="alta-form" action="alta_producto.php" method="POST">
         <label for="nombre">Nombre *</label>
         <input type="text" id="nombre" name="nombre" maxlength="100" required
                value="<?php echo htmlspecialchars($_POST["nombre"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
@@ -117,7 +138,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             <?php endforeach; ?>
         </select>
         <h3>Insumos del producto</h3>
-        <div id="componentes">
+        <div id="componentes" class="componentes">
             <div class="componente">
                 <select name="id_insumo[]" required>
                     <option value="">Seleccione un insumo...</option>
@@ -130,10 +151,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </div>
         </div>
         <button type="button" onclick="agregar()">Agregar insumo</button>
-        <br>
-        <button type="submit">Guardar producto</button>
-        <a href="../productos.php">Volver al listado</a>
+        <div class="alta-actions">
+            <button type="submit">Guardar producto</button>
+            <a href="../productos.php">Volver al listado</a>
+        </div>
     </form>
+            </section>
+        </main>
+    </div>
     <template id="plantilla">
         <div class="componente">
             <select name="id_insumo[]" required>

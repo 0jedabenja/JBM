@@ -1,62 +1,24 @@
+<?php
+include_once "includes/funciones.php";
+verificar_permiso("caja");
+?>
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caja</title>
     <script src="assets/js/sidebar.js" defer></script>
     <style>
-    .navigation ul li:nth-child(4) {
-        background-color: #fff;
-    }
-
-    .navigation ul li:nth-child(4) a {
-        color: #001f47;
-    }
-
-    .navigation ul li:nth-child(4) a::before {
-        content: "";
-        position: absolute;
-        right: 0;
-        top: -50px;
-        width: 50px;
-        height: 50px;
-        background-color: transparent;
-        border-radius: 50%;
-        box-shadow: 35px 35px 0 10px #fff;
-        pointer-events: none;
-    }
-
-    .navigation ul li:nth-child(4) a::after {
-        content: "";
-        position: absolute;
-        right: 0;
-        bottom: -50px;
-        width: 50px;
-        height: 50px;
-        background-color: transparent;
-        border-radius: 50%;
-        box-shadow: 35px -35px 0 10px #fff;
-        pointer-events: none;
-    }
-
-    .navigation ul li:nth-child(4) a .icon img {
-    content: url('assets/img/sidebar/theme-payments.svg');
-    }
+        .navigation ul li:nth-child(4){background:#fff}.navigation ul li:nth-child(4) a{color:#001f47}.navigation ul li:nth-child(4) a .icon img{content:url('assets/img/sidebar/theme-payments.svg')}.caja-content{padding:30px}.caja-panel{background:#fff;border:1px solid #ddd;border-radius:10px;margin:20px auto;max-width:600px;padding:25px}.caja-panel h1{color:#001f47}.caja-form{display:grid;gap:10px}.caja-form label{color:#001f47;font-weight:bold}.caja-form input,.caja-form button{border:1px solid #bbb;border-radius:5px;padding:11px}.caja-form button{background:#001f47;color:#fff;cursor:pointer}.caja-mensaje{padding:10px}.caja-abierta{border-left:5px solid #27824b;padding-left:15px}.caja-cerrada{border-left:5px solid #d99018;padding-left:15px}.caja-alerta{background:#fff3cd;border-left:5px solid #d99018;color:#765400;padding:12px}.caja-alerta fuerte{color:#b42318}
     </style>
-
+</head>
 <body>
-    <?php include_once 'includes/sidebar.php'; ?>
-
-    <div class="main">
-        <div class="topbasr">
-            <div class="toggle">
-                <img src="assets/img/sidebar/dark-menu.svg">
-            </div>
-
-            <?php include_once 'includes/profile.php'; ?>
-        </div>
-    </div>
-</body>
-
-</html>
+<?php include_once 'includes/sidebar.php'; ?>
+<div class="main"><div class="topbar"><div class="toggle"><img src="assets/img/sidebar/dark-menu.svg" alt="Abrir menú"></div><?php include_once 'includes/profile.php'; ?></div>
+<main class="caja-content"><section class="caja-panel"><h1>Sesión de caja</h1><div id="estadoCaja">Cargando...</div><p id="mensajeCaja" class="caja-mensaje"></p><form id="formAbrir" class="caja-form"><label for="montoInicial">Monto inicial</label><input id="montoInicial" type="number" min="0" step="0.01" required><button type="submit">Abrir caja</button></form><form id="formCerrar" class="caja-form" hidden><label for="montoFinal">Monto final</label><input id="montoFinal" type="number" min="0" step="0.01" required><button type="submit">Cerrar caja</button></form><h2>Movimientos del turno</h2><p>Total cobrado: <strong id="totalCobrado">$ 0.00</strong></p><div id="movimientosCaja">No hay movimientos.</div></section></main></div>
+<script>
+let turnoAbierto=null;
+async function cargarCaja(){const r=await fetch("apis/api_caja.php");const d=await r.json();if(!r.ok){mostrar(d.error,true);return;}turnoAbierto=d.abierta;document.getElementById("formAbrir").hidden=!!turnoAbierto;document.getElementById("formCerrar").hidden=!turnoAbierto;document.getElementById("estadoCaja").className=turnoAbierto?"caja-abierta":"caja-cerrada";document.getElementById("estadoCaja").innerHTML=turnoAbierto?`<strong>Caja abierta</strong><br>Turno #${turnoAbierto.id_turno}<br><span id="tiempoCaja" data-apertura="${turnoAbierto.fecha_hora_apertura}"></span><br>Apertura: ${escapeHTML(turnoAbierto.fecha_hora_apertura)}<br>Monto inicial: $ ${escapeHTML(turnoAbierto.monto_inicial)}<br>Responsable: ${escapeHTML(turnoAbierto.empleado)}`:"<strong>Caja cerrada</strong><br>Abre una sesión para permitir la creación de pedidos.";document.getElementById("totalCobrado").textContent=`$ ${Number(d.total_cobrado||0).toFixed(2)}`;document.getElementById("movimientosCaja").innerHTML=d.movimientos.length?d.movimientos.map(m=>`<div><strong>Pedido #${m.id_pedido}</strong> - $ ${Number(m.monto_total).toFixed(2)} - ${escapeHTML(m.metodo_pago)} - ${Number(m.cobrado)?"Cobrado":String(m.estado).toLowerCase()==="listo"?"Para cobrar":"Pendiente"}${Number(m.cobrado)?"":String(m.estado).toLowerCase()==="listo"?` <button type="button" onclick="cobrar(${m.id_pedido})">Cobrar</button>`:""}</div>`).join(""):"No hay movimientos.";actualizarTiempoCaja();}
+document.getElementById("formAbrir").addEventListener("submit",async e=>{e.preventDefault();await enviar({accion:"abrir",monto_inicial:Number(document.getElementById("montoInicial").value)},"Caja abierta.");});document.getElementById("formCerrar").addEventListener("submit",async e=>{e.preventDefault();await enviar({accion:"cerrar",monto_final:Number(document.getElementById("montoFinal").value)},"Caja cerrada.");});async function enviar(datos,mensaje){const r=await fetch("apis/api_caja.php",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(datos)});const d=await r.json();if(!r.ok){mostrar(d.error,true);return;}mostrar(mensaje,false);cargarCaja();}async function cobrar(id){await enviar({accion:"cobrar",id_pedido:id},"Pedido cobrado.");}function actualizarTiempoCaja(){const elemento=document.getElementById("tiempoCaja");if(!elemento)return;const segundos=Math.max(0,Math.floor((Date.now()-new Date(elemento.dataset.apertura).getTime())/1000));const horas=Math.floor(segundos/3600);const minutos=Math.floor((segundos%3600)/60);const resto=segundos%60;elemento.textContent=`Tiempo abierta: ${String(horas).padStart(2,"0")}h ${String(minutos).padStart(2,"0")}m ${String(resto).padStart(2,"0")}s`;elemento.className=horas>=6?"caja-alerta":"";if(horas>=6)elemento.textContent+=" - Advertencia: la sesión supera las 6 horas.";}function mostrar(t,error){const e=document.getElementById("mensajeCaja");e.textContent=t;e.style.color=error?"#b42318":"#16723b";}function escapeHTML(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&#039;");}setInterval(actualizarTiempoCaja,1000);cargarCaja();
+</script></body></html>

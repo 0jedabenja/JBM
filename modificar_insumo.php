@@ -1,6 +1,7 @@
 <?php
 include_once("includes/conexionBD.php");
 include_once("includes/funciones.php");
+verificar_permiso("insumos");
 $id_insumo = filter_input(INPUT_GET, "id", FILTER_VALIDATE_INT);
 if ($id_insumo === false || $id_insumo === null || $id_insumo <= 0) {
     http_response_code(400);
@@ -89,16 +90,35 @@ if (!$insumo) {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modificar Insumo</title>
+    <link rel="stylesheet" href="assets/css/alta.css">
+    <script src="assets/js/sidebar.js" defer></script>
+    <style>
+        .navigation ul li:nth-child(6) { background-color: #fff; }
+        .navigation ul li:nth-child(6) a { color: #001f47; }
+        .navigation ul li:nth-child(6) a .icon img { content: url('assets/img/sidebar/theme-box.svg'); }
+    </style>
 </head>
 <body>
-    <h2>Modificar Insumo</h2>
+    <?php include_once "includes/sidebar.php"; ?>
 
-    <?php if ($mensaje !== ""): ?>
-        <p><?php echo htmlspecialchars($mensaje, ENT_QUOTES, "UTF-8"); ?></p>
-    <?php endif; ?>
+    <div class="main">
+        <div class="topbar">
+            <div class="toggle"><img src="assets/img/sidebar/dark-menu.svg" alt="Abrir menú"></div>
+            <?php include_once "includes/profile.php"; ?>
+        </div>
 
-    <form action="modificar_insumo.php?id=<?php echo $insumo["id_insumo"]; ?>" method="POST">
+        <main class="alta-content">
+            <section class="alta-panel">
+                <h1>Modificar insumo</h1>
+                <p>Actualiza los datos permitidos del insumo seleccionado.</p>
+
+                <?php if ($mensaje !== ""): ?>
+                    <p class="alta-error" role="alert"><?php echo htmlspecialchars($mensaje, ENT_QUOTES, "UTF-8"); ?></p>
+                <?php endif; ?>
+
+    <form class="alta-form" action="modificar_insumo.php?id=<?php echo (int) $insumo["id_insumo"]; ?>" method="POST">
         <label for="nombre">Nombre del Insumo *</label>
         <input type="text" id="nombre" name="nombre" maxlength="100" required
                value="<?php echo htmlspecialchars($insumo["nombre"], ENT_QUOTES, "UTF-8"); ?>">
@@ -126,8 +146,13 @@ if (!$insumo) {
         <input type="number" id="costo" name="costo" step="0.01" min="0" required
                value="<?php echo htmlspecialchars($insumo["costo"], ENT_QUOTES, "UTF-8"); ?>">
 
-        <button type="submit">Guardar cambios</button>
-        <a href="insumos.php">Volver al listado</a>
+        <div class="alta-actions">
+            <button type="submit">Guardar cambios</button>
+            <a href="insumos.php">Volver al listado</a>
+        </div>
     </form>
+            </section>
+        </main>
+    </div>
 </body>
 </html>
