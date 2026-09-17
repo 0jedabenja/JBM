@@ -8,8 +8,7 @@
 
         <ul>
             <li>
-                <img src="assets/img/sidebar/logout.svg">
-                <a href="close.php">Cerrar sesión</a>
+                <a href="<?php echo $rutaBase ?? ""; ?>close.php">Cerrar sesión</a>
             </li>
         </ul>
     </div>

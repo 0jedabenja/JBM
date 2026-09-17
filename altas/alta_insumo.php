@@ -2,8 +2,10 @@
 include_once("../includes/conexionBD.php");
 include_once("../includes/funciones.php");
 verificar_sesion();
+verificar_permiso("insumos");
 $mensaje = "";
 $tipoMensaje = "";
+$rutaBase = "../";
 
 $medidas = array();
 $consultaMedidas = mysqli_query($conexion, "SELECT id_medida, unidad FROM medida ORDER BY unidad ASC");
@@ -56,14 +58,37 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nuevo Insumo</title>
+    <link rel="stylesheet" href="../assets/css/alta.css">
+    <script src="../assets/js/sidebar.js" defer></script>
+    <style>
+        .navigation ul li:nth-child(6) { background-color: #fff; }
+        .navigation ul li:nth-child(6) a { color: #001f47; }
+        .navigation ul li:nth-child(6) a .icon img { content: url('../assets/img/sidebar/theme-box.svg'); }
+    </style>
 </head>
 <body>
+    <?php include_once "../includes/sidebar.php"; ?>
 
-    <div class="form-container">
-        <h2>Registrar Nuevo Insumo</h2>
+    <div class="main">
+        <div class="topbar">
+            <div class="toggle"><img src="../assets/img/sidebar/dark-menu.svg" alt="Abrir menú"></div>
+            <?php include_once "../includes/profile.php"; ?>
+        </div>
 
-        <form action="alta_insumo.php" method="POST">
+        <main class="alta-content">
+            <section class="alta-panel">
+                <h1>Registrar nuevo insumo</h1>
+                <p>Completa los datos del insumo y su unidad de medida.</p>
+
+                <?php if ($mensaje !== ""): ?>
+                    <p class="<?php echo $tipoMensaje === "exito" ? "alta-success" : "alta-error"; ?>" role="alert">
+                        <?php echo htmlspecialchars($mensaje, ENT_QUOTES, "UTF-8"); ?>
+                    </p>
+                <?php endif; ?>
+
+        <form class="alta-form" action="alta_insumo.php" method="POST">
             
             <div class="campo">
                 <label for="nombre">Nombre del Insumo *</label>
@@ -97,10 +122,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <input type="number" id="costo" name="costo" step="0.01" min="0" value="0">
             </div>
 
-            <button type="submit" class="btn">Guardar Insumo</button>
-            <a href="../insumos.php" class="btn btn-volver">Volver al Listado</a>
+            <div class="alta-actions">
+                <button type="submit" class="btn">Guardar Insumo</button>
+                <a href="../insumos.php" class="btn btn-volver">Volver al Listado</a>
+            </div>
 
         </form>
+            </section>
+        </main>
     </div>
 
 </body>

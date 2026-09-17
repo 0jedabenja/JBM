@@ -17,9 +17,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     } elseif (strlen($usuario) > 50) {
         $mensaje = "El usuario no es válido.";
     } else {
-        $sql = "SELECT id_empleado, nombre, apellido, usuario, contraseña, id_rol
-                FROM Empleado
-                WHERE usuario = ? AND activo = 1
+        $sql = "SELECT e.id_empleado, e.nombre, e.apellido, e.usuario, e.contraseña, e.id_rol,
+                   r.nombre AS rol
+            FROM Empleado e
+            INNER JOIN Rol r ON r.id_rol = e.id_rol
+            WHERE e.usuario = ? AND e.activo = 1
                 LIMIT 1";
         $stmt = mysqli_prepare($conexion, $sql);
 
@@ -36,6 +38,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $_SESSION["usuario"] = $empleado["usuario"];
                 $_SESSION["nombre_usuario"] = $empleado["nombre"] . " " . $empleado["apellido"];
                 $_SESSION["id_rol"] = (int) $empleado["id_rol"];
+                $_SESSION["rol"] = $empleado["rol"];
                 header("Location: index.php");
                 exit();
             }

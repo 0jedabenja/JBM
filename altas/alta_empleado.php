@@ -2,8 +2,10 @@
 include_once("../includes/conexionBD.php");
 include_once("../includes/funciones.php");
 verificar_sesion();
+verificar_permiso("empleados");
 
 $mensaje = "";
+$rutaBase = "../";
 $roles = array();
 $consultaRoles = mysqli_query($conexion, "SELECT id_rol, nombre FROM Rol ORDER BY nombre ASC");
 if ($consultaRoles) {
@@ -54,16 +56,34 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nuevo Empleado</title>
+    <link rel="stylesheet" href="../assets/css/alta.css">
+    <script src="../assets/js/sidebar.js" defer></script>
+    <style>
+        .navigation ul li:nth-child(8) { background-color: #fff; }
+        .navigation ul li:nth-child(8) a { color: #001f47; }
+        .navigation ul li:nth-child(8) a .icon img { content: url('../assets/img/sidebar/theme-team.svg'); }
+    </style>
 </head>
 <body>
-    <h2>Registrar Nuevo Empleado</h2>
+    <?php include_once "../includes/sidebar.php"; ?>
 
-    <?php if ($mensaje !== ""): ?>
-        <p><?php echo htmlspecialchars($mensaje, ENT_QUOTES, "UTF-8"); ?></p>
-    <?php endif; ?>
+    <div class="main">
+        <div class="topbar">
+            <div class="toggle"><img src="../assets/img/sidebar/dark-menu.svg" alt="Abrir menú"></div>
+            <?php include_once "../includes/profile.php"; ?>
+        </div>
 
-    <form action="alta_empleado.php" method="POST">
+        <main class="alta-content">
+            <section class="alta-panel">
+                <h1>Registrar nuevo empleado</h1>
+                <p>Completa los datos y selecciona el rol del empleado.</p>
+                <?php if ($mensaje !== ""): ?>
+                    <p class="alta-error" role="alert"><?php echo htmlspecialchars($mensaje, ENT_QUOTES, "UTF-8"); ?></p>
+                <?php endif; ?>
+
+    <form class="alta-form" action="alta_empleado.php" method="POST">
         <label for="nombre">Nombre *</label>
         <input type="text" id="nombre" name="nombre" maxlength="100" required
                value="<?php echo htmlspecialchars($_POST["nombre"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
@@ -90,8 +110,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             <?php endforeach; ?>
         </select>
 
-        <button type="submit">Guardar empleado</button>
-        <a href="../empleados.php">Volver al listado</a>
+        <div class="alta-actions">
+            <button type="submit">Guardar empleado</button>
+            <a href="../empleados.php">Volver al listado</a>
+        </div>
     </form>
+            </section>
+        </main>
+    </div>
 </body>
 </html>

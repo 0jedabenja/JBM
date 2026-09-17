@@ -1,0 +1,127 @@
+.alta-content {
+    padding: 30px;
+}
+
+.alta-panel {
+    background: #fff;
+    border: 1px solid #e4e7eb;
+    border-radius: 12px;
+    margin: 20px auto;
+    max-width: 760px;
+    padding: 30px;
+}
+
+.alta-panel h1 {
+    color: #001f47;
+    margin-bottom: 8px;
+}
+
+.alta-panel p {
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.alta-form {
+    display: grid;
+    gap: 8px;
+}
+
+.alta-form label {
+    color: #001f47;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.alta-form input,
+.alta-form select {
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    font-size: 1rem;
+    padding: 12px;
+}
+
+.alta-form input:focus,
+.alta-form select:focus {
+    border-color: #001f47;
+    outline: 2px solid rgba(0, 31, 71, 0.15);
+}
+
+.alta-error,
+.alta-success {
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.alta-error {
+    background: #fff1f1;
+    border: 1px solid #d9534f;
+    color: #a52b27;
+}
+
+.alta-success {
+    background: #effaf1;
+    border: 1px solid #4c9a5b;
+    color: #2e6b38;
+}
+
+.alta-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.alta-actions button,
+.alta-actions a,
+.alta-form button {
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 12px 18px;
+    text-decoration: none;
+}
+
+.alta-actions button,
+.alta-form > button {
+    background: #001f47;
+    border: 1px solid #001f47;
+    color: #fff;
+}
+
+.alta-actions a {
+    border: 1px solid #001f47;
+    color: #001f47;
+}
+
+.componentes {
+    display: grid;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.componente {
+    align-items: center;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: 1fr 150px auto;
+}
+
+.componente button {
+    background: #fff;
+    border: 1px solid #001f47;
+    border-radius: 6px;
+    color: #001f47;
+    cursor: pointer;
+    padding: 10px;
+}
+
+.alta-panel h3 {
+    color: #001f47;
+    margin: 25px 0 5px;
+}
+
+@media (max-width: 700px) {
+    .alta-content { padding: 15px; }
+    .alta-panel { padding: 20px; }
+    .alta-actions { flex-direction: column; }
+    .componente { grid-template-columns: 1fr; }
+}

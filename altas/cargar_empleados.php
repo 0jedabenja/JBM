@@ -1,5 +1,7 @@
 <?php
 include_once("../includes/conexionBD.php");
+include_once("../includes/funciones.php");
+//verificar_permiso("empleados");
 $mensaje = "";
 $roles = array();
 

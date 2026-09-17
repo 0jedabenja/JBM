@@ -58,14 +58,12 @@ CREATE TABLE Cliente (
 
 CREATE TABLE Estado_Mesa (
     id_estado INT AUTO_INCREMENT,
-    tipo VARCHAR(50) NOT NULL,
     nombre VARCHAR(50) NOT NULL,
     PRIMARY KEY (id_estado)
 );
 
 CREATE TABLE Estado_Pedido (
     id_estado INT AUTO_INCREMENT,
-    tipo VARCHAR(50) NOT NULL,
     nombre VARCHAR(50) NOT NULL,
     PRIMARY KEY (id_estado)
 );
@@ -113,6 +111,7 @@ CREATE TABLE Mesa (
     ancho INT,
     id_estado INT NOT NULL,
     PRIMARY KEY (id_mesa),
+    UNIQUE KEY uq_mesa_numero (numero),
     FOREIGN KEY (id_estado) REFERENCES Estado_Mesa(id_estado) ON UPDATE CASCADE
 );
 
@@ -139,6 +138,7 @@ CREATE TABLE Pedido (
     id_cliente INT,
     id_descuento INT,
     id_mp INT NOT NULL,
+    cobrado BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (id_pedido),
     FOREIGN KEY (id_empleado) REFERENCES Empleado(id_empleado) ON UPDATE CASCADE,
     FOREIGN KEY (id_turno) REFERENCES Turno_caja(id_turno) ON UPDATE CASCADE,
@@ -175,6 +175,7 @@ CREATE TABLE Contiene (
     cantidad INT NOT NULL,
     precio DECIMAL(10,2) NOT NULL,
     total DECIMAL(10,2) NOT NULL,
+    completado BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (id_pedido, id_producto),
     FOREIGN KEY (id_pedido) REFERENCES Pedido(id_pedido) ON DELETE CASCADE,
     FOREIGN KEY (id_producto) REFERENCES Producto(id_producto) ON DELETE CASCADE
