@@ -65,13 +65,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <form action="login.php" method="POST">
             <h2 class="form-title">Iniciar sesión</h2>
             <p class="form-description">Bienvenido, ingresa tus datos para acceder<br>a tu cuenta.</p>
-                <?php if ($mensaje !== ""): ?>
-                    <p class="form-error" role="alert"><?php echo htmlspecialchars($mensaje, ENT_QUOTES, "UTF-8"); ?></p>
-                <?php endif; ?>
-                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(obtener_token_csrf(), ENT_QUOTES, "UTF-8"); ?>">
+            <?php if ($mensaje !== ""): ?>
+            <p class="form-error" role="alert"><?php echo htmlspecialchars($mensaje, ENT_QUOTES, "UTF-8"); ?></p>
+            <?php endif; ?>
+            <input type="hidden" name="csrf_token"
+                value="<?php echo htmlspecialchars(obtener_token_csrf(), ENT_QUOTES, "UTF-8"); ?>">
             <div class="input-container">
-                    <input type="text" name="username" placeholder="Usuario" maxlength="50" required
-                           value="<?php echo htmlspecialchars($_POST["username"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
+                <input type="text" name="username" placeholder="Usuario" maxlength="50" required
+                    value="<?php echo htmlspecialchars($_POST["username"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
                 <img src="assets/img/login/light-user.svg" class="icon-user">
             </div>
             <div class="input-container">
@@ -88,14 +89,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             <p>&copy; 2026 JBM. Todos los derechos reservados.</p>
         </div>
         <div class="footer-right">
-            <button type="button" class="about-us">Sobre nosotros</button>
-            <button type="button" class="language">ES</button>
-            <button type="button" class="theme">
-                <img src="assets/img/login/dark-moon.svg" class="icon-theme">
-            </button>
+            <div class="about-us" id="openPopup">Sobre nosotros</div>
+            <div class="language">ES</div>
+            <img src="assets/img/login/light-sun.svg" class="icon-theme">
         </div>
     </footer>
-    <?php include_once 'about-us.php'; ?>
+    <?php include_once "about-us.php"; ?>
 </body>
 
 </html>
