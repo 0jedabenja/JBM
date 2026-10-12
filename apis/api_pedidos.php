@@ -46,7 +46,8 @@ function obtenerProductosPedido($conexion, $id_pedido) {
 }
 
 $metodo = $_SERVER["REQUEST_METHOD"];
-$vista = $_GET["vista"] ?? "";
+// La vista elige una condición fija; los valores de búsqueda se enlazan por separado.
+$vista = obtener_parametro_get("vista");
 $condicionVista = "";
 if ($vista === "cocina") {
     verificar_permiso("cocina", true);
@@ -56,14 +57,14 @@ if ($vista === "cocina") {
 }
 
 if ($metodo === "GET") {
-    if (($_GET["caja"] ?? "") === "estado") {
+    if (obtener_parametro_get("caja") === "estado") {
         $resultadoCaja = mysqli_query($conexion, "SELECT id_turno, fecha_hora_apertura FROM Turno_caja WHERE fecha_hora_cierre IS NULL ORDER BY fecha_hora_apertura DESC LIMIT 1");
         responder(array("abierta" => mysqli_fetch_assoc($resultadoCaja) ?: null));
     }
-    $limite = isset($_GET["limite"]) ? max(1, (int)$_GET["limite"]) : 20;
-    $pagina = isset($_GET["pagina"]) ? max(1, (int)$_GET["pagina"]) : 1;
+    $limite = max(1, (int)obtener_parametro_get("limite", "20"));
+    $pagina = max(1, (int)obtener_parametro_get("pagina", "1"));
     $desde = ($pagina - 1) * $limite;
-    $filtro = trim($_GET["filtro"] ?? "");
+    $filtro = obtener_parametro_get("filtro");
 
     if ($filtro !== "") {
         $sql = "SELECT p.id_pedido, p.descripcion, p.fecha_hora_creacion, p.fecha_hora_entrega,

@@ -3,17 +3,26 @@ include_once("../includes/conexionBD.php");
 include_once("../includes/funciones.php");
 verificar_sesion_api();
 
-header('Content-Type: application/json', true, 200);
+header("Content-Type: application/json; charset=utf-8");
 
-if (isset($_GET["tipo"]) && isset($_GET["id"])) {
+if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+    http_response_code(405);
+    echo json_encode(array("error" => "Método no permitido."), JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+$entrada = json_decode(file_get_contents("php://input"), true);
+if (!is_array($entrada)) $entrada = $_POST;
+
+// Solo se interpolan identificadores de esta lista; el ID se enlaza como parámetro.
     $entidades = array(
         "insumo" => array("permiso" => "insumos", "tabla" => "Insumo", "columna" => "id_insumo"),
         "cliente" => array("permiso" => "clientes", "tabla" => "Cliente", "columna" => "id_cliente"),
         "producto" => array("permiso" => "productos", "tabla" => "Producto", "columna" => "id_producto"),
         "empleado" => array("permiso" => "empleados", "tabla" => "Empleado", "columna" => "id_empleado")
     );
-    $tipo = $_GET["tipo"];
-    $id = filter_var($_GET["id"], FILTER_VALIDATE_INT);
+    $tipo = is_string($entrada["tipo"] ?? null) ? trim($entrada["tipo"]) : "";
+    $id = filter_var($entrada["id"] ?? null, FILTER_VALIDATE_INT);
 
     if (!isset($entidades[$tipo]) || $id === false || $id <= 0) {
         http_response_code(400);
@@ -32,11 +41,11 @@ if (isset($_GET["tipo"]) && isset($_GET["id"])) {
     }
 
     mysqli_stmt_bind_param($stmt, "i", $id);
-    mysqli_stmt_execute($stmt);
+    if (!mysqli_stmt_execute($stmt)) {
+        mysqli_stmt_close($stmt);
+        http_response_code(500);
+        echo json_encode(array("error" => "No se pudo completar la operación."), JSON_UNESCAPED_UNICODE);
+        exit();
+    }
     mysqli_stmt_close($stmt);
     echo json_encode(ucfirst($tipo) . " " . $id . " desactivado", JSON_UNESCAPED_UNICODE);
-
-} else {
-    header('Content-Type: application/json', true, 400);
-    echo json_encode(["error" => ["Datos incompletos"]]);
-}

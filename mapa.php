@@ -68,18 +68,6 @@ $puedeEditar = obtener_rol_sesion() === "administrador";
                 <label for="numeroMesa">Número</label>
                 <input id="numeroMesa" type="number" min="1" step="1" required>
             </div>
-            <div class="mapa-field">
-                <label for="anchoMesa">Ancho</label>
-                <input id="anchoMesa" type="number" min="60" max="260" step="5" required>
-            </div>
-            <div class="mapa-field">
-                <label for="estadoMesa">Estado</label>
-                <select id="estadoMesa" required>
-                    <option value="1">Libre</option>
-                    <option value="2">Ocupada</option>
-                    <option value="3">Para limpiar</option>
-                </select>
-            </div>
             <div class="mapa-actions-bar">
                 <button type="button" class="secondary" data-cerrar-dialog="dialogMesa">Cancelar</button>
                 <button type="button" id="btnEliminarMesa" class="danger" hidden>Eliminar</button>
@@ -100,10 +88,11 @@ $puedeEditar = obtener_rol_sesion() === "administrador";
     const formMesa = document.getElementById("formMesa");
     const idMesaInput = document.getElementById("idMesa");
     const numeroMesaInput = document.getElementById("numeroMesa");
-    const anchoMesaInput = document.getElementById("anchoMesa");
-    const estadoMesaSelect = document.getElementById("estadoMesa");
     const btnEliminarMesa = document.getElementById("btnEliminarMesa");
     const btnNuevaMesa = document.getElementById("btnNuevaMesa");
+    let firmaMesas = "";
+    let cargandoMapa = false;
+    let arrastrando = false;
 
     function inicializarMapa() {
         if (!puedeEditar) {
@@ -122,27 +111,11 @@ $puedeEditar = obtener_rol_sesion() === "administrador";
             formMesa.addEventListener("submit", async (evento) => {
                 evento.preventDefault();
                 const idMesa = idMesaInput.value ? Number(idMesaInput.value) : null;
-                const payload = {
-                    numero: Number(numeroMesaInput.value),
-                    ancho: Number(anchoMesaInput.value),
-                    id_estado: Number(estadoMesaSelect.value)
-                };
+                const payload = { numero: Number(numeroMesaInput.value) };
 
                 if (!Number.isInteger(payload.numero) || payload.numero <= 0) {
                     mostrarMensaje("El número de la mesa es obligatorio.", true);
                     return;
-                }
-
-                if (!Number.isFinite(payload.ancho) || payload.ancho < 60 || payload.ancho > 260) {
-                    mostrarMensaje("El ancho debe estar entre 60 y 260 px.", true);
-                    return;
-                }
-
-                if (idMesa) {
-                    const mesaActual = mesas.find((mesa) => Number(mesa.id_mesa) === idMesa);
-                    if (!mesaActual) return;
-                    payload.pos_x = Number(mesaActual.pos_x);
-                    payload.pos_y = Number(mesaActual.pos_y);
                 }
 
                 const metodo = idMesa ? "PATCH" : "POST";
@@ -183,16 +156,26 @@ $puedeEditar = obtener_rol_sesion() === "administrador";
         inicializarMapa();
     }
 
-    async function cargarMapa() {
+    async function cargarMapa(mostrarError = true) {
+        if (cargandoMapa) return;
+        cargandoMapa = true;
+
         try {
-            const respuesta = await fetch("apis/api_mesas.php");
+            const respuesta = await fetch("apis/api_mesas.php", { cache: "no-store" });
             const datos = await respuesta.json();
             if (!respuesta.ok) throw new Error(datos.error || "No se pudo cargar el mapa.");
-            mesas = datos.mesas || [];
-            renderMesas();
-            actualizarResumen();
+            const nuevasMesas = datos.mesas || [];
+            const nuevaFirma = JSON.stringify(nuevasMesas);
+            if (nuevaFirma !== firmaMesas) {
+                mesas = nuevasMesas;
+                firmaMesas = nuevaFirma;
+                renderMesas();
+                actualizarResumen();
+            }
         } catch (error) {
-            mostrarMensaje(error.message, true);
+            if (mostrarError) mostrarMensaje(error.message, true);
+        } finally {
+            cargandoMapa = false;
         }
     }
 
@@ -276,6 +259,7 @@ $puedeEditar = obtener_rol_sesion() === "administrador";
         const startY = evento.clientY;
         const startPosX = Number(mesa.pos_x || 0);
         const startPosY = Number(mesa.pos_y || 0);
+        arrastrando = true;
 
         const mover = (event) => {
             if (!event.isPrimary) return;
@@ -300,12 +284,15 @@ $puedeEditar = obtener_rol_sesion() === "administrador";
         const fin = async () => {
             window.removeEventListener("pointermove", mover);
             window.removeEventListener("pointerup", fin);
+            window.removeEventListener("pointercancel", fin);
+            arrastrando = false;
             if (mesa.pos_x === startPosX && mesa.pos_y === startPosY) return;
             await guardarMesaPosicion(mesa);
         };
 
         window.addEventListener("pointermove", mover);
         window.addEventListener("pointerup", fin, { once: true });
+        window.addEventListener("pointercancel", fin, { once: true });
     }
 
     async function guardarMesaPosicion(mesa) {
@@ -314,11 +301,8 @@ $puedeEditar = obtener_rol_sesion() === "administrador";
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 id_mesa: Number(mesa.id_mesa),
-                numero: Number(mesa.numero),
                 pos_x: Number(mesa.pos_x),
-                pos_y: Number(mesa.pos_y),
-                ancho: Number(mesa.ancho || 100),
-                id_estado: Number(mesa.id_estado || 1)
+                pos_y: Number(mesa.pos_y)
             })
         });
 
@@ -343,8 +327,6 @@ $puedeEditar = obtener_rol_sesion() === "administrador";
 
         if (!idMesa) {
             numeroMesaInput.focus();
-            estadoMesaSelect.value = "1";
-            anchoMesaInput.value = "100";
             document.getElementById("tituloDialogMesa").textContent = "Nueva mesa";
             document.getElementById("subtituloDialogMesa").textContent = "Creá una mesa nueva para este salón.";
             btnEliminarMesa.hidden = true;
@@ -358,8 +340,6 @@ $puedeEditar = obtener_rol_sesion() === "administrador";
         document.getElementById("tituloDialogMesa").textContent = `Mesa #${mesa.numero}`;
         document.getElementById("subtituloDialogMesa").textContent = "Editá los datos de la mesa.";
         numeroMesaInput.value = mesa.numero;
-        anchoMesaInput.value = mesa.ancho || 100;
-        estadoMesaSelect.value = String(mesa.id_estado || 1);
         abrirDialogNative(dialogMesa);
     }
 
@@ -461,6 +441,9 @@ $puedeEditar = obtener_rol_sesion() === "administrador";
     }
 
     cargarMapa();
+    setInterval(() => {
+        if (document.visibilityState === "visible" && !arrastrando) cargarMapa(false);
+    }, 4000);
     </script>
 
 </body>

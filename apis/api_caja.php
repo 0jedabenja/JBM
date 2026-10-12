@@ -41,7 +41,7 @@ $metodo = $_SERVER["REQUEST_METHOD"];
 if ($metodo === "GET") {
     $esAdministrador = obtener_rol_sesion() === "administrador";
     $idEmpleado = (int) $_SESSION["usuario_id"];
-    $idDetalle = filter_input(INPUT_GET, "detalle", FILTER_VALIDATE_INT);
+    $idDetalle = filter_var(obtener_parametro_get("detalle"), FILTER_VALIDATE_INT);
     if ($idDetalle) {
         $stmtTurno = mysqli_prepare($conexion, "SELECT t.id_turno, t.fecha_hora_apertura, t.fecha_hora_cierre, t.monto_inicial, t.monto_final, t.id_empleado, CONCAT(e.nombre, ' ', e.apellido) AS empleado FROM Turno_caja t INNER JOIN Empleado e ON e.id_empleado = t.id_empleado WHERE t.id_turno = ? LIMIT 1");
         mysqli_stmt_bind_param($stmtTurno, "i", $idDetalle);
@@ -71,7 +71,7 @@ if ($metodo === "GET") {
     while ($sesion = mysqli_fetch_assoc($resultadoPropias)) $sesionesPropias[] = $sesion;
     mysqli_stmt_close($stmtPropias);
 
-    $pagina = max(1, (int) ($_GET["pagina"] ?? 1));
+    $pagina = max(1, (int)obtener_parametro_get("pagina", "1"));
     $porPagina = 10;
     $historial = array();
     $totalSesiones = 0;

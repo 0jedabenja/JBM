@@ -90,7 +90,7 @@ verificar_permiso("insumos");
         }
         function cambiarPagina(delta) { paginaActual = Math.max(1, paginaActual + delta); cargarInsumos(); }
         function buscarInsumos() { clearTimeout(timeoutBusqueda); timeoutBusqueda = setTimeout(() => { paginaActual = 1; cargarInsumos(); }, 300); }
-        function eliminarInsumo(id) { if (!confirm("¿Está seguro de que desea desactivar este insumo?")) return; fetch(`apis/eliminar.php?tipo=insumo&id=${encodeURIComponent(id)}`).then(response => { if (!response.ok) throw new Error(); return response.json(); }).then(cargarInsumos).catch(() => alert("No se pudo desactivar el insumo.")); }
+        function eliminarInsumo(id) { if (!confirm("¿Está seguro de que desea desactivar este insumo?")) return; fetch("apis/eliminar.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "insumo", id: Number(id) }) }).then(response => { if (!response.ok) throw new Error(); return response.json(); }).then(cargarInsumos).catch(() => alert("No se pudo desactivar el insumo.")); }
         function escapeHTML(valor) { if (valor === null || valor === undefined) return ""; return String(valor).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;"); }
     </script>
 </body>

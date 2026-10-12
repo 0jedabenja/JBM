@@ -47,12 +47,21 @@ let carrito = [];
 let ultimoPedidoCocina = 0;
 let contextoAudio = null;
 let cajaAbierta = false;
+let firmaMapaPedido = "";
+let cargandoMapaPedido = false;
 
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".pedido-tabs button").forEach(boton => boton.addEventListener("click", () => activarVista(boton.dataset.vista)));
     const inicial = puedeCrear ? "creacion" : "cocina";
     activarVista(inicial);
-    if (puedeCrear) { cargarEstadoCajaPedido(); cargarMapaPedido(); document.getElementById("formPedido").addEventListener("submit", crearPedido); }
+    if (puedeCrear) {
+        cargarEstadoCajaPedido();
+        cargarMapaPedido();
+        document.getElementById("formPedido").addEventListener("submit", crearPedido);
+        setInterval(() => {
+            if (document.visibilityState === "visible") cargarMapaPedido();
+        }, 4000);
+    }
 });
 function activarVista(vista) {
     document.querySelectorAll(".pedido-view").forEach(seccion => seccion.classList.remove("active"));
@@ -67,28 +76,50 @@ function cargarMenu() {
     }).catch(() => document.getElementById("menuProductos").textContent = "No se pudo cargar el menú.");
 }
 async function cargarMapaPedido() {
-    const respuesta = await fetch("apis/api_mesas.php");
-    const datos = await respuesta.json();
-    if (!respuesta.ok) return;
+    if (cargandoMapaPedido) return;
+    cargandoMapaPedido = true;
 
-    const mapa = document.getElementById("mapaPedido");
-    mapa.innerHTML = "";
-    datos.mesas.forEach((mesa) => {
-        const estado = (mesa.estado || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const boton = document.createElement("button");
-        boton.type = "button";
-        boton.className = `mesa-pedido ${estado}`;
-        boton.style.left = `${Number(mesa.pos_x || 0) / 1200 * 100}%`;
-        boton.style.top = `${Number(mesa.pos_y || 0) / 700 * 100}%`;
-        boton.style.width = `${Math.max(60, Number(mesa.ancho || 100)) / 1200 * 100}%`;
-        boton.style.transform = "none";
-        boton.style.minHeight = "72px";
-        boton.style.borderRadius = "16px";
-        boton.innerHTML = `<strong>Mesa ${escapeHTML(mesa.numero)}</strong><small>${escapeHTML(mesa.estado)}</small>`;
-        boton.disabled = estado !== "libre";
-        if (estado === "libre") boton.addEventListener("click", () => seleccionarMesa(mesa, boton));
-        mapa.appendChild(boton);
-    });
+    try {
+        const respuesta = await fetch("apis/api_mesas.php", { cache: "no-store" });
+        const datos = await respuesta.json();
+        if (!respuesta.ok) return;
+
+        const firma = JSON.stringify(datos.mesas || []);
+        if (firma === firmaMapaPedido) return;
+
+        const mapa = document.getElementById("mapaPedido");
+        const idSeleccionado = document.getElementById("idMesa").value;
+        const mesas = datos.mesas || [];
+        const seleccionada = mesas.find((mesa) => String(mesa.id_mesa) === idSeleccionado && String(mesa.estado).toLowerCase() === "libre");
+        if (idSeleccionado && !seleccionada) {
+            document.getElementById("idMesa").value = "";
+            document.getElementById("mesaSeleccionada").textContent = "Ninguna mesa seleccionada.";
+        }
+
+        mapa.innerHTML = "";
+        mesas.forEach((mesa) => {
+            const estado = (mesa.estado || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const boton = document.createElement("button");
+            boton.type = "button";
+            boton.className = `mesa-pedido ${estado}`;
+            boton.style.left = `${Number(mesa.pos_x || 0) / 1200 * 100}%`;
+            boton.style.top = `${Number(mesa.pos_y || 0) / 700 * 100}%`;
+            boton.style.width = `${Number(mesa.ancho || 100) / 1200 * 100}%`;
+            boton.style.transform = "none";
+            boton.style.minHeight = "72px";
+            boton.style.borderRadius = "16px";
+            boton.innerHTML = `<strong>Mesa ${escapeHTML(mesa.numero)}</strong><small>${escapeHTML(mesa.estado)}</small>`;
+            boton.disabled = estado !== "libre";
+            if (estado === "libre") boton.addEventListener("click", () => seleccionarMesa(mesa, boton));
+            if (String(mesa.id_mesa) === idSeleccionado) boton.classList.add("seleccionada");
+            mapa.appendChild(boton);
+        });
+        firmaMapaPedido = firma;
+    } catch (error) {
+        console.error(error);
+    } finally {
+        cargandoMapaPedido = false;
+    }
 }
 function seleccionarMesa(mesa,elemento){document.querySelectorAll(".mesa-pedido").forEach(m=>m.classList.remove("seleccionada"));elemento.classList.add("seleccionada");document.getElementById("idMesa").value=mesa.id_mesa;document.getElementById("mesaSeleccionada").textContent=`Mesa ${mesa.numero} seleccionada.`;}
 function agregarProducto(id, nombre, precio) {

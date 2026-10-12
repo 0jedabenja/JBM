@@ -14,6 +14,13 @@ if ($consultaMedidas) {
         $medidas[] = $row;
     }
 }
+$categorias = array();
+$consultaCategorias = mysqli_query($conexion, "SELECT id_categoria, titulo FROM Categoria ORDER BY titulo ASC");
+if ($consultaCategorias) {
+    while ($row = mysqli_fetch_assoc($consultaCategorias)) {
+        $categorias[] = $row;
+    }
+}
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     
@@ -22,22 +29,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $stock_minimo = filter_var($_POST["stock_minimo"] ?? 0, FILTER_VALIDATE_FLOAT);
     $costo = filter_var($_POST["costo"] ?? 0, FILTER_VALIDATE_FLOAT);
     $id_medida = filter_var($_POST["id_medida"] ?? 0, FILTER_VALIDATE_INT);
+    $id_categoria = filter_var($_POST["id_categoria"] ?? null, FILTER_VALIDATE_INT);
 
     if (empty($nombre)) {
         $mensaje = "El nombre del insumo es obligatorio.";
         $tipoMensaje = "error";
-    } elseif ($cantidad_actual === false || $stock_minimo === false || $costo === false || $id_medida === false) {
+    } elseif ($cantidad_actual === false || $stock_minimo === false || $costo === false || $id_medida === false || $id_categoria === false || $id_categoria <= 0) {
         $mensaje = "Los valores numéricos ingresados no son válidos.";
         $tipoMensaje = "error";
     } else {
         
-        $sql = "INSERT INTO Insumo (nombre, cantidad_actual, stock_minimo, costo, id_medida) 
-                VALUES (?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO Insumo (nombre, cantidad_actual, stock_minimo, costo, id_medida, id_categoria)
+            VALUES (?, ?, ?, ?, ?, ?)";
 
         $stmt = mysqli_prepare($conexion, $sql);
 
         if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "sdddi", $nombre, $cantidad_actual, $stock_minimo, $costo, $id_medida);
+            mysqli_stmt_bind_param($stmt, "sdddii", $nombre, $cantidad_actual, $stock_minimo, $costo, $id_medida, $id_categoria);
             if (mysqli_stmt_execute($stmt)) {
                 $mensaje = "¡Insumo registrado con éxito!";
                 $tipoMensaje = "exito";
@@ -103,6 +111,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         <option value="<?php echo $medida['id_medida']; ?>">
                             <?php echo htmlspecialchars($medida['unidad']); ?>
                         </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="campo">
+                <label for="id_categoria">Categoría *</label>
+                <select id="id_categoria" name="id_categoria" required>
+                    <option value="">Seleccione una categoría...</option>
+                    <?php foreach ($categorias as $categoria): ?>
+                        <option value="<?php echo (int)$categoria["id_categoria"]; ?>"><?php echo htmlspecialchars($categoria["titulo"], ENT_QUOTES, "UTF-8"); ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>

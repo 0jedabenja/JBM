@@ -53,7 +53,7 @@ function cargar_mesas() {
     $resultado = mysqli_query($conexion, "SELECT m.id_mesa, m.numero, m.pos_x, m.pos_y, m.ancho, m.id_estado, e.nombre AS estado FROM Mesa m INNER JOIN Estado_Mesa e ON e.id_estado = m.id_estado ORDER BY m.numero");
 
     while ($mesa = mysqli_fetch_assoc($resultado)) {
-        $ancho = min(260, max(60, (int)($mesa["ancho"] ?? 100)));
+        $ancho = 100;
         $x = min(1200 - $ancho, max(0, (int)($mesa["pos_x"] ?? 0)));
         $y = min(620, max(0, (int)($mesa["pos_y"] ?? 0)));
 
@@ -78,10 +78,7 @@ function cargar_mesas() {
 $metodo = $_SERVER["REQUEST_METHOD"];
 if ($metodo === "GET") {
     $mesas = cargar_mesas();
-    $estados = array();
-    $resultadoEstados = mysqli_query($conexion, "SELECT id_estado, nombre FROM Estado_Mesa ORDER BY nombre");
-    while ($estado = mysqli_fetch_assoc($resultadoEstados)) $estados[] = $estado;
-    responder_mesas(array("mesas" => $mesas, "estados" => $estados));
+    responder_mesas(array("mesas" => $mesas));
 }
 
 $rolActual = obtener_rol_sesion();
@@ -93,31 +90,9 @@ $entrada = entrada_mesas();
 
 if ($metodo === "POST") {
     $numero = filter_var($entrada["numero"] ?? null, FILTER_VALIDATE_INT);
-    $posX = isset($entrada["pos_x"]) ? coordenada_mesa($entrada["pos_x"]) : null;
-    $posY = isset($entrada["pos_y"]) ? coordenada_mesa($entrada["pos_y"]) : null;
-    $ancho = filter_var($entrada["ancho"] ?? 100, FILTER_VALIDATE_INT);
-    $idEstado = filter_var($entrada["id_estado"] ?? null, FILTER_VALIDATE_INT);
-
-    if ($numero === false || $numero <= 0 || $ancho === false || $ancho < 60 || $ancho > 260 || $posX === false || $posY === false || ($idEstado !== false && $idEstado <= 0)) {
+    if ($numero === false || $numero <= 0) {
         responder_mesas(array("error" => "Los datos de la mesa no son válidos."), 400);
     }
-
-    if ($posX === null || $posY === null) {
-        $mesasActuales = cargar_mesas();
-        $posiciones = array_map(function ($mesa) {
-            return array("x" => (int)$mesa["pos_x"], "y" => (int)$mesa["pos_y"], "ancho" => (int)$mesa["ancho"]);
-        }, $mesasActuales);
-        $posicion = buscar_posicion_mesa($ancho, $posiciones);
-        if ($posicion === null) responder_mesas(array("error" => "No hay espacio disponible para otra mesa."), 409);
-        $posX = $posicion["x"];
-        $posY = $posicion["y"];
-    }
-
-    if ($posX < 0 || $posY < 0 || $posX > 1200 - $ancho || $posY > 620) {
-        responder_mesas(array("error" => "La posición de la mesa no es válida."), 400);
-    }
-
-    $idEstadoFinal = $idEstado ?? 1;
 
     $stmtNumero = mysqli_prepare($conexion, "SELECT id_mesa FROM Mesa WHERE numero = ? LIMIT 1");
     mysqli_stmt_bind_param($stmtNumero, "i", $numero);
@@ -126,8 +101,19 @@ if ($metodo === "POST") {
     mysqli_stmt_close($stmtNumero);
     if ($numeroExiste) responder_mesas(array("error" => "Ya existe una mesa con ese número."), 409);
 
+    $mesasActuales = cargar_mesas();
+    $posiciones = array_map(function ($mesa) {
+        return array("x" => (int)$mesa["pos_x"], "y" => (int)$mesa["pos_y"], "ancho" => 100);
+    }, $mesasActuales);
+    $posicion = buscar_posicion_mesa(100, $posiciones);
+    if ($posicion === null) responder_mesas(array("error" => "No hay espacio disponible para otra mesa."), 409);
+
+    $posX = $posicion["x"];
+    $posY = $posicion["y"];
+    $ancho = 100;
+    $idEstado = 1;
     $stmt = mysqli_prepare($conexion, "INSERT INTO Mesa (numero, pos_x, pos_y, ancho, id_estado) VALUES (?, ?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, "iiiii", $numero, $posX, $posY, $ancho, $idEstadoFinal);
+    mysqli_stmt_bind_param($stmt, "iiiii", $numero, $posX, $posY, $ancho, $idEstado);
     if (!mysqli_stmt_execute($stmt)) {
         mysqli_stmt_close($stmt);
         responder_mesas(array("error" => "No se pudo crear la mesa."), 409);
@@ -153,25 +139,36 @@ if ($metodo === "DELETE") {
 
 if ($metodo === "PATCH") {
     $idMesa = filter_var($entrada["id_mesa"] ?? null, FILTER_VALIDATE_INT);
-    $numero = filter_var($entrada["numero"] ?? null, FILTER_VALIDATE_INT);
-    $posX = coordenada_mesa($entrada["pos_x"] ?? null);
-    $posY = coordenada_mesa($entrada["pos_y"] ?? null);
-    $ancho = filter_var($entrada["ancho"] ?? null, FILTER_VALIDATE_INT);
-    $idEstado = filter_var($entrada["id_estado"] ?? null, FILTER_VALIDATE_INT);
+    $editaNumero = array_key_exists("numero", $entrada);
+    $editaPosicion = array_key_exists("pos_x", $entrada) && array_key_exists("pos_y", $entrada);
+    $numero = $editaNumero ? filter_var($entrada["numero"], FILTER_VALIDATE_INT) : null;
+    $posX = $editaPosicion ? coordenada_mesa($entrada["pos_x"]) : null;
+    $posY = $editaPosicion ? coordenada_mesa($entrada["pos_y"]) : null;
 
-    if ($idMesa === false || $idMesa <= 0 || $numero === false || $numero <= 0 || $posX === false || $posY === false || $ancho === false || $ancho < 60 || $ancho > 260 || $posX < 0 || $posY < 0 || $posX > 1200 - $ancho || $posY > 620 || $idEstado === false || $idEstado <= 0) {
+    if ($idMesa === false || $idMesa <= 0 || (!$editaNumero && !$editaPosicion) || ($editaNumero && ($numero === false || $numero <= 0)) || (array_key_exists("pos_x", $entrada) !== array_key_exists("pos_y", $entrada)) || ($editaPosicion && ($posX === false || $posY === false || $posX < 0 || $posY < 0 || $posX > 1100 || $posY > 620))) {
         responder_mesas(array("error" => "Los datos de la mesa no son válidos."), 400);
     }
 
-    $stmtNumero = mysqli_prepare($conexion, "SELECT id_mesa FROM Mesa WHERE numero = ? AND id_mesa <> ? LIMIT 1");
-    mysqli_stmt_bind_param($stmtNumero, "ii", $numero, $idMesa);
-    mysqli_stmt_execute($stmtNumero);
-    $numeroExiste = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtNumero));
-    mysqli_stmt_close($stmtNumero);
-    if ($numeroExiste) responder_mesas(array("error" => "Ya existe otra mesa con ese número."), 409);
+    if ($editaNumero) {
+        $stmtNumero = mysqli_prepare($conexion, "SELECT id_mesa FROM Mesa WHERE numero = ? AND id_mesa <> ? LIMIT 1");
+        mysqli_stmt_bind_param($stmtNumero, "ii", $numero, $idMesa);
+        mysqli_stmt_execute($stmtNumero);
+        $numeroExiste = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtNumero));
+        mysqli_stmt_close($stmtNumero);
+        if ($numeroExiste) responder_mesas(array("error" => "Ya existe otra mesa con ese número."), 409);
+    }
 
-    $stmt = mysqli_prepare($conexion, "UPDATE Mesa SET numero = ?, pos_x = ?, pos_y = ?, ancho = ?, id_estado = ? WHERE id_mesa = ?");
-    mysqli_stmt_bind_param($stmt, "iiiiii", $numero, $posX, $posY, $ancho, $idEstado, $idMesa);
+    if ($editaNumero && $editaPosicion) {
+        $stmt = mysqli_prepare($conexion, "UPDATE Mesa SET numero = ?, pos_x = ?, pos_y = ? WHERE id_mesa = ?");
+        mysqli_stmt_bind_param($stmt, "iiii", $numero, $posX, $posY, $idMesa);
+    } elseif ($editaNumero) {
+        $stmt = mysqli_prepare($conexion, "UPDATE Mesa SET numero = ? WHERE id_mesa = ?");
+        mysqli_stmt_bind_param($stmt, "ii", $numero, $idMesa);
+    } else {
+        $stmt = mysqli_prepare($conexion, "UPDATE Mesa SET pos_x = ?, pos_y = ? WHERE id_mesa = ?");
+        mysqli_stmt_bind_param($stmt, "iii", $posX, $posY, $idMesa);
+    }
+
     mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
     responder_mesas(array("ok" => true));
