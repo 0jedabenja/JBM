@@ -82,6 +82,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         if ($correcto) {
             mysqli_commit($conexion);
+            registrar_auditoria($conexion, "crear_producto", "producto", $idProducto, array("nombre" => $nombre, "precio" => $precio, "componentes" => count($componentes)));
             header("Location: ../productos.php");
             exit();
         }

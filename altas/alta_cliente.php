@@ -24,7 +24,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if ($stmt) {
             mysqli_stmt_bind_param($stmt, "ssss", $nombre, $apellido, $telefono, $direccion);
             if (mysqli_stmt_execute($stmt)) {
+                $idCliente = mysqli_insert_id($conexion);
                 mysqli_stmt_close($stmt);
+                registrar_auditoria($conexion, "crear_cliente", "cliente", $idCliente);
                 header("Location: ../clientes.php");
                 exit();
             }

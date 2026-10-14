@@ -27,7 +27,7 @@ function obtener_detalle_conteo($conexion, $idConteo) {
     mysqli_stmt_close($stmt);
     if (!$conteo) return null;
 
-    $sql = "SELECT d.id_insumo, i.nombre,
+    $sql = "SELECT d.id_insumo, i.nombre, i.costo,
                    COALESCE(m.simbolo, m.unidad, '-') AS unidad,
                    d.cantidad_sistema, d.cantidad_contada
             FROM Detalle_Conteo_Insumo d
@@ -47,7 +47,7 @@ function obtener_detalle_conteo($conexion, $idConteo) {
 }
 
 function obtener_insumos_conteo($conexion, $tipo, $idCategoria = null) {
-    $sql = "SELECT id_insumo, nombre, cantidad_actual FROM Insumo WHERE activo = TRUE AND cantidad_actual <> 0";
+    $sql = "SELECT id_insumo, nombre, cantidad_actual FROM Insumo WHERE activo = TRUE";
     if ($tipo === "categoria") $sql .= " AND id_categoria = ?";
     if ($tipo === "sin_categoria") $sql .= " AND id_categoria IS NULL";
     $sql .= " ORDER BY nombre";
@@ -137,6 +137,33 @@ if ($accion === "iniciar") {
     }
 
     mysqli_begin_transaction($conexion);
+    $resultadoAbiertos = mysqli_query(
+        $conexion,
+        "SELECT tipo_categoria, id_categoria
+         FROM Conteo_Insumo
+         WHERE estado = 'En curso'
+         FOR UPDATE"
+    );
+    if (!$resultadoAbiertos) {
+        mysqli_rollback($conexion);
+        responder_conteo(array("error" => "No se pudieron verificar los conteos abiertos."), 500);
+    }
+    while ($conteoAbierto = mysqli_fetch_assoc($resultadoAbiertos)) {
+        $seSuperponen =
+            $tipo === "todas" ||
+            $conteoAbierto["tipo_categoria"] === "todas" ||
+            ($tipo === "sin_categoria" && $conteoAbierto["tipo_categoria"] === "sin_categoria") ||
+            ($tipo === "categoria" &&
+                $conteoAbierto["tipo_categoria"] === "categoria" &&
+                (int)$conteoAbierto["id_categoria"] === (int)$idCategoria);
+        if ($seSuperponen) {
+            mysqli_free_result($resultadoAbiertos);
+            mysqli_rollback($conexion);
+            responder_conteo(array("error" => "Ya hay un conteo abierto que incluye esta categoría. Finalizalo o cancelalo antes de iniciar otro."), 409);
+        }
+    }
+    mysqli_free_result($resultadoAbiertos);
+
     $idEmpleado = (int)$_SESSION["usuario_id"];
     $stmt = mysqli_prepare($conexion, "INSERT INTO Conteo_Insumo (tipo_categoria, id_categoria, id_empleado) VALUES (?, ?, ?)");
     mysqli_stmt_bind_param($stmt, "sii", $tipo, $idCategoria, $idEmpleado);
@@ -151,7 +178,7 @@ if ($accion === "iniciar") {
     $items = obtener_insumos_conteo($conexion, $tipo, $idCategoria);
     if (!$items) {
         mysqli_rollback($conexion);
-        responder_conteo(array("error" => "No hay insumos con saldo distinto de cero para contar."), 422);
+        responder_conteo(array("error" => "No hay insumos activos para contar con este filtro."), 422);
     }
 
     $stmt = mysqli_prepare($conexion, "INSERT INTO Detalle_Conteo_Insumo (id_conteo, id_insumo, cantidad_sistema) VALUES (?, ?, ?)");
@@ -167,6 +194,7 @@ if ($accion === "iniciar") {
     }
     mysqli_stmt_close($stmt);
     mysqli_commit($conexion);
+    registrar_auditoria($conexion, "iniciar_conteo", "conteo_insumos", $idConteo, array("tipo_categoria" => $tipo, "id_categoria" => $idCategoria));
     responder_conteo(obtener_detalle_conteo($conexion, $idConteo), 201);
 }
 
@@ -232,8 +260,37 @@ if ($accion === "guardar_borrador") {
 if ($accion === "finalizar") {
     $idConteo = filter_var($entrada["id_conteo"] ?? null, FILTER_VALIDATE_INT);
     $cantidades = $entrada["cantidades"] ?? null;
-    if ($idConteo === false || $idConteo <= 0 || !is_array($cantidades)) {
+    $contrasenaAdministrador = $entrada["contrasena_administrador"] ?? null;
+    if ($idConteo === false || $idConteo <= 0 || !is_array($cantidades) || !is_string($contrasenaAdministrador) || $contrasenaAdministrador === "") {
         responder_conteo(array("error" => "Los datos del conteo no son válidos."), 400);
+    }
+
+    $idEmpleado = (int)$_SESSION["usuario_id"];
+    $stmt = mysqli_prepare(
+        $conexion,
+        "SELECT e.contraseña, e.activo, r.nombre AS rol
+         FROM Empleado e
+         INNER JOIN Rol r ON r.id_rol = e.id_rol
+         WHERE e.id_empleado = ?
+         LIMIT 1"
+    );
+    if (!$stmt) {
+        responder_conteo(array("error" => "No se pudo validar la contraseña del administrador."), 500);
+    }
+    mysqli_stmt_bind_param($stmt, "i", $idEmpleado);
+    if (!mysqli_stmt_execute($stmt)) {
+        mysqli_stmt_close($stmt);
+        responder_conteo(array("error" => "No se pudo validar la contraseña del administrador."), 500);
+    }
+    $administrador = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+    mysqli_stmt_close($stmt);
+    if (
+        !$administrador ||
+        !(bool)$administrador["activo"] ||
+        strtolower(trim($administrador["rol"])) !== "administrador" ||
+        !password_verify($contrasenaAdministrador, $administrador["contraseña"])
+    ) {
+        responder_conteo(array("error" => "La contraseña del administrador no es correcta."), 403);
     }
 
     // Actualiza las existencias y el detalle en una única operación atómica.
@@ -248,15 +305,29 @@ if ($accion === "finalizar") {
         responder_conteo(array("error" => "El conteo ya no está disponible."), 409);
     }
 
-    $stmt = mysqli_prepare($conexion, "SELECT id_insumo, cantidad_sistema FROM Detalle_Conteo_Insumo WHERE id_conteo = ? FOR UPDATE");
+    $stmt = mysqli_prepare(
+        $conexion,
+        "SELECT d.id_insumo, d.cantidad_sistema, i.costo
+         FROM Detalle_Conteo_Insumo d
+         INNER JOIN Insumo i ON i.id_insumo = d.id_insumo
+         WHERE d.id_conteo = ?
+         FOR UPDATE"
+    );
     mysqli_stmt_bind_param($stmt, "i", $idConteo);
     mysqli_stmt_execute($stmt);
     $resultado = mysqli_stmt_get_result($stmt);
     $esperados = array();
-    while ($item = mysqli_fetch_assoc($resultado)) $esperados[(int)$item["id_insumo"]] = (float)$item["cantidad_sistema"];
+    while ($item = mysqli_fetch_assoc($resultado)) {
+        $esperados[(int)$item["id_insumo"]] = array(
+            "cantidad" => (float)$item["cantidad_sistema"],
+            "costo" => (float)$item["costo"]
+        );
+    }
     mysqli_stmt_close($stmt);
 
     $ingresados = array();
+    $cantidadFaltantes = 0;
+    $cantidadSobrantes = 0;
     foreach ($cantidades as $item) {
         if (!is_array($item)) {
             mysqli_rollback($conexion);
@@ -269,6 +340,11 @@ if ($accion === "finalizar") {
             responder_conteo(array("error" => "Revisá las cantidades ingresadas."), 400);
         }
         $ingresados[$idInsumo] = round((float)$cantidad, 2);
+        if ($ingresados[$idInsumo] < $esperados[$idInsumo]["cantidad"]) {
+            $cantidadFaltantes++;
+        } elseif ($ingresados[$idInsumo] > $esperados[$idInsumo]["cantidad"]) {
+            $cantidadSobrantes++;
+        }
     }
 
     if (count($ingresados) !== count($esperados)) {
@@ -279,7 +355,7 @@ if ($accion === "finalizar") {
     $stmtInsumo = mysqli_prepare($conexion, "UPDATE Insumo SET cantidad_actual = ? WHERE id_insumo = ?");
     $stmtDetalle = mysqli_prepare($conexion, "UPDATE Detalle_Conteo_Insumo SET cantidad_contada = ?, diferencia = ? WHERE id_conteo = ? AND id_insumo = ?");
     foreach ($ingresados as $idInsumo => $cantidad) {
-        $cantidadSistema = $esperados[$idInsumo];
+        $cantidadSistema = $esperados[$idInsumo]["cantidad"];
         $diferencia = round($cantidad - $cantidadSistema, 2);
         mysqli_stmt_bind_param($stmtInsumo, "di", $cantidad, $idInsumo);
         if (!mysqli_stmt_execute($stmtInsumo)) {
@@ -295,6 +371,12 @@ if ($accion === "finalizar") {
             mysqli_rollback($conexion);
             responder_conteo(array("error" => "No se pudo guardar el detalle del conteo."), 500);
         }
+        if (!registrar_movimiento_insumo($conexion, $idInsumo, "inventario", $diferencia, $esperados[$idInsumo]["costo"], $idConteo)) {
+            mysqli_stmt_close($stmtInsumo);
+            mysqli_stmt_close($stmtDetalle);
+            mysqli_rollback($conexion);
+            responder_conteo(array("error" => "No se pudo registrar el movimiento del ajuste de inventario."), 500);
+        }
     }
     mysqli_stmt_close($stmtInsumo);
     mysqli_stmt_close($stmtDetalle);
@@ -308,6 +390,7 @@ if ($accion === "finalizar") {
     }
     mysqli_stmt_close($stmt);
     mysqli_commit($conexion);
+    registrar_auditoria($conexion, "finalizar_conteo", "conteo_insumos", $idConteo, array("items" => count($ingresados), "faltantes" => $cantidadFaltantes, "sobrantes" => $cantidadSobrantes));
     responder_conteo(array("ok" => true));
 }
 
@@ -320,6 +403,7 @@ if ($accion === "cancelar") {
     $actualizado = mysqli_stmt_affected_rows($stmt) > 0;
     mysqli_stmt_close($stmt);
     if (!$actualizado) responder_conteo(array("error" => "El conteo ya no está disponible."), 409);
+    registrar_auditoria($conexion, "cancelar_conteo", "conteo_insumos", $idConteo);
     responder_conteo(array("ok" => true));
 }
 

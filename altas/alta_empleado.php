@@ -38,7 +38,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if ($stmt) {
             mysqli_stmt_bind_param($stmt, "ssssi", $nombre, $apellido, $usuario, $hash, $id_rol);
             if (mysqli_stmt_execute($stmt)) {
+                $idEmpleadoNuevo = mysqli_insert_id($conexion);
                 mysqli_stmt_close($stmt);
+                registrar_auditoria($conexion, "crear_empleado", "empleado", $idEmpleadoNuevo, array("usuario" => $usuario, "id_rol" => $id_rol));
                 header("Location: ../empleados.php");
                 exit();
             }
