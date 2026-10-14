@@ -89,7 +89,7 @@ verificar_permiso("empleados");
         }
         function cambiarPagina(delta) { paginaActual = Math.max(1, paginaActual + delta); cargarEmpleados(); }
         function buscarEmpleados() { clearTimeout(timeoutBusqueda); timeoutBusqueda = setTimeout(() => { paginaActual = 1; cargarEmpleados(); }, 300); }
-        function eliminarEmpleado(id) { if (!confirm("¿Está seguro de que desea desactivar este empleado?")) return; fetch(`apis/eliminar.php?tipo=empleado&id=${encodeURIComponent(id)}`).then(response => { if (!response.ok) throw new Error(); return response.json(); }).then(cargarEmpleados).catch(() => alert("No se pudo desactivar el empleado.")); }
+        function eliminarEmpleado(id) { if (!confirm("¿Está seguro de que desea desactivar este empleado?")) return; fetch("apis/eliminar.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "empleado", id: Number(id) }) }).then(response => { if (!response.ok) throw new Error(); return response.json(); }).then(cargarEmpleados).catch(() => alert("No se pudo desactivar el empleado.")); }
         function escapeHTML(valor) { if (valor === null || valor === undefined) return ""; return String(valor).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;"); }
     </script>
 </body>

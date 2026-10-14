@@ -70,6 +70,16 @@ if ($rolActual === "administrador") {
         color: #765400;
     }
 
+    .conteo-inicio {
+        background: #001f47;
+        border-radius: 6px;
+        color: #fff;
+        display: inline-block;
+        margin-top: 16px;
+        padding: 10px 16px;
+        text-decoration: none;
+    }
+
     .stock-vacio {
         background: #eef8f0;
         border: 1px solid #8cc799;
@@ -134,6 +144,7 @@ if ($rolActual === "administrador") {
             <main class="inicio-content">
                 <h1>Inicio</h1>
                 <?php if ($rolActual === "administrador"): ?>
+                    <a class="conteo-inicio" href="conteos.php">Iniciar conteo de insumos</a>
                     <?php if (count($insumosBajoStock) > 0): ?>
                         <section class="stock-alerta" aria-labelledby="titulo-stock">
                             <h2 id="titulo-stock">Insumos con stock bajo</h2>
