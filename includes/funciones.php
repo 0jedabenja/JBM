@@ -58,7 +58,7 @@ function obtener_rol_sesion() {
 function usuario_tiene_permiso($permiso) {
     $rol = obtener_rol_sesion();
     $permisos = array(
-        "administrador" => array("inicio", "pedidos", "crear_pedido", "cocina", "mapa", "caja", "clientes", "insumos", "productos", "empleados", "conteos"),
+        "administrador" => array("inicio", "pedidos", "crear_pedido", "cocina", "mapa", "caja", "clientes", "insumos", "productos", "empleados"),
         "cajero" => array("inicio", "pedidos", "crear_pedido", "mapa", "caja"),
         "mozo" => array("inicio", "pedidos", "crear_pedido"),
         "cocina" => array("inicio", "pedidos", "cocina")
@@ -93,14 +93,6 @@ function verificar_sesion_api() {
         echo json_encode(array("error" => "Sesión requerida."), JSON_UNESCAPED_UNICODE);
         exit();
     }
-}
-
-function obtener_parametro_get($nombre, $predeterminado = "") {
-    if (!isset($_GET[$nombre]) || !is_scalar($_GET[$nombre])) {
-        return $predeterminado;
-    }
-
-    return trim((string)$_GET[$nombre]);
 }
 
 function obtener_token_csrf() {

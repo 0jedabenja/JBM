@@ -5,9 +5,21 @@ verificar_sesion_api();
 verificar_permiso("insumos", true);
 header('Content-Type: application/json; charset=utf-8');
 
-$limiteParametro = obtener_parametro_get("limite", "20");
-$limite = $limiteParametro === "sin" ? 9999999 : max(1, (int)$limiteParametro);
-$pagina = max(1, (int)obtener_parametro_get("pagina", "1"));
+if (!isset($_GET["limite"])) {
+    $limite = 20;
+} else {
+    if ($_GET["limite"] === "sin") {
+        $limite = 9999999;
+    } else {
+        $limite = max(1, (int)$_GET["limite"]);
+    }
+}
+
+if (!isset($_GET["pagina"])) {
+    $pagina = 1;
+} else {
+    $pagina = max(1, (int)$_GET["pagina"]);
+}
 
 $desdequeelemento = ($pagina - 1) * $limite;
 $camposPermitidos = array(
@@ -18,11 +30,10 @@ $camposPermitidos = array(
     "stock_minimo" => "i.stock_minimo",
     "costo" => "i.costo"
 );
-$campo = obtener_parametro_get("campo", "todos");
-$filtro = obtener_parametro_get("filtro");
+$campo = $_GET["campo"] ?? "todos";
 
-if ($filtro !== "" && $filtro !== "undefined") {
-    $filtro = "%" . $filtro . "%";
+if (isset($_GET["filtro"]) && $_GET["filtro"] !== "undefined" && trim($_GET["filtro"]) !== "") {
+    $filtro = "%" . trim($_GET["filtro"]) . "%";
     if (isset($camposPermitidos[$campo])) {
         $sql = "SELECT i.id_insumo, i.nombre, i.cantidad_actual, i.stock_minimo, i.costo, i.id_medida, m.unidad
                 FROM Insumo i

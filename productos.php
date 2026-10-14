@@ -88,7 +88,7 @@ verificar_permiso("productos");
         }
         function cambiarPagina(delta) { paginaActual = Math.max(1, paginaActual + delta); cargarProductos(); }
         function buscarProductos() { clearTimeout(timeoutBusqueda); timeoutBusqueda = setTimeout(() => { paginaActual = 1; cargarProductos(); }, 300); }
-        function eliminarProducto(id) { if (!confirm("¿Está seguro de que desea desactivar este producto?")) return; fetch("apis/eliminar.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "producto", id: Number(id) }) }).then(response => { if (!response.ok) throw new Error(); return response.json(); }).then(cargarProductos).catch(() => alert("No se pudo desactivar el producto.")); }
+        function eliminarProducto(id) { if (!confirm("¿Está seguro de que desea desactivar este producto?")) return; fetch(`apis/eliminar.php?tipo=producto&id=${encodeURIComponent(id)}`).then(response => { if (!response.ok) throw new Error(); return response.json(); }).then(cargarProductos).catch(() => alert("No se pudo desactivar el producto.")); }
         function escapeHTML(valor) { if (valor === null || valor === undefined) return ""; return String(valor).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;"); }
     </script>
 </body>
