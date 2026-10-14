@@ -39,6 +39,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $_SESSION["nombre_usuario"] = $empleado["nombre"] . " " . $empleado["apellido"];
                 $_SESSION["id_rol"] = (int) $empleado["id_rol"];
                 $_SESSION["rol"] = $empleado["rol"];
+                registrar_auditoria($conexion, "iniciar_sesion", "empleado", (int)$empleado["id_empleado"]);
                 header("Location: index.php");
                 exit();
             }

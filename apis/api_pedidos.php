@@ -229,7 +229,11 @@ if ($metodo === "POST") {
         $stmt = mysqli_prepare($conexion, "UPDATE Contiene SET completado = TRUE WHERE id_pedido = ? AND id_producto = ?");
         mysqli_stmt_bind_param($stmt, "ii", $idPedido, $idProducto);
         mysqli_stmt_execute($stmt);
+        $actualizado = mysqli_stmt_affected_rows($stmt) > 0;
         mysqli_stmt_close($stmt);
+        if ($actualizado) {
+            registrar_auditoria($conexion, "completar_producto_pedido", "pedido", $idPedido, array("id_producto" => $idProducto));
+        }
         responder(array("ok" => true));
     }
 
@@ -249,6 +253,7 @@ if ($metodo === "POST") {
             mysqli_stmt_execute($stmtMesa);
             mysqli_stmt_close($stmtMesa);
         }
+        registrar_auditoria($conexion, "marcar_pedido_listo", "pedido", $idPedido);
         responder(array("ok" => true));
     }
 
@@ -617,4 +622,5 @@ if (!$correcto) {
 }
 
 mysqli_commit($conexion);
+registrar_auditoria($conexion, "crear_pedido", "pedido", $idPedido, array("productos" => count($lineas), "monto_total" => $montoTotal, "id_mesa" => $idMesa));
 responder(array("ok" => true, "id_pedido" => $idPedido, "monto_total" => $montoTotal), 201);

@@ -162,9 +162,62 @@ if ($rolActual === "administrador") {
                     <?php else: ?>
                         <p class="stock-vacio">No hay insumos por debajo del stock de aviso.</p>
                     <?php endif; ?>
+                    <details>
+                        <summary>Auditoría del sistema</summary>
+                        <p>Registro de operaciones importantes. Se muestran 100 eventos por página.</p>
+                        <table>
+                            <thead><tr><th>Fecha y hora</th><th>Usuario</th><th>Acción</th><th>Entidad</th><th>Detalle</th><th>IP</th></tr></thead>
+                            <tbody id="filasAuditoria"><tr><td colspan="6">Abrí esta sección para cargar los registros.</td></tr></tbody>
+                        </table>
+                        <p id="mensajeAuditoria" role="status"></p>
+                        <button id="auditoriaAnterior" type="button" disabled>Anterior</button>
+                        <span id="paginaAuditoria">Página 1</span>
+                        <button id="auditoriaSiguiente" type="button" disabled>Siguiente</button>
+                    </details>
                 <?php endif; ?>
             </main>
     </div>
+    <?php if ($rolActual === "administrador"): ?>
+    <script>
+    let paginaAuditoriaActual = 1;
+    let auditoriaCargada = false;
+    const seccionAuditoria = document.querySelector("main details");
+    seccionAuditoria.addEventListener("toggle", () => {
+        if (seccionAuditoria.open && !auditoriaCargada) cargarAuditoria();
+    });
+    document.getElementById("auditoriaAnterior").addEventListener("click", () => {
+        if (paginaAuditoriaActual > 1) { paginaAuditoriaActual--; cargarAuditoria(); }
+    });
+    document.getElementById("auditoriaSiguiente").addEventListener("click", () => {
+        if (document.getElementById("auditoriaSiguiente").dataset.hayMas === "true") { paginaAuditoriaActual++; cargarAuditoria(); }
+    });
+    async function cargarAuditoria() {
+        try {
+            const respuesta = await fetch(`apis/api_auditoria.php?pagina=${paginaAuditoriaActual}`, { cache: "no-store" });
+            const datos = await respuesta.json();
+            if (!respuesta.ok) throw new Error(datos.error || "No se pudo cargar la auditoría.");
+            document.getElementById("filasAuditoria").innerHTML = datos.registros.length
+                ? datos.registros.map((fila) => `<tr>
+                    <td>${escaparAuditoria(fila.fecha_hora)}</td><td>${escaparAuditoria(fila.responsable)} (${escaparAuditoria(fila.usuario)})</td>
+                    <td>${escaparAuditoria(fila.accion)}</td><td>${escaparAuditoria(fila.entidad)} #${escaparAuditoria(fila.id_entidad)}</td>
+                    <td>${escaparAuditoria(JSON.stringify(fila.detalle || {}))}</td><td>${escaparAuditoria(fila.ip)}</td></tr>`).join("")
+                : '<tr><td colspan="6">Todavía no hay eventos registrados.</td></tr>';
+            document.getElementById("mensajeAuditoria").textContent = `Total: ${datos.total} eventos`;
+            document.getElementById("paginaAuditoria").textContent = `Página ${datos.pagina}`;
+            document.getElementById("auditoriaAnterior").disabled = !datos.hay_anterior;
+            document.getElementById("auditoriaSiguiente").disabled = !datos.hay_siguiente;
+            document.getElementById("auditoriaSiguiente").dataset.hayMas = datos.hay_siguiente ? "true" : "false";
+            auditoriaCargada = true;
+        } catch (error) {
+            document.getElementById("mensajeAuditoria").textContent = error.message;
+            auditoriaCargada = false;
+        }
+    }
+    function escaparAuditoria(valor) {
+        return String(valor ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+    </script>
+    <?php endif; ?>
 </body>
 
 </html>

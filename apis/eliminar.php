@@ -34,9 +34,5 @@ if (isset($_GET["tipo"]) && isset($_GET["id"])) {
     mysqli_stmt_bind_param($stmt, "i", $id);
     mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
+    registrar_auditoria($conexion, "desactivar_" . $tipo, $tipo, $id);
     echo json_encode(ucfirst($tipo) . " " . $id . " desactivado", JSON_UNESCAPED_UNICODE);
-
-} else {
-    header('Content-Type: application/json', true, 400);
-    echo json_encode(["error" => ["Datos incompletos"]]);
-}
