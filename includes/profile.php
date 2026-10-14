@@ -4,7 +4,7 @@
     </div>
 
     <div class="dropdown">
-        <h3>Usuario</h3>
+        <h3><?php echo htmlspecialchars($_SESSION["nombre_usuario"] ?? "", ENT_QUOTES, "UTF-8"); ?></h3>
 
         <ul>
             <li>
