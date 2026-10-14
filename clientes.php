@@ -269,11 +269,7 @@ verificar_permiso("clientes");
                 return;
             }
 
-            fetch("apis/eliminar.php", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ tipo: "cliente", id: Number(id) })
-            })
+            fetch(`apis/eliminar.php?tipo=cliente&id=${encodeURIComponent(id)}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error("No se pudo desactivar el cliente.");

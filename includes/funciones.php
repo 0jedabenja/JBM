@@ -95,14 +95,6 @@ function verificar_sesion_api() {
     }
 }
 
-function obtener_parametro_get($nombre, $predeterminado = "") {
-    if (!isset($_GET[$nombre]) || !is_scalar($_GET[$nombre])) {
-        return $predeterminado;
-    }
-
-    return trim((string)$_GET[$nombre]);
-}
-
 function obtener_token_csrf() {
     iniciar_sesion_segura();
     if (empty($_SESSION["csrf_token"])) {

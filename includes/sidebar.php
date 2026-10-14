@@ -73,14 +73,6 @@
                     </a>
                 </li>
                 <?php endif; ?>
-                <?php if (usuario_tiene_permiso("conteos")): ?>
-                <li>
-                    <a href="<?php echo $rutaBase ?? ""; ?>conteos.php">
-                        <span class="icon"><img src="<?php echo $rutaBase ?? ""; ?>assets/img/sidebar/light-box.svg"></span>
-                        <span class="title">Conteo de insumos</span>
-                    </a>
-                </li>
-                <?php endif; ?>
             </ul>
         </div>
     </div>
