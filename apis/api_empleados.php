@@ -5,21 +5,9 @@ verificar_sesion_api();
 verificar_permiso("empleados", true);
 header('Content-Type: application/json; charset=utf-8');
 
-if (!isset($_GET["limite"])) {
-    $limite = 20;
-} else {
-    if ($_GET["limite"] === "sin") {
-        $limite = 9999999;
-    } else {
-        $limite = max(1, (int)$_GET["limite"]);
-    }
-}
-
-if (!isset($_GET["pagina"])) {
-    $pagina = 1;
-} else {
-    $pagina = max(1, (int)$_GET["pagina"]);
-}
+$limiteParametro = obtener_parametro_get("limite", "20");
+$limite = $limiteParametro === "sin" ? 9999999 : max(1, (int)$limiteParametro);
+$pagina = max(1, (int)obtener_parametro_get("pagina", "1"));
 
 $desdequeelemento = ($pagina - 1) * $limite;
 $camposPermitidos = array(
@@ -29,10 +17,11 @@ $camposPermitidos = array(
     "usuario" => "e.usuario",
     "rol" => "r.nombre"
 );
-$campo = $_GET["campo"] ?? "todos";
+$campo = obtener_parametro_get("campo", "todos");
+$filtro = obtener_parametro_get("filtro");
 
-if (isset($_GET["filtro"]) && $_GET["filtro"] !== "undefined" && trim($_GET["filtro"]) !== "") {
-    $filtro = "%" . trim($_GET["filtro"]) . "%";
+if ($filtro !== "" && $filtro !== "undefined") {
+    $filtro = "%" . $filtro . "%";
     if (isset($camposPermitidos[$campo])) {
         $sql = "SELECT e.id_empleado, e.nombre, e.apellido, e.usuario, e.id_rol,
                        r.nombre AS rol

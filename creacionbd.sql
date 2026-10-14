@@ -89,8 +89,34 @@ CREATE TABLE Insumo (
     stock_minimo DECIMAL(10,2) NOT NULL,
     costo DECIMAL(10,2) NOT NULL,
     id_medida INT,
+    id_categoria INT,
     PRIMARY KEY (id_insumo),
-    FOREIGN KEY (id_medida) REFERENCES Medida(id_medida) ON DELETE SET NULL ON UPDATE CASCADE
+    FOREIGN KEY (id_medida) REFERENCES Medida(id_medida) ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY (id_categoria) REFERENCES Categoria(id_categoria) ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+CREATE TABLE Conteo_Insumo (
+    id_conteo INT AUTO_INCREMENT,
+    fecha_inicio DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_fin DATETIME,
+    estado ENUM('En curso', 'Finalizado', 'Cancelado') NOT NULL DEFAULT 'En curso',
+    tipo_categoria ENUM('todas', 'categoria', 'sin_categoria') NOT NULL DEFAULT 'todas',
+    id_categoria INT,
+    id_empleado INT NOT NULL,
+    PRIMARY KEY (id_conteo),
+    FOREIGN KEY (id_categoria) REFERENCES Categoria(id_categoria) ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY (id_empleado) REFERENCES Empleado(id_empleado) ON UPDATE CASCADE
+);
+
+CREATE TABLE Detalle_Conteo_Insumo (
+    id_conteo INT NOT NULL,
+    id_insumo INT NOT NULL,
+    cantidad_sistema DECIMAL(10,2) NOT NULL,
+    cantidad_contada DECIMAL(10,2),
+    diferencia DECIMAL(10,2),
+    UNIQUE KEY uq_conteo_insumo (id_conteo, id_insumo),
+    FOREIGN KEY (id_conteo) REFERENCES Conteo_Insumo(id_conteo) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_insumo) REFERENCES Insumo(id_insumo) ON UPDATE CASCADE
 );
 
 CREATE TABLE Producto (
@@ -137,7 +163,7 @@ CREATE TABLE Pedido (
     id_estado INT NOT NULL,
     id_cliente INT,
     id_descuento INT,
-    id_mp INT NULL DEFAULT NULL,
+    id_mp INT NOT NULL,
     cobrado BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (id_pedido),
     FOREIGN KEY (id_empleado) REFERENCES Empleado(id_empleado) ON UPDATE CASCADE,
