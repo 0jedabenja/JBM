@@ -37,7 +37,7 @@ $puedeCocina = in_array($rolActual, array("administrador", "cocina"), true);
             </section>
             <section id="vista-pendientes" class="pedido-view"><h2>Pedidos pendientes</h2><div id="listaPendientes"></div></section>
             <?php endif; ?>
-            <?php if ($puedeCocina): ?><section id="vista-cocina" class="pedido-view"><h2>Cocina</h2><p>Los pedidos aparecen automáticamente cuando se crean.</p><div id="listaCocina"></div></section><?php endif; ?>
+            <?php if ($puedeCocina): ?><section id="vista-cocina" class="pedido-view"><h2>Cocina</h2><p>Los pedidos aparecen automáticamente cuando se crean.</p><p id="mensajeBoleta" class="mensaje" role="status" aria-live="polite"></p><div id="listaCocina"></div></section><?php endif; ?>
         </main>
     </div>
 <script>
@@ -151,7 +151,32 @@ function renderCocina(pedidos) {
     actualizarRelojes();
 }
 function completarProducto(id_pedido,id_producto) { fetch("apis/api_pedidos.php",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({accion:"completar_producto",id_pedido,id_producto})}).then(()=>cargarPedidos("cocina")); }
-function finalizarPedido(id_pedido) { fetch("apis/api_pedidos.php",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({accion:"finalizar",id_pedido})}).then(r=>r.json().then(d=>({ok:r.ok,data:d}))).then(r=>{if(!r.ok) alert(r.data.error); cargarPedidos("cocina");}); }
+async function finalizarPedido(id_pedido) {
+    const ventanaBoleta = window.open("about:blank", "_blank");
+    const mensaje = document.getElementById("mensajeBoleta");
+    if (mensaje) mensaje.textContent = "";
+    try {
+        const respuesta = await fetch("apis/api_pedidos.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ accion: "finalizar", id_pedido })
+        });
+        const datos = await respuesta.json();
+        if (!respuesta.ok) throw new Error(datos.error || "No se pudo finalizar el pedido.");
+        const urlBoleta = `apis/boleta_pedido.php?id_pedido=${encodeURIComponent(id_pedido)}`;
+        if (ventanaBoleta) {
+            ventanaBoleta.location.href = urlBoleta;
+            if (mensaje) mensaje.textContent = `Pedido #${id_pedido} listo. Se abrió la boleta para imprimir.`;
+        } else if (mensaje) {
+            mensaje.innerHTML = `Pedido #${id_pedido} listo. <a href="${urlBoleta}" target="_blank" rel="noopener">Abrir boleta</a>`;
+        }
+        cargarPedidos("cocina");
+    } catch (error) {
+        if (ventanaBoleta) ventanaBoleta.close();
+        if (mensaje) mensaje.textContent = error.message;
+        else alert(error.message);
+    }
+}
 function actualizarRelojes() { document.querySelectorAll(".reloj").forEach(el => { const minutos=Math.floor((Date.now()-new Date(el.dataset.inicio).getTime())/60000); const segundos=Math.max(0,Math.floor((Date.now()-new Date(el.dataset.inicio).getTime())/1000)); el.textContent=`Tiempo: ${String(Math.floor(segundos/60)).padStart(2,"0")}:${String(segundos%60).padStart(2,"0")}`; el.className=`reloj ${minutos>=30?"rojo":minutos>=20?"naranja":minutos>=10?"amarillo":""}`; }); }
 setInterval(() => { actualizarRelojes(); if (puedeCrear) cargarEstadoCajaPedido(); if (puedeCocina && document.getElementById("vista-cocina")?.classList.contains("active")) cargarPedidos("cocina"); if (puedeCrear && document.getElementById("vista-pendientes")?.classList.contains("active")) cargarPedidos("pendientes"); }, 5000);
 function emitirAlerta() { try { contextoAudio ||= new (window.AudioContext || window.webkitAudioContext)(); const oscilador=contextoAudio.createOscillator(); const ganancia=contextoAudio.createGain(); oscilador.connect(ganancia); ganancia.connect(contextoAudio.destination); oscilador.frequency.value=880; ganancia.gain.value=.15; oscilador.start(); oscilador.stop(contextoAudio.currentTime+.25); } catch (e) {} }

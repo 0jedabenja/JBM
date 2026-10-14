@@ -51,7 +51,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
             mysqli_stmt_close($stmt);
         }
-        if ($correcto) { mysqli_commit($conexion); header("Location: productos.php"); exit(); }
+        if ($correcto) {
+            mysqli_commit($conexion);
+            registrar_auditoria($conexion, "modificar_producto", "producto", $id_producto, array("nombre" => $nombre, "precio" => $precio, "componentes" => count($componentes)));
+            header("Location: productos.php");
+            exit();
+        }
         mysqli_rollback($conexion); $mensaje = "No se pudo actualizar el producto y su receta.";
     }
 }

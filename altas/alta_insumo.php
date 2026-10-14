@@ -38,7 +38,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $mensaje = "Los valores numéricos ingresados no son válidos.";
         $tipoMensaje = "error";
     } else {
-        
+        mysqli_begin_transaction($conexion);
         $sql = "INSERT INTO Insumo (nombre, cantidad_actual, stock_minimo, costo, id_medida, id_categoria)
             VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -47,9 +47,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if ($stmt) {
             mysqli_stmt_bind_param($stmt, "sdddii", $nombre, $cantidad_actual, $stock_minimo, $costo, $id_medida, $id_categoria);
             if (mysqli_stmt_execute($stmt)) {
-                $mensaje = "¡Insumo registrado con éxito!";
-                $tipoMensaje = "exito";
+                $idInsumo = mysqli_insert_id($conexion);
+                $movimientoRegistrado = registrar_movimiento_insumo($conexion, $idInsumo, "saldo_inicial", $cantidad_actual, $costo);
+                if ($movimientoRegistrado) {
+                    mysqli_commit($conexion);
+                    registrar_auditoria($conexion, "crear_insumo", "insumo", $idInsumo, array("nombre" => $nombre, "saldo_inicial" => $cantidad_actual));
+                    $mensaje = "¡Insumo registrado con éxito!";
+                    $tipoMensaje = "exito";
+                } else {
+                    mysqli_rollback($conexion);
+                    $mensaje = "No se pudo guardar el movimiento de saldo inicial.";
+                    $tipoMensaje = "error";
+                }
             } else {
+                mysqli_rollback($conexion);
                 $mensaje = "Error al guardar el insumo en la base de datos.";
                 $tipoMensaje = "error";
                 error_log("Error MySQL INSERT: " . mysqli_stmt_error($stmt));
@@ -58,6 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         } else {
             $mensaje = "Error al preparar la consulta.";
             $tipoMensaje = "error";
+            mysqli_rollback($conexion);
         }
     }
 }

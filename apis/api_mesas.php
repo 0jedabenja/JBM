@@ -120,6 +120,7 @@ if ($metodo === "POST") {
     }
     $idMesa = mysqli_insert_id($conexion);
     mysqli_stmt_close($stmt);
+    registrar_auditoria($conexion, "crear_mesa", "mesa", $idMesa, array("numero" => $numero));
     responder_mesas(array("ok" => true, "id_mesa" => $idMesa), 201);
 }
 
@@ -134,6 +135,7 @@ if ($metodo === "DELETE") {
     mysqli_stmt_close($stmt);
     if (!$ejecutado) responder_mesas(array("error" => "No se pudo eliminar la mesa."), 409);
     if (!$eliminada) responder_mesas(array("error" => "La mesa no existe."), 404);
+    registrar_auditoria($conexion, "eliminar_mesa", "mesa", $idMesa);
     responder_mesas(array("ok" => true));
 }
 
@@ -169,8 +171,10 @@ if ($metodo === "PATCH") {
         mysqli_stmt_bind_param($stmt, "iii", $posX, $posY, $idMesa);
     }
 
-    mysqli_stmt_execute($stmt);
+    $ejecutado = mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
+    if (!$ejecutado) responder_mesas(array("error" => "No se pudo modificar la mesa."), 500);
+    registrar_auditoria($conexion, "modificar_mesa", "mesa", $idMesa, array("numero" => $editaNumero ? $numero : null, "pos_x" => $editaPosicion ? $posX : null, "pos_y" => $editaPosicion ? $posY : null));
     responder_mesas(array("ok" => true));
 }
 

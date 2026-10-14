@@ -48,4 +48,5 @@ if (!is_array($entrada)) $entrada = $_POST;
         exit();
     }
     mysqli_stmt_close($stmt);
+    registrar_auditoria($conexion, "desactivar_" . $tipo, $tipo, $id);
     echo json_encode(ucfirst($tipo) . " " . $id . " desactivado", JSON_UNESCAPED_UNICODE);

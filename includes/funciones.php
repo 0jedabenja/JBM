@@ -58,7 +58,7 @@ function obtener_rol_sesion() {
 function usuario_tiene_permiso($permiso) {
     $rol = obtener_rol_sesion();
     $permisos = array(
-        "administrador" => array("inicio", "pedidos", "crear_pedido", "cocina", "mapa", "caja", "clientes", "insumos", "productos", "empleados", "conteos"),
+        "administrador" => array("inicio", "pedidos", "crear_pedido", "cocina", "mapa", "caja", "clientes", "insumos", "productos", "empleados", "conteos", "auditoria"),
         "cajero" => array("inicio", "pedidos", "crear_pedido", "mapa", "caja"),
         "mozo" => array("inicio", "pedidos", "crear_pedido"),
         "cocina" => array("inicio", "pedidos", "cocina")
@@ -114,6 +114,65 @@ function obtener_token_csrf() {
 function validar_token_csrf($token) {
     iniciar_sesion_segura();
     return is_string($token) && !empty($_SESSION["csrf_token"]) && hash_equals($_SESSION["csrf_token"], $token); // si se setea el token y es correcto, devuelve true, sino false
+}
+
+function registrar_auditoria($conexion, $accion, $entidad, $idEntidad = null, $detalle = array()) {
+    if (empty($_SESSION["usuario_id"])) {
+        error_log("Auditoría no registrada: no hay usuario autenticado.");
+        return false;
+    }
+
+    $detalleJson = json_encode($detalle, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($detalleJson === false) {
+        error_log("Auditoría no registrada: no se pudo serializar el detalle.");
+        return false;
+    }
+
+    $idEmpleado = (int)$_SESSION["usuario_id"];
+    $idEntidad = $idEntidad === null ? null : (int)$idEntidad;
+    $ip = is_string($_SERVER["REMOTE_ADDR"] ?? null) ? substr($_SERVER["REMOTE_ADDR"], 0, 45) : null;
+    $stmt = mysqli_prepare(
+        $conexion,
+        "INSERT INTO Auditoria (id_empleado, accion, entidad, id_entidad, detalle, ip)
+         VALUES (?, ?, ?, ?, ?, ?)"
+    );
+    if (!$stmt) {
+        error_log("Auditoría no registrada: " . mysqli_error($conexion));
+        return false;
+    }
+    mysqli_stmt_bind_param($stmt, "ississ", $idEmpleado, $accion, $entidad, $idEntidad, $detalleJson, $ip);
+    $registrado = mysqli_stmt_execute($stmt);
+    if (!$registrado) {
+        error_log("Auditoría no registrada: " . mysqli_stmt_error($stmt));
+    }
+    mysqli_stmt_close($stmt);
+    return $registrado;
+}
+
+function registrar_movimiento_insumo($conexion, $idInsumo, $tipo, $cantidad, $costoUnitario, $referenciaId = null) {
+    $idEmpleado = empty($_SESSION["usuario_id"]) ? null : (int)$_SESSION["usuario_id"];
+    $idInsumo = (int)$idInsumo;
+    $referenciaId = $referenciaId === null ? null : (int)$referenciaId;
+    $cantidad = round((float)$cantidad, 2);
+    $costoUnitario = round((float)$costoUnitario, 2);
+    if ($cantidad == 0) return true;
+
+    $stmt = mysqli_prepare(
+        $conexion,
+        "INSERT INTO Movimiento_Insumo (id_insumo, id_empleado, tipo, cantidad, costo_unitario, referencia_id)
+         VALUES (?, ?, ?, ?, ?, ?)"
+    );
+    if (!$stmt) {
+        error_log("Movimiento de insumo no registrado: " . mysqli_error($conexion));
+        return false;
+    }
+    mysqli_stmt_bind_param($stmt, "iisddi", $idInsumo, $idEmpleado, $tipo, $cantidad, $costoUnitario, $referenciaId);
+    $registrado = mysqli_stmt_execute($stmt);
+    if (!$registrado) {
+        error_log("Movimiento de insumo no registrado: " . mysqli_stmt_error($stmt));
+    }
+    mysqli_stmt_close($stmt);
+    return $registrado;
 }
 
 function cerrar_sesion() {

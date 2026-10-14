@@ -22,7 +22,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $stmt = mysqli_prepare($conexion, "UPDATE Empleado SET nombre = ?, apellido = ?, usuario = ?, id_rol = ? WHERE id_empleado = ? AND activo = TRUE");
             mysqli_stmt_bind_param($stmt, "sssii", $nombre, $apellido, $usuario, $id_rol, $id_empleado);
         }
-        if (mysqli_stmt_execute($stmt)) { mysqli_stmt_close($stmt); header("Location: empleados.php"); exit(); }
+        if (mysqli_stmt_execute($stmt)) {
+            mysqli_stmt_close($stmt);
+            registrar_auditoria($conexion, "modificar_empleado", "empleado", $id_empleado, array("usuario" => $usuario, "id_rol" => $id_rol));
+            header("Location: empleados.php");
+            exit();
+        }
         $mensaje = "No se pudo actualizar el empleado. Verifique que el usuario no esté repetido."; mysqli_stmt_close($stmt);
     }
 }

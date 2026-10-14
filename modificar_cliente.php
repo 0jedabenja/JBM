@@ -15,7 +15,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     else {
         $stmt = mysqli_prepare($conexion, "UPDATE Cliente SET nombre = ?, apellido = ?, telefono = ?, direccion = ? WHERE id_cliente = ? AND activo = TRUE");
         mysqli_stmt_bind_param($stmt, "ssssi", $nombre, $apellido, $telefono, $direccion, $id_cliente);
-        if (mysqli_stmt_execute($stmt)) { mysqli_stmt_close($stmt); header("Location: clientes.php"); exit(); }
+        if (mysqli_stmt_execute($stmt)) {
+            mysqli_stmt_close($stmt);
+            registrar_auditoria($conexion, "modificar_cliente", "cliente", $id_cliente);
+            header("Location: clientes.php");
+            exit();
+        }
         $mensaje = "No se pudo actualizar el cliente."; mysqli_stmt_close($stmt);
     }
 }

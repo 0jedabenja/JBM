@@ -114,6 +114,7 @@ if ($accion === "abrir") {
     mysqli_stmt_execute($stmt);
     $idTurno = mysqli_insert_id($conexion);
     mysqli_stmt_close($stmt);
+    registrar_auditoria($conexion, "abrir_caja", "turno_caja", $idTurno, array("monto_inicial" => $montoInicial));
     responder_caja(array("ok" => true, "id_turno" => $idTurno), 201);
 }
 
@@ -126,6 +127,7 @@ if ($accion === "cerrar") {
     $actualizado = mysqli_stmt_affected_rows($stmt) > 0;
     mysqli_stmt_close($stmt);
     if (!$actualizado) responder_caja(array("error" => "No hay una sesión de caja abierta."), 409);
+    registrar_auditoria($conexion, "cerrar_caja", "turno_caja", null, array("monto_final" => $montoFinal));
     responder_caja(array("ok" => true));
 }
 
@@ -138,6 +140,7 @@ if ($accion === "cobrar") {
     $actualizado = mysqli_stmt_affected_rows($stmt) > 0;
     mysqli_stmt_close($stmt);
     if (!$actualizado) responder_caja(array("error" => "El pedido no está listo para cobrar, ya fue cobrado o no pertenece a la caja abierta."), 409);
+    registrar_auditoria($conexion, "cobrar_pedido", "pedido", $idPedido);
     responder_caja(array("ok" => true));
 }
 
