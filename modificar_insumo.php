@@ -18,43 +18,33 @@ if ($consultaMedidas) {
         $medidas[] = $row;
     }
 }
-$categorias = array();
-$consultaCategorias = mysqli_query($conexion, "SELECT id_categoria, titulo FROM Categoria ORDER BY titulo ASC");
-if ($consultaCategorias) {
-    while ($row = mysqli_fetch_assoc($consultaCategorias)) {
-        $categorias[] = $row;
-    }
-}
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $nombre = trim($_POST["nombre"] ?? "");
     $stock_minimo = filter_var($_POST["stock_minimo"] ?? null, FILTER_VALIDATE_FLOAT);
     $costo = filter_var($_POST["costo"] ?? null, FILTER_VALIDATE_FLOAT);
     $id_medida = filter_var($_POST["id_medida"] ?? null, FILTER_VALIDATE_INT);
-    $categoriaIngresada = trim($_POST["id_categoria"] ?? "");
-    $id_categoria = $categoriaIngresada === "" ? null : filter_var($categoriaIngresada, FILTER_VALIDATE_INT);
 
     if ($nombre === "") {
         $mensaje = "El nombre del insumo es obligatorio.";
         $tipoMensaje = "error";
-    } elseif ($stock_minimo === false || $costo === false || $id_medida === false || $id_medida <= 0 || ($categoriaIngresada !== "" && ($id_categoria === false || $id_categoria <= 0))) {
+    } elseif ($stock_minimo === false || $costo === false || $id_medida === false || $id_medida <= 0) {
         $mensaje = "Los valores ingresados no son válidos.";
         $tipoMensaje = "error";
     } else {
         $sql = "UPDATE Insumo
-            SET nombre = ?, stock_minimo = ?, costo = ?, id_medida = ?, id_categoria = ?
+            SET nombre = ?, stock_minimo = ?, costo = ?, id_medida = ?
                 WHERE id_insumo = ? AND activo = TRUE";
         $stmt = mysqli_prepare($conexion, $sql);
 
         if ($stmt) {
             mysqli_stmt_bind_param(
                 $stmt,
-                "sddiii",
+                "sddii",
                 $nombre,
                 $stock_minimo,
                 $costo,
                 $id_medida,
-                $id_categoria,
                 $id_insumo
             );
 
@@ -76,7 +66,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
-$sql = "SELECT id_insumo, nombre, cantidad_actual, stock_minimo, costo, id_medida, id_categoria
+$sql = "SELECT id_insumo, nombre, cantidad_actual, stock_minimo, costo, id_medida
         FROM Insumo
         WHERE id_insumo = ? AND activo = TRUE";
 $stmt = mysqli_prepare($conexion, $sql);
@@ -141,16 +131,6 @@ if (!$insumo) {
                 <option value="<?php echo $medida["id_medida"]; ?>"
                     <?php echo ((int)$medida["id_medida"] === (int)$insumo["id_medida"]) ? "selected" : ""; ?>>
                     <?php echo htmlspecialchars($medida["unidad"], ENT_QUOTES, "UTF-8"); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-
-        <label for="id_categoria">Categoría</label>
-        <select id="id_categoria" name="id_categoria">
-            <option value="">Sin categoría</option>
-            <?php foreach ($categorias as $categoria): ?>
-                <option value="<?php echo (int)$categoria["id_categoria"]; ?>" <?php echo ((int)$categoria["id_categoria"] === (int)($insumo["id_categoria"] ?? 0)) ? "selected" : ""; ?>>
-                    <?php echo htmlspecialchars($categoria["titulo"], ENT_QUOTES, "UTF-8"); ?>
                 </option>
             <?php endforeach; ?>
         </select>
