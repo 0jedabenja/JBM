@@ -163,7 +163,7 @@ CREATE TABLE Pedido (
     id_estado INT NOT NULL,
     id_cliente INT,
     id_descuento INT,
-    id_mp INT NOT NULL,
+    id_mp INT,
     cobrado BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (id_pedido),
     FOREIGN KEY (id_empleado) REFERENCES Empleado(id_empleado) ON UPDATE CASCADE,

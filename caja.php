@@ -70,6 +70,7 @@ let sesionAbierta = null;
 let efectivoEsperadoActual = 0;
 let paginaHistorial = 1;
 let totalPaginas = 1;
+let metodosPago = [];
 
 async function cargarCaja(pagina = paginaHistorial) {
     paginaHistorial = pagina;
@@ -78,6 +79,7 @@ async function cargarCaja(pagina = paginaHistorial) {
         const datos = await respuesta.json();
         if (!respuesta.ok) throw new Error(datos.error || "No se pudo consultar la caja.");
         sesionAbierta = datos.abierta;
+        metodosPago = datos.metodos_pago || [];
         renderizarTurno(datos);
         renderizarSesiones(datos.sesiones_propias || []);
         if (esAdministrador) renderizarHistorial(datos);
@@ -124,7 +126,8 @@ function renderizarMovimientos(movimientos, idContenedor, permitirCobro) {
         const cobrado = Number(movimiento.cobrado) === 1;
         const estado = cobrado ? "Cobrado" : listo ? "Listo para cobrar" : "En preparación";
         const estadoClass = cobrado ? "cobrado" : "pendiente";
-        const accion = permitirCobro && listo && !cobrado ? `<button class="caja-button secondary" type="button" data-cobrar="${Number(movimiento.id_pedido)}">Cobrar</button>` : "-";
+        const opcionesPago = metodosPago.map(metodo => `<option value="${Number(metodo.id_mp)}" ${Number(metodo.id_mp) === Number(movimiento.id_mp) ? "selected" : ""}>${escapeHTML(metodo.descripcion)}</option>`).join("");
+        const accion = permitirCobro && listo && !cobrado ? `<select aria-label="Medio de pago del pedido ${Number(movimiento.id_pedido)}" data-metodo-pago><option value="">Medio de pago...</option>${opcionesPago}</select> <button class="caja-button secondary" type="button" data-cobrar="${Number(movimiento.id_pedido)}">Cobrar</button>` : "-";
         return `<tr><td>#${escapeHTML(movimiento.id_pedido)}</td><td>${escapeHTML(formatearFecha(movimiento.fecha_hora_creacion))}</td><td>${moneda(movimiento.monto_total)}</td><td>${escapeHTML(movimiento.metodo_pago)}</td><td><span class="caja-movement-state ${estadoClass}">${estado}</span></td>${permitirCobro ? `<td>${accion}</td>` : ""}</tr>`;
     }).join("");
 }
@@ -217,7 +220,14 @@ document.addEventListener("click", async evento => {
     const botonCobrar = evento.target.closest("[data-cobrar]");
     const botonCerrarDialogo = evento.target.closest("[data-cerrar-dialog]");
     if (botonDetalle) await verDetalle(Number(botonDetalle.dataset.detalle));
-    if (botonCobrar) await enviar({accion:"cobrar", id_pedido:Number(botonCobrar.dataset.cobrar)}, "Pedido cobrado.");
+    if (botonCobrar) {
+        const idMetodoPago = Number(botonCobrar.closest("tr").querySelector("[data-metodo-pago]")?.value);
+        if (!idMetodoPago) {
+            mostrarMensaje("Selecciona el medio de pago antes de cobrar.", true);
+            return;
+        }
+        await enviar({accion:"cobrar", id_pedido:Number(botonCobrar.dataset.cobrar), id_mp:idMetodoPago}, "Pedido cobrado.");
+    }
     if (botonCerrarDialogo) cerrarDialogo(botonCerrarDialogo.dataset.cerrarDialog);
 });
 setInterval(actualizarTiempoCaja, 1000);

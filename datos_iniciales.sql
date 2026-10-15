@@ -26,6 +26,7 @@ INSERT INTO Estado_Mesa (nombre) VALUES
 INSERT INTO Estado_Pedido (nombre) VALUES
 ('Pendiente'),
 ('En preparación'),
+('Comiendo'),
 ('Listo'),
 ('Entregado'),
 ('Cancelado');

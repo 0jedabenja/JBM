@@ -58,13 +58,13 @@ $stmt = mysqli_prepare(
     "SELECT p.id_pedido, p.fecha_hora_creacion, p.monto_total,
             COALESCE(CONCAT(c.nombre, ' ', c.apellido), 'Consumidor final') AS cliente,
             COALESCE(CAST(m.numero AS CHAR), '-') AS mesa,
-            mp.descripcion AS metodo_pago,
+            COALESCE(mp.descripcion, 'Pendiente de cobro') AS metodo_pago,
             CONCAT(e.nombre, ' ', e.apellido) AS empleado,
             ep.nombre AS estado
      FROM Pedido p
      LEFT JOIN Cliente c ON c.id_cliente = p.id_cliente
      LEFT JOIN Mesa m ON m.id_mesa = p.id_mesa
-     INNER JOIN Metodo_pago mp ON mp.id_mp = p.id_mp
+     LEFT JOIN Metodo_pago mp ON mp.id_mp = p.id_mp
      INNER JOIN Empleado e ON e.id_empleado = p.id_empleado
      INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado
      WHERE p.id_pedido = ?"

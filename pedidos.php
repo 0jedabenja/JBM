@@ -15,7 +15,8 @@ $puedeCocina = in_array($rolActual, array("administrador", "cocina"), true);
     <style>
         .navigation ul li:nth-child(2){background:#fff}.navigation ul li:nth-child(2) a{color:#001f47}.navigation ul li:nth-child(2) a .icon img{content:url('assets/img/sidebar/theme-restaurant.svg')}
         .advertencia-caja{background:#fff3cd;border:1px solid #d9a441;border-radius:6px;color:#765400;padding:12px}.bloqueado{cursor:not-allowed;opacity:.5}
-        .pedidos-content{padding:20px 30px}.pedidos-content h1{color:#001f47}.pedido-tabs{display:flex;gap:10px;margin:20px 0}.pedido-tabs button{background:#fff;border:1px solid #001f47;border-radius:6px;color:#001f47;cursor:pointer;padding:10px 16px}.pedido-tabs button.active{background:#001f47;color:#fff}.pedido-view{display:none}.pedido-view.active{display:block}.menu-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}.producto-card{background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px}.producto-card button{background:#001f47;border:0;border-radius:5px;color:#fff;cursor:pointer;padding:9px;width:100%}.pedido-panel,.cocina-pedido{border:1px solid #ddd;border-radius:8px;margin-bottom:15px;padding:16px}.pedido-panel h3,.cocina-pedido h3{color:#001f47;margin-top:0}.pedido-form{display:grid;gap:10px;grid-template-columns:repeat(4,1fr);margin:20px 0}.pedido-form label{color:#001f47;font-weight:bold}.pedido-form input{border:1px solid #bbb;border-radius:5px;padding:10px}.pedido-form button{background:#001f47;border:0;border-radius:5px;color:#fff;cursor:pointer;padding:10px}.mapa-pedido{aspect-ratio:1200/700;background:#dce4e2;background-image:linear-gradient(rgba(0,31,71,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(0,31,71,.08) 1px,transparent 1px);background-size:3.333% 5.714%;border:2px solid #78908b;border-radius:8px;margin:15px 0;overflow:hidden;position:relative}.mesa-pedido{align-items:center;border:3px solid #27824b;border-radius:10px;display:flex;flex-direction:column;justify-content:center;min-height:60px;position:absolute;transform:translate(-50%,-50%);width:8%;z-index:1}.mesa-pedido.libre{background:#e9f8ed;cursor:pointer}.mesa-pedido.ocupada,.mesa-pedido.paralimpiar{background:#f5dada;cursor:not-allowed;opacity:.65}.mesa-pedido.seleccionada{box-shadow:0 0 0 4px #001f47}.carrito{border-top:1px solid #ddd;margin-top:20px;padding-top:10px}.linea-carrito{display:flex;justify-content:space-between;padding:6px 0}.producto-cocina{align-items:center;border:1px solid #ddd;display:flex;gap:10px;justify-content:space-between;margin:8px 0;padding:10px}.producto-cocina.completo{background:#e9f8ed;text-decoration:line-through}.producto-cocina button{background:#001f47;border:0;border-radius:4px;color:#fff;cursor:pointer;padding:7px}.reloj{font-weight:bold}.reloj.amarillo{color:#c69200}.reloj.naranja{color:#e66c00}.reloj.rojo{color:#d62828}.mensaje{padding:10px}.error{color:#b42318}.exito{color:#16723b}@media(max-width:800px){.pedido-form{grid-template-columns:1fr 1fr}.pedidos-content{padding:15px}}@media(max-width:500px){.pedido-form{grid-template-columns:1fr}.pedido-tabs{flex-wrap:wrap}}
+        .pedidos-content{padding:20px 30px}.pedidos-content h1{color:#001f47}.pedido-tabs{display:flex;gap:10px;margin:20px 0}.pedido-tabs button{background:#fff;border:1px solid #001f47;border-radius:6px;color:#001f47;cursor:pointer;padding:10px 16px}.pedido-tabs button.active{background:#001f47;color:#fff}.pedido-view{display:none}.pedido-view.active{display:block}.menu-filtros{display:flex;gap:10px;margin:14px 0}.menu-filtros input,.menu-filtros select{border:1px solid #bbb;border-radius:5px;font:inherit;padding:10px}.menu-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}.menu-scroll{max-height:420px;overflow-y:auto;padding:4px}.producto-card{background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px}.producto-card button{background:#001f47;border:0;border-radius:5px;color:#fff;cursor:pointer;padding:9px;width:100%}.pedido-panel,.cocina-pedido{border:1px solid #ddd;border-radius:8px;margin-bottom:15px;padding:16px}.pedido-panel h3,.cocina-pedido h3{color:#001f47;margin-top:0}.pedido-form{display:grid;gap:10px;grid-template-columns:repeat(3,1fr);margin:20px 0}.pedido-form label{color:#001f47;font-weight:bold}.pedido-form input{border:1px solid #bbb;border-radius:5px;padding:10px}.pedido-form .pedido-stock-override{align-items:center;display:flex;gap:8px}.pedido-form .pedido-stock-override input,.pedido-stock-override input{accent-color:#001f47;border:0;height:18px;margin:0;padding:0;width:18px}.pedido-stock-override{align-items:center;color:#765400;display:flex;font-weight:600;gap:8px;margin:12px 0}.pedido-form button,.pedido-action{background:#001f47;border:0;border-radius:5px;color:#fff;cursor:pointer;padding:10px}.pedido-action.secondary{background:#fff;border:1px solid #001f47;color:#001f47;margin-right:8px}.mapa-pedido{aspect-ratio:1200/700;background:#dce4e2;background-image:linear-gradient(rgba(0,31,71,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(0,31,71,.08) 1px,transparent 1px);background-size:3.333% 5.714%;border:2px solid #78908b;border-radius:8px;margin:15px 0;overflow:hidden;position:relative}.mesa-pedido{align-items:center;border:3px solid #27824b;border-radius:10px;display:flex;flex-direction:column;justify-content:center;min-height:60px;position:absolute;transform:translate(-50%,-50%);width:8%;z-index:1}.mesa-pedido.libre{background:#e9f8ed;cursor:pointer}.mesa-pedido.ocupada,.mesa-pedido.paralimpiar{background:#f5dada;cursor:not-allowed;opacity:.65}.mesa-pedido.seleccionada{box-shadow:0 0 0 4px #001f47}.carrito{border-top:1px solid #ddd;margin-top:20px;padding-top:10px}.linea-carrito{display:flex;justify-content:space-between;padding:6px 0}.producto-cocina{align-items:center;border:1px solid #ddd;display:flex;gap:10px;justify-content:space-between;margin:8px 0;padding:10px}.producto-cocina.completo{background:#e9f8ed;text-decoration:line-through}.producto-cocina button{background:#001f47;border:0;border-radius:4px;color:#fff;cursor:pointer;padding:7px}.reloj{font-weight:bold}.reloj.amarillo{color:#c69200}.reloj.naranja{color:#e66c00}.reloj.rojo{color:#d62828}.mensaje{padding:10px}.error{color:#b42318}.exito{color:#16723b}dialog.pedido-dialog{border:0;border-radius:8px;box-shadow:0 16px 55px #10252d40;margin:auto;max-height:90vh;max-width:900px;padding:24px;width:calc(100% - 32px)}dialog.pedido-dialog::backdrop{background:#10252d88}.dialogo-acciones{display:flex;justify-content:flex-end;margin-top:14px}@media(max-width:800px){.pedido-form{grid-template-columns:1fr 1fr}.pedidos-content{padding:15px}}@media(max-width:500px){.pedido-form{grid-template-columns:1fr}.pedido-tabs,.menu-filtros{flex-wrap:wrap}}
+        .mensaje.error{white-space:pre-line}
     </style>
 </head>
 <body>
@@ -32,15 +33,16 @@ $puedeCocina = in_array($rolActual, array("administrador", "cocina"), true);
             <?php if ($puedeCrear): ?>
             <section id="vista-creacion" class="pedido-view">
                 <h2>Menú rápido</h2><p id="estadoCajaPedido" class="advertencia-caja">Comprobando sesión de caja...</p><p id="mensajeCreacion" class="mensaje"></p><h3>Selecciona una mesa libre</h3><div id="mapaPedido" class="mapa-pedido"></div><input id="idMesa" type="hidden" required><p id="mesaSeleccionada">Ninguna mesa seleccionada.</p>
-                <div id="menuProductos" class="menu-grid"></div>
-                <div class="pedido-panel"><h3>Pedido actual</h3><div id="carrito" class="carrito">No hay productos agregados.</div><form id="formPedido" class="pedido-form"><label>Medio de pago<input id="idMp" type="number" min="1" value="1" required></label><label>Cliente (opcional)<input id="idCliente" type="number" min="1"></label><button type="submit">Crear pedido</button></form></div>
+                <p>Si no hay insumos suficientes, se mostrará un aviso. Activa la opción de forzar solo si el conteo de inventario es incorrecto.</p><div class="menu-filtros"><input id="buscarProducto" type="search" placeholder="Buscar producto..." aria-label="Buscar producto"><select id="categoriaProducto" aria-label="Filtrar por categoría"><option value="">Todas las categorías</option></select></div><div class="menu-scroll"><div id="menuProductos" class="menu-grid"></div></div>
+                <div class="pedido-panel"><h3>Pedido actual</h3><div id="carrito" class="carrito">No hay productos agregados.</div><form id="formPedido" class="pedido-form"><label>Cliente (opcional)<input id="idCliente" type="number" min="1"></label><label class="pedido-stock-override"><input id="forzarStock" type="checkbox"> Forzar pedido aunque falte stock</label><button type="submit">Crear pedido</button></form></div>
             </section>
-            <section id="vista-pendientes" class="pedido-view"><h2>Pedidos pendientes</h2><div id="listaPendientes"></div></section>
+            <section id="vista-pendientes" class="pedido-view"><h2>Pedidos pendientes</h2><p id="mensajePendientes" class="mensaje" role="status" aria-live="polite"></p><div id="listaPendientes"></div></section>
             <?php endif; ?>
             <?php if ($puedeCocina): ?><section id="vista-cocina" class="pedido-view"><h2>Cocina</h2><p>Los pedidos aparecen automáticamente cuando se crean.</p><p id="mensajeBoleta" class="mensaje" role="status" aria-live="polite"></p><div id="listaCocina"></div></section><?php endif; ?>
         </main>
     </div>
-<script>
+    <dialog id="dialogAgregarProductos" class="pedido-dialog" aria-labelledby="tituloAgregarProductos"><h2 id="tituloAgregarProductos">Agregar productos</h2><p id="mensajeAgregarProductos" class="mensaje"></p><label class="pedido-stock-override"><input id="forzarStockExtra" type="checkbox"> Forzar pedido aunque falte stock</label><div class="menu-filtros"><input id="buscarProductoExtra" type="search" placeholder="Buscar producto..." aria-label="Buscar producto"><select id="categoriaProductoExtra" aria-label="Filtrar por categoría"><option value="">Todas las categorías</option></select></div><div class="menu-scroll"><div id="menuAgregarProductos" class="menu-grid"></div></div><div class="dialogo-acciones"><button class="pedido-action secondary" type="button" onclick="document.getElementById('dialogAgregarProductos').close()">Cerrar</button></div></dialog>
+    <script>
 const puedeCrear = <?php echo $puedeCrear ? "true" : "false"; ?>;
 const puedeCocina = <?php echo $puedeCocina ? "true" : "false"; ?>;
 let carrito = [];
@@ -49,15 +51,28 @@ let contextoAudio = null;
 let cajaAbierta = false;
 let firmaMapaPedido = "";
 let cargandoMapaPedido = false;
+let productosMenu = [];
+let pedidoParaAgregar = null;
+let cargandoMenu = false;
+let menuCargado = false;
 
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".pedido-tabs button").forEach(boton => boton.addEventListener("click", () => activarVista(boton.dataset.vista)));
     const inicial = puedeCrear ? "creacion" : "cocina";
     activarVista(inicial);
     if (puedeCrear) {
+        cargarMenu();
         cargarEstadoCajaPedido();
         cargarMapaPedido();
         document.getElementById("formPedido").addEventListener("submit", crearPedido);
+        document.getElementById("carrito").addEventListener("click", evento => {
+            const boton = evento.target.closest("[data-ajustar-producto]");
+            if (boton) ajustarCantidad(Number(boton.dataset.ajustarProducto), Number(boton.dataset.cambio));
+        });
+        document.getElementById("buscarProducto").addEventListener("input", () => renderizarMenu());
+        document.getElementById("categoriaProducto").addEventListener("change", () => renderizarMenu());
+        document.getElementById("buscarProductoExtra").addEventListener("input", () => renderizarMenu("menuAgregarProductos", "buscarProductoExtra", "categoriaProductoExtra"));
+        document.getElementById("categoriaProductoExtra").addEventListener("change", () => renderizarMenu("menuAgregarProductos", "buscarProductoExtra", "categoriaProductoExtra"));
         setInterval(() => {
             if (document.visibilityState === "visible") cargarMapaPedido();
         }, 4000);
@@ -71,9 +86,49 @@ function activarVista(vista) {
     if (vista === "cocina") { cargarPedidos("cocina"); setTimeout(() => cargarPedidos("cocina"), 300); }
 }
 function cargarMenu() {
-    fetch("apis/api_productos.php?limite=sin&campo=todos&filtro=").then(r => r.json()).then(productos => {
-        document.getElementById("menuProductos").innerHTML = productos.map(p => `<article class="producto-card"><h3>${escapeHTML(p.nombre)}</h3><p>$ ${escapeHTML(p.precio)}<br>${escapeHTML(p.categoria)}</p><button type="button" class="boton-producto" onclick="agregarProducto(${p.id_producto}, '${escapeJS(p.nombre)}', ${Number(p.precio)})">Agregar</button></article>`).join("");
-    }).catch(() => document.getElementById("menuProductos").textContent = "No se pudo cargar el menú.");
+    if (menuCargado || cargandoMenu) return;
+    cargandoMenu = true;
+    fetch("apis/api_productos.php?limite=sin&campo=todos&filtro=").then(respuesta => leerRespuestaApi(respuesta, "No se pudo cargar el menú")).then(productos => {
+        productosMenu = productos;
+        menuCargado = true;
+        ["categoriaProducto", "categoriaProductoExtra"].forEach(id => {
+            const selector = document.getElementById(id);
+            selector.innerHTML = '<option value="">Todas las categorías</option>' + [...new Set(productos.map(p => p.categoria).filter(Boolean))].sort().map(categoria => `<option value="${escapeHTML(categoria)}">${escapeHTML(categoria)}</option>`).join("");
+        });
+        renderizarMenu();
+        renderizarMenu("menuAgregarProductos", "buscarProductoExtra", "categoriaProductoExtra");
+    }).catch(error => {
+        document.getElementById("menuProductos").textContent = error.message;
+        document.getElementById("menuAgregarProductos").textContent = error.message;
+    }).finally(() => {
+        cargandoMenu = false;
+    });
+}
+function renderizarMenu(contenedorId = "menuProductos", busquedaId = "buscarProducto", categoriaId = "categoriaProducto") {
+    const contenedor = document.getElementById(contenedorId);
+    const busqueda = normalizarTexto(document.getElementById(busquedaId).value.trim());
+    const categoria = document.getElementById(categoriaId).value;
+    const productos = productosMenu.filter(p => (!categoria || p.categoria === categoria) && (!busqueda || normalizarTexto(`${p.nombre} ${p.categoria || ""}`).includes(busqueda)));
+    contenedor.replaceChildren();
+    if (!productos.length) { contenedor.textContent = "No hay productos para este filtro."; return; }
+    productos.forEach(producto => {
+        const tarjeta = document.createElement("article");
+        tarjeta.className = "producto-card";
+        const titulo = document.createElement("h3");
+        titulo.textContent = producto.nombre;
+        const detalle = document.createElement("p");
+        detalle.textContent = `$ ${producto.precio} · ${producto.categoria || "Sin categoría"}`;
+        const boton = document.createElement("button");
+        boton.type = "button";
+        boton.className = "boton-producto";
+        boton.disabled = !cajaAbierta;
+        boton.textContent = contenedorId === "menuProductos" ? "Agregar" : "Agregar al pedido";
+        boton.addEventListener("click", () => contenedorId === "menuProductos"
+            ? agregarProducto(Number(producto.id_producto), producto.nombre, Number(producto.precio))
+            : agregarProductoExtra(Number(producto.id_producto), producto.nombre));
+        tarjeta.append(titulo, detalle, boton);
+        contenedor.appendChild(tarjeta);
+    });
 }
 async function cargarMapaPedido() {
     if (cargandoMapaPedido) return;
@@ -81,7 +136,7 @@ async function cargarMapaPedido() {
 
     try {
         const respuesta = await fetch("apis/api_mesas.php", { cache: "no-store" });
-        const datos = await respuesta.json();
+        const datos = await leerRespuestaApi(respuesta, "No se pudo cargar el mapa de mesas");
         if (!respuesta.ok) return;
 
         const firma = JSON.stringify(datos.mesas || []);
@@ -123,36 +178,92 @@ async function cargarMapaPedido() {
 }
 function seleccionarMesa(mesa,elemento){document.querySelectorAll(".mesa-pedido").forEach(m=>m.classList.remove("seleccionada"));elemento.classList.add("seleccionada");document.getElementById("idMesa").value=mesa.id_mesa;document.getElementById("mesaSeleccionada").textContent=`Mesa ${mesa.numero} seleccionada.`;}
 function agregarProducto(id, nombre, precio) {
-    const cantidad = Number.parseInt(prompt(`Cantidad de ${nombre}:`, "1"), 10);
-    if (!Number.isInteger(cantidad) || cantidad <= 0) return;
     const existente = carrito.find(p => p.id_producto === id);
-    if (existente) existente.cantidad += cantidad; else carrito.push({id_producto:id,nombre,precio,cantidad});
+    if (existente) existente.cantidad += 1; else carrito.push({id_producto:id,nombre,precio,cantidad:1});
+    renderCarrito();
+}
+function ajustarCantidad(id, cambio) {
+    const producto = carrito.find(p => p.id_producto === id);
+    if (!producto) return;
+    producto.cantidad += cambio;
+    if (producto.cantidad <= 0) carrito = carrito.filter(p => p.id_producto !== id);
     renderCarrito();
 }
 function renderCarrito() {
     const contenedor = document.getElementById("carrito");
     if (!carrito.length) { contenedor.textContent = "No hay productos agregados."; return; }
-    contenedor.innerHTML = carrito.map(p => `<div class="linea-carrito"><span>${escapeHTML(p.nombre)} x ${p.cantidad}</span><strong>$ ${(p.precio * p.cantidad).toFixed(2)}</strong></div>`).join("");
+    contenedor.innerHTML = carrito.map(p => `<div class="linea-carrito"><span>${escapeHTML(p.nombre)} · $ ${(p.precio * p.cantidad).toFixed(2)}</span><div><button type="button" aria-label="Quitar una unidad de ${escapeHTML(p.nombre)}" data-ajustar-producto="${p.id_producto}" data-cambio="-1">−</button> <strong>${p.cantidad}</strong> <button type="button" aria-label="Agregar una unidad de ${escapeHTML(p.nombre)}" data-ajustar-producto="${p.id_producto}" data-cambio="1">+</button></div></div>`).join("");
 }
-function crearPedido(evento) {
+function normalizarTexto(valor) {
+    return String(valor ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase();
+}
+async function crearPedido(evento) {
     evento.preventDefault(); if (!cajaAbierta) { mostrarMensaje("No se puede crear el pedido: la caja está cerrada.", true); return; } if (!document.getElementById("idMesa").value) { mostrarMensaje("Selecciona una mesa libre antes de crear el pedido.", true); return; } if (!carrito.length) { mostrarMensaje("Agrega al menos un producto.", true); return; }
-    const datos = {id_mesa:Number(document.getElementById("idMesa").value),id_mp:Number(document.getElementById("idMp").value),id_cliente:document.getElementById("idCliente").value ? Number(document.getElementById("idCliente").value) : null,productos:carrito.map(p => ({id_producto:p.id_producto,cantidad:p.cantidad}))};
-    fetch("apis/api_pedidos.php", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(datos)}).then(r => r.json().then(d => ({ok:r.ok,data:d}))).then(r => { if (!r.ok) throw new Error(r.data.error || "No se pudo crear el pedido."); carrito=[]; renderCarrito(); document.getElementById("idMesa").value=""; document.getElementById("mesaSeleccionada").textContent="Ninguna mesa seleccionada."; cargarMapaPedido(); mostrarMensaje(`Pedido #${r.data.id_pedido} enviado a cocina.`, false); }).catch(e => { cargarMapaPedido(); mostrarMensaje(e.message, true); });
+    const datos = {id_mesa:Number(document.getElementById("idMesa").value),id_cliente:document.getElementById("idCliente").value ? Number(document.getElementById("idCliente").value) : null,forzar_stock:document.getElementById("forzarStock").checked,productos:carrito.map(p => ({id_producto:p.id_producto,cantidad:p.cantidad}))};
+    try {
+        const respuesta = await fetch("apis/api_pedidos.php", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(datos)});
+        const resultado = await leerRespuestaApi(respuesta, "No se pudo crear el pedido");
+        carrito = [];
+        document.getElementById("forzarStock").checked = false;
+        renderCarrito();
+        document.getElementById("idMesa").value = "";
+        document.getElementById("mesaSeleccionada").textContent = "Ninguna mesa seleccionada.";
+        cargarMapaPedido();
+        mostrarMensaje(`Pedido #${resultado.id_pedido} enviado a cocina.`, false);
+    } catch (error) {
+        cargarMapaPedido();
+        mostrarMensaje(error.message, true);
+    }
 }
-async function cargarEstadoCajaPedido() { const respuesta = await fetch("apis/api_pedidos.php?caja=estado"); const datos = await respuesta.json(); cajaAbierta = Boolean(respuesta.ok && datos.abierta); const aviso = document.getElementById("estadoCajaPedido"); aviso.textContent = cajaAbierta ? "Caja abierta. Se pueden crear pedidos." : "Caja cerrada. Abre una sesión de caja para crear pedidos."; aviso.className = cajaAbierta ? "mensaje exito" : "advertencia-caja"; document.querySelectorAll(".boton-producto, #formPedido button[type=submit]").forEach(boton => { boton.disabled = !cajaAbierta; boton.classList.toggle("bloqueado", !cajaAbierta); }); if (cajaAbierta && !document.getElementById("menuProductos").children.length) cargarMenu(); if (cajaAbierta) cargarMapaPedido(); }
+async function cargarEstadoCajaPedido() {
+    const aviso = document.getElementById("estadoCajaPedido");
+    try {
+        const respuesta = await fetch("apis/api_pedidos.php?caja=estado");
+        const datos = await leerRespuestaApi(respuesta, "No se pudo consultar el estado de caja");
+        cajaAbierta = Boolean(datos.abierta);
+        aviso.textContent = cajaAbierta ? "Caja abierta. Se pueden crear pedidos." : "Caja cerrada. Abre una sesión de caja para crear pedidos.";
+        aviso.className = cajaAbierta ? "mensaje exito" : "advertencia-caja";
+        document.querySelectorAll(".boton-producto, #formPedido button[type=submit]").forEach(boton => {
+            boton.disabled = !cajaAbierta;
+            boton.classList.toggle("bloqueado", !cajaAbierta);
+        });
+        if (cajaAbierta) cargarMapaPedido();
+    } catch (error) {
+        cajaAbierta = false;
+        aviso.textContent = error.message;
+        aviso.className = "advertencia-caja";
+    }
+}
+async function leerRespuestaApi(respuesta, operacion = "La solicitud") {
+    const texto = await respuesta.text();
+    let datos;
+    try {
+        datos = texto.trim() ? JSON.parse(texto) : null;
+    } catch (error) {
+        throw new Error(`${operacion}: el servidor devolvió una respuesta no válida (HTTP ${respuesta.status}).`);
+    }
+    if (!datos) throw new Error(`${operacion}: el servidor devolvió una respuesta vacía (HTTP ${respuesta.status}).`);
+    if (!respuesta.ok) {
+        const detalleFaltantes = Array.isArray(datos.faltantes) ? datos.faltantes.map(insumo => {
+            const unidad = insumo.unidad ? ` ${insumo.unidad}` : "";
+            return `${insumo.nombre}: se necesitan ${Number(insumo.requerido).toLocaleString("es-AR")}${unidad} y hay ${Number(insumo.disponible).toLocaleString("es-AR")}${unidad}.`;
+        }).join("\n") : "";
+        throw new Error([datos.error || `${operacion} (HTTP ${respuesta.status}).`, detalleFaltantes].filter(Boolean).join("\n"));
+    }
+    return datos;
+}
 function mostrarMensaje(texto, error) { const elemento=document.getElementById("mensajeCreacion"); elemento.textContent=texto; elemento.className=`mensaje ${error ? "error" : "exito"}`; }
 function cargarPedidos(vista) {
-    fetch(`apis/api_pedidos.php?vista=${vista}&limite=100`).then(r=>r.json()).then(pedidos => { if (vista === "cocina") renderCocina(pedidos); else renderPendientes(pedidos); }).catch(() => {});
+    fetch(`apis/api_pedidos.php?vista=${vista}&limite=100`).then(r=>leerRespuestaApi(r, "No se pudieron cargar los pedidos")).then(pedidos => { if (vista === "cocina") renderCocina(pedidos); else renderPendientes(pedidos); }).catch(error => { const contenedor = document.getElementById(vista === "cocina" ? "listaCocina" : "listaPendientes"); if (contenedor) contenedor.textContent = error.message; console.error(error); });
 }
-function renderPendientes(pedidos) { document.getElementById("listaPendientes").innerHTML = pedidos.length ? pedidos.map(p => `<article class="pedido-panel"><h3>Pedido #${p.id_pedido}</h3><p>Estado: ${escapeHTML(p.estado)} | Mesa: ${escapeHTML(p.mesa || "-")} | Creado: ${escapeHTML(p.fecha_hora_creacion)}</p><p>${p.productos.map(x => `${escapeHTML(x.nombre)} x ${x.cantidad}`).join(", ")}</p></article>`).join("") : "No hay pedidos pendientes."; }
+function renderPendientes(pedidos) { document.getElementById("listaPendientes").innerHTML = pedidos.length ? pedidos.map(p => `<article class="pedido-panel"><h3>Pedido #${p.id_pedido}</h3><p>Estado: ${escapeHTML(p.estado === "Listo" ? "Listo para cobrar" : p.estado)} | Mesa: ${escapeHTML(p.mesa || "-")} | Creado: ${escapeHTML(p.fecha_hora_creacion)}</p><p>${p.productos.map(x => `${escapeHTML(x.nombre)} x ${x.cantidad}`).join(", ")}</p>${p.estado === "Comiendo" ? `<button class="pedido-action secondary" type="button" onclick="abrirAgregarProductos(${Number(p.id_pedido)})">Agregar productos</button><button class="pedido-action" type="button" onclick="cerrarPedido(${Number(p.id_pedido)})">Cerrar pedido</button>` : ""}</article>`).join("") : "No hay pedidos pendientes."; }
 function renderCocina(pedidos) {
     const nuevos = pedidos.filter(p => Number(p.id_pedido) > ultimoPedidoCocina); if (ultimoPedidoCocina && nuevos.length) emitirAlerta(); if (pedidos.length) ultimoPedidoCocina = Math.max(...pedidos.map(p => Number(p.id_pedido)));
-    document.getElementById("listaCocina").innerHTML = pedidos.length ? pedidos.map(p => `<article class="cocina-pedido"><h3>Pedido #${p.id_pedido}</h3><p>Mesa: ${escapeHTML(p.mesa || "-")} | <span class="reloj" data-inicio="${p.fecha_hora_creacion}"></span></p>${p.productos.map(x => `<div class="producto-cocina ${Number(x.completado) ? "completo" : ""}"><span>${escapeHTML(x.nombre)} x ${x.cantidad}</span>${Number(x.completado) ? "Completo" : `<button type="button" onclick="completarProducto(${p.id_pedido},${x.id_producto})">Completar</button>`}</div>`).join("")}<button type="button" onclick="finalizarPedido(${p.id_pedido})">Finalizar pedido</button></article>`).join("") : "No hay pedidos en cocina.";
+    document.getElementById("listaCocina").innerHTML = pedidos.length ? pedidos.map(p => `<article class="cocina-pedido"><h3>Pedido #${p.id_pedido}</h3><p>Mesa: ${escapeHTML(p.mesa || "-")} | <span class="reloj" data-inicio="${p.fecha_hora_creacion}"></span></p>${p.productos.map(x => `<div class="producto-cocina ${Number(x.completado) ? "completo" : ""}"><span>${escapeHTML(x.nombre)} x ${x.cantidad}</span>${Number(x.completado) ? "Completo" : `<button type="button" onclick="completarProducto(${p.id_pedido},${x.id_producto})">Completar</button>`}</div>`).join("")}<button type="button" onclick="finalizarPedido(${p.id_pedido})">Marcar como listo</button></article>`).join("") : "No hay pedidos en cocina.";
     actualizarRelojes();
 }
-function completarProducto(id_pedido,id_producto) { fetch("apis/api_pedidos.php",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({accion:"completar_producto",id_pedido,id_producto})}).then(()=>cargarPedidos("cocina")); }
+async function completarProducto(id_pedido,id_producto) { try { const respuesta = await fetch("apis/api_pedidos.php",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({accion:"completar_producto",id_pedido,id_producto})}); await leerRespuestaApi(respuesta, "No se pudo completar el producto"); cargarPedidos("cocina"); } catch (error) { const mensaje = document.getElementById("mensajeBoleta"); if (mensaje) mensaje.textContent = error.message; } }
 async function finalizarPedido(id_pedido) {
-    const ventanaBoleta = window.open("about:blank", "_blank");
     const mensaje = document.getElementById("mensajeBoleta");
     if (mensaje) mensaje.textContent = "";
     try {
@@ -161,26 +272,59 @@ async function finalizarPedido(id_pedido) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ accion: "finalizar", id_pedido })
         });
-        const datos = await respuesta.json();
-        if (!respuesta.ok) throw new Error(datos.error || "No se pudo finalizar el pedido.");
-        const urlBoleta = `apis/boleta_pedido.php?id_pedido=${encodeURIComponent(id_pedido)}`;
-        if (ventanaBoleta) {
-            ventanaBoleta.location.href = urlBoleta;
-            if (mensaje) mensaje.textContent = `Pedido #${id_pedido} listo. Se abrió la boleta para imprimir.`;
-        } else if (mensaje) {
-            mensaje.innerHTML = `Pedido #${id_pedido} listo. <a href="${urlBoleta}" target="_blank" rel="noopener">Abrir boleta</a>`;
-        }
+        await leerRespuestaApi(respuesta, "No se pudo finalizar el pedido");
+        if (mensaje) mensaje.textContent = `Pedido #${id_pedido} listo y en estado Comiendo.`;
         cargarPedidos("cocina");
     } catch (error) {
-        if (ventanaBoleta) ventanaBoleta.close();
         if (mensaje) mensaje.textContent = error.message;
         else alert(error.message);
+    }
+}
+function abrirAgregarProductos(idPedido) {
+    pedidoParaAgregar = idPedido;
+    document.getElementById("forzarStockExtra").checked = false;
+    const mensaje = document.getElementById("mensajeAgregarProductos");
+    mensaje.textContent = `Pedido #${idPedido}. Los productos agregados volverán a cocina.`;
+    mensaje.className = "mensaje";
+    document.getElementById("buscarProductoExtra").value = "";
+    document.getElementById("categoriaProductoExtra").value = "";
+    renderizarMenu("menuAgregarProductos", "buscarProductoExtra", "categoriaProductoExtra");
+    document.getElementById("dialogAgregarProductos").showModal();
+}
+async function agregarProductoExtra(idProducto, nombre) {
+    if (!cajaAbierta) {
+        document.getElementById("mensajeAgregarProductos").textContent = "No se pueden agregar productos: la caja está cerrada.";
+        return;
+    }
+    try {
+        const respuesta = await fetch("apis/api_pedidos.php", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({accion:"agregar_productos", id_pedido:pedidoParaAgregar, forzar_stock:document.getElementById("forzarStockExtra").checked, productos:[{id_producto:idProducto, cantidad:1}]})});
+        await leerRespuestaApi(respuesta, "No se pudieron agregar los productos");
+        document.getElementById("forzarStockExtra").checked = false;
+        const mensaje = document.getElementById("mensajeAgregarProductos");
+        mensaje.textContent = `1 × ${nombre} agregado al pedido #${pedidoParaAgregar}.`;
+        mensaje.className = "mensaje exito";
+        cargarPedidos("pendientes");
+    } catch (error) {
+        const mensaje = document.getElementById("mensajeAgregarProductos");
+        mensaje.textContent = error.message;
+        mensaje.className = "mensaje error";
+    }
+}
+async function cerrarPedido(idPedido) {
+    if (!window.confirm(`¿Cerrar el pedido #${idPedido} y enviarlo a caja para cobrar?`)) return;
+    try {
+        const respuesta = await fetch("apis/api_pedidos.php", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({accion:"cerrar_pedido", id_pedido:idPedido})});
+        await leerRespuestaApi(respuesta, "No se pudo cerrar el pedido");
+        document.getElementById("mensajePendientes").textContent = `Pedido #${idPedido} enviado a caja para cobrar.`;
+        cargarPedidos("pendientes");
+    } catch (error) {
+        document.getElementById("mensajePendientes").textContent = error.message;
+        document.getElementById("mensajePendientes").className = "mensaje error";
     }
 }
 function actualizarRelojes() { document.querySelectorAll(".reloj").forEach(el => { const minutos=Math.floor((Date.now()-new Date(el.dataset.inicio).getTime())/60000); const segundos=Math.max(0,Math.floor((Date.now()-new Date(el.dataset.inicio).getTime())/1000)); el.textContent=`Tiempo: ${String(Math.floor(segundos/60)).padStart(2,"0")}:${String(segundos%60).padStart(2,"0")}`; el.className=`reloj ${minutos>=30?"rojo":minutos>=20?"naranja":minutos>=10?"amarillo":""}`; }); }
 setInterval(() => { actualizarRelojes(); if (puedeCrear) cargarEstadoCajaPedido(); if (puedeCocina && document.getElementById("vista-cocina")?.classList.contains("active")) cargarPedidos("cocina"); if (puedeCrear && document.getElementById("vista-pendientes")?.classList.contains("active")) cargarPedidos("pendientes"); }, 5000);
 function emitirAlerta() { try { contextoAudio ||= new (window.AudioContext || window.webkitAudioContext)(); const oscilador=contextoAudio.createOscillator(); const ganancia=contextoAudio.createGain(); oscilador.connect(ganancia); ganancia.connect(contextoAudio.destination); oscilador.frequency.value=880; ganancia.gain.value=.15; oscilador.start(); oscilador.stop(contextoAudio.currentTime+.25); } catch (e) {} }
-function escapeJS(valor) { return String(valor).replace(/\\/g,"\\\\").replace(/'/g,"\\'"); }
 function escapeHTML(valor) { if (valor === null || valor === undefined) return ""; return String(valor).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&#039;"); }
 </script>
 </body>
