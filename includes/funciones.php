@@ -26,10 +26,6 @@ function verificar_sesion() {
 function obtener_rol_sesion() {
     iniciar_sesion_segura();
 
-    if (!empty($_SESSION["rol"])) {
-        return strtolower(trim($_SESSION["rol"]));
-    }
-
     if (empty($_SESSION["usuario_id"])) {
         return "";
     }
@@ -39,19 +35,36 @@ function obtener_rol_sesion() {
         include_once __DIR__ . "/conexionBD.php";
     }
 
-    $stmt = mysqli_prepare($conexion, "SELECT r.nombre FROM Empleado e INNER JOIN Rol r ON r.id_rol = e.id_rol WHERE e.id_empleado = ? AND e.activo = TRUE LIMIT 1");
-    if (!$stmt) {
-        return "";
+    $usuario = trim((string)($_SESSION["usuario"] ?? ""));
+    if ($usuario !== "") {
+        $stmt = mysqli_prepare($conexion, "SELECT e.id_empleado, e.usuario, e.nombre, e.apellido, e.id_rol, r.nombre AS rol FROM Empleado e INNER JOIN Rol r ON r.id_rol = e.id_rol WHERE e.usuario = ? AND e.activo = TRUE LIMIT 1");
+        if (!$stmt) {
+            return "";
+        }
+        mysqli_stmt_bind_param($stmt, "s", $usuario);
+    } else {
+        $stmt = mysqli_prepare($conexion, "SELECT e.id_empleado, e.usuario, e.nombre, e.apellido, e.id_rol, r.nombre AS rol FROM Empleado e INNER JOIN Rol r ON r.id_rol = e.id_rol WHERE e.id_empleado = ? AND e.activo = TRUE LIMIT 1");
+        if (!$stmt) {
+            return "";
+        }
+        $usuarioId = (int) $_SESSION["usuario_id"];
+        mysqli_stmt_bind_param($stmt, "i", $usuarioId);
     }
-
-    $usuario_id = (int) $_SESSION["usuario_id"];
-    mysqli_stmt_bind_param($stmt, "i", $usuario_id);
     mysqli_stmt_execute($stmt);
     $resultado = mysqli_stmt_get_result($stmt);
     $fila = mysqli_fetch_assoc($resultado);
     mysqli_stmt_close($stmt);
 
-    $_SESSION["rol"] = $fila["nombre"] ?? "";
+    if (!$fila) {
+        unset($_SESSION["usuario_id"], $_SESSION["usuario"], $_SESSION["nombre_usuario"], $_SESSION["id_rol"], $_SESSION["rol"]);
+        return "";
+    }
+
+    $_SESSION["usuario_id"] = (int) $fila["id_empleado"];
+    $_SESSION["usuario"] = $fila["usuario"];
+    $_SESSION["nombre_usuario"] = $fila["nombre"] . " " . $fila["apellido"];
+    $_SESSION["id_rol"] = (int) $fila["id_rol"];
+    $_SESSION["rol"] = $fila["rol"];
     return strtolower(trim($_SESSION["rol"]));
 }
 

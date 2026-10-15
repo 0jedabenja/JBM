@@ -45,6 +45,43 @@ function obtenerProductosPedido($conexion, $id_pedido) {
     return $productos;
 }
 
+function obtenerFaltantesStock($conexion, $productos) {
+    $requeridoPorInsumo = array();
+    $stmtReceta = mysqli_prepare($conexion, "SELECT cp.id_insumo, i.nombre, i.cantidad_actual, m.simbolo, SUM(cp.cantidad * ?) AS cantidad_requerida FROM Compone cp INNER JOIN Insumo i ON i.id_insumo = cp.id_insumo LEFT JOIN Medida m ON m.id_medida = i.id_medida WHERE cp.id_producto = ? GROUP BY cp.id_insumo, i.nombre, i.cantidad_actual, m.simbolo");
+    if (!$stmtReceta) {
+        throw new RuntimeException("No se pudo comprobar el inventario.");
+    }
+
+    foreach ($productos as $producto) {
+        $cantidadProducto = (int) $producto["cantidad"];
+        $idProducto = (int) $producto["id_producto"];
+        mysqli_stmt_bind_param($stmtReceta, "di", $cantidadProducto, $idProducto);
+        if (!mysqli_stmt_execute($stmtReceta)) {
+            mysqli_stmt_close($stmtReceta);
+            throw new RuntimeException("No se pudo comprobar el inventario.");
+        }
+        $resultadoReceta = mysqli_stmt_get_result($stmtReceta);
+        while ($insumo = mysqli_fetch_assoc($resultadoReceta)) {
+            $idInsumo = (int) $insumo["id_insumo"];
+            if (!isset($requeridoPorInsumo[$idInsumo])) {
+                $requeridoPorInsumo[$idInsumo] = array(
+                    "id_insumo" => $idInsumo,
+                    "nombre" => $insumo["nombre"],
+                    "unidad" => $insumo["simbolo"] ?? "",
+                    "disponible" => (float) $insumo["cantidad_actual"],
+                    "requerido" => 0
+                );
+            }
+            $requeridoPorInsumo[$idInsumo]["requerido"] += (float) $insumo["cantidad_requerida"];
+        }
+    }
+    mysqli_stmt_close($stmtReceta);
+
+    return array_values(array_filter($requeridoPorInsumo, function ($insumo) {
+        return $insumo["requerido"] > $insumo["disponible"];
+    }));
+}
+
 $metodo = $_SERVER["REQUEST_METHOD"];
 // La vista elige una condición fija; los valores de búsqueda se enlazan por separado.
 $vista = obtener_parametro_get("vista");
@@ -53,7 +90,7 @@ if ($vista === "cocina") {
     verificar_permiso("cocina", true);
     $condicionVista = " AND LOWER(ep.nombre) = 'en preparación'";
 } elseif ($vista === "pendientes") {
-    $condicionVista = " AND LOWER(ep.nombre) IN ('en preparación', 'listo')";
+    $condicionVista = " AND LOWER(ep.nombre) IN ('en preparación', 'comiendo', 'listo')";
 }
 
 if ($metodo === "GET") {
@@ -71,11 +108,10 @@ if ($metodo === "GET") {
                        p.monto_total, p.id_empleado, CONCAT(e.nombre, ' ', e.apellido) AS empleado,
                        p.id_turno, p.id_mesa, m.numero AS mesa, p.id_estado, ep.nombre AS estado,
                        p.id_cliente, CONCAT(c.nombre, ' ', c.apellido) AS cliente,
-                       p.id_descuento, p.id_mp, mp.descripcion AS metodo_pago
+                       p.id_descuento
                 FROM Pedido p
                 INNER JOIN Empleado e ON e.id_empleado = p.id_empleado
                 INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado
-                INNER JOIN Metodo_pago mp ON mp.id_mp = p.id_mp
                 LEFT JOIN Mesa m ON m.id_mesa = p.id_mesa
                 LEFT JOIN Cliente c ON c.id_cliente = p.id_cliente
                      WHERE (p.id_pedido LIKE ? OR m.numero LIKE ? OR ep.nombre LIKE ?
@@ -93,11 +129,10 @@ if ($metodo === "GET") {
                        p.monto_total, p.id_empleado, CONCAT(e.nombre, ' ', e.apellido) AS empleado,
                        p.id_turno, p.id_mesa, m.numero AS mesa, p.id_estado, ep.nombre AS estado,
                        p.id_cliente, CONCAT(c.nombre, ' ', c.apellido) AS cliente,
-                       p.id_descuento, p.id_mp, mp.descripcion AS metodo_pago
+                       p.id_descuento
                 FROM Pedido p
                 INNER JOIN Empleado e ON e.id_empleado = p.id_empleado
                 INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado
-                INNER JOIN Metodo_pago mp ON mp.id_mp = p.id_mp
                 LEFT JOIN Mesa m ON m.id_mesa = p.id_mesa
                 LEFT JOIN Cliente c ON c.id_cliente = p.id_cliente
                 WHERE 1 = 1 {$condicionVista}
@@ -125,6 +160,107 @@ if ($metodo === "POST") {
     $entradaAccion = obtenerEntrada();
     $accion = $entradaAccion["accion"] ?? "";
 
+    if ($accion === "agregar_productos") {
+        verificar_permiso("crear_pedido", true);
+        $idPedido = filter_var($entradaAccion["id_pedido"] ?? null, FILTER_VALIDATE_INT);
+        $productos = $entradaAccion["productos"] ?? array();
+        $forzarStock = ($entradaAccion["forzar_stock"] ?? false) === true;
+        if ($idPedido === false || $idPedido <= 0 || !is_array($productos) || count($productos) === 0) {
+            responder(array("error" => "Datos del pedido no válidos."), 400);
+        }
+
+        mysqli_begin_transaction($conexion);
+        $stmtPedido = mysqli_prepare($conexion, "SELECT p.monto_total FROM Pedido p INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado WHERE p.id_pedido = ? AND LOWER(ep.nombre) = 'comiendo' AND p.cobrado = FALSE AND p.id_turno IN (SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL) FOR UPDATE");
+        if (!$stmtPedido) {
+            mysqli_rollback($conexion);
+            responder(array("error" => "No se pudo consultar el pedido."), 500);
+        }
+        mysqli_stmt_bind_param($stmtPedido, "i", $idPedido);
+        mysqli_stmt_execute($stmtPedido);
+        $pedido = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtPedido));
+        mysqli_stmt_close($stmtPedido);
+        if (!$pedido) {
+            mysqli_rollback($conexion);
+            responder(array("error" => "Solo se pueden agregar productos a un pedido en estado Comiendo."), 409);
+        }
+
+        $productosActualizados = array();
+        $totalAgregado = 0;
+        foreach ($productos as $producto) {
+            $idProducto = filter_var($producto["id_producto"] ?? null, FILTER_VALIDATE_INT);
+            $cantidad = filter_var($producto["cantidad"] ?? null, FILTER_VALIDATE_INT);
+            if ($idProducto === false || $idProducto <= 0 || $cantidad === false || $cantidad <= 0 || isset($productosActualizados[$idProducto])) {
+                mysqli_rollback($conexion);
+                responder(array("error" => "La lista de productos no es válida."), 400);
+            }
+
+            $stmtPrecio = mysqli_prepare($conexion, "SELECT precio FROM Producto WHERE id_producto = ? AND activo = TRUE");
+            if (!$stmtPrecio) {
+                mysqli_rollback($conexion);
+                responder(array("error" => "No se pudo consultar el producto."), 500);
+            }
+            mysqli_stmt_bind_param($stmtPrecio, "i", $idProducto);
+            mysqli_stmt_execute($stmtPrecio);
+            $filaPrecio = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtPrecio));
+            mysqli_stmt_close($stmtPrecio);
+            if (!$filaPrecio) {
+                mysqli_rollback($conexion);
+                responder(array("error" => "El producto indicado no existe o está inactivo."), 400);
+            }
+
+            $precio = (float) $filaPrecio["precio"];
+            $total = $precio * $cantidad;
+            $totalAgregado += $total;
+            $productosActualizados[$idProducto] = array("cantidad" => $cantidad, "precio" => $precio, "total" => $total);
+        }
+
+        try {
+            $faltantes = obtenerFaltantesStock($conexion, array_map(function ($idProducto, $linea) {
+                return array("id_producto" => $idProducto, "cantidad" => $linea["cantidad"]);
+            }, array_keys($productosActualizados), array_values($productosActualizados)));
+        } catch (Throwable $error) {
+            error_log("No se pudo comprobar stock al agregar productos al pedido #{$idPedido}: " . $error->getMessage());
+            mysqli_rollback($conexion);
+            responder(array("error" => "No se pudo comprobar el inventario. Intenta nuevamente."), 500);
+        }
+        if ($faltantes && !$forzarStock) {
+            mysqli_rollback($conexion);
+            responder(array("error" => "No hay stock suficiente para agregar estos productos. Activa “Forzar pedido aunque falte stock” para continuar.", "faltantes" => $faltantes), 409);
+        }
+
+        $stmtLinea = mysqli_prepare($conexion, "INSERT INTO Contiene (id_pedido, id_producto, cantidad, precio, total) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE cantidad = cantidad + VALUES(cantidad), precio = VALUES(precio), total = total + VALUES(total), completado = FALSE");
+        if (!$stmtLinea) {
+            mysqli_rollback($conexion);
+            responder(array("error" => "No se pudieron agregar los productos."), 500);
+        }
+        foreach ($productosActualizados as $idProducto => $linea) {
+            $cantidad = $linea["cantidad"];
+            $precio = $linea["precio"];
+            $total = $linea["total"];
+            mysqli_stmt_bind_param($stmtLinea, "iiidd", $idPedido, $idProducto, $cantidad, $precio, $total);
+            if (!mysqli_stmt_execute($stmtLinea)) {
+                mysqli_stmt_close($stmtLinea);
+                mysqli_rollback($conexion);
+                responder(array("error" => "No se pudieron agregar los productos."), 500);
+            }
+        }
+        mysqli_stmt_close($stmtLinea);
+        $stmtActualizarPedido = mysqli_prepare($conexion, "UPDATE Pedido SET monto_total = monto_total + ?, id_estado = (SELECT id_estado FROM Estado_Pedido WHERE LOWER(nombre) = 'en preparación' LIMIT 1) WHERE id_pedido = ?");
+        mysqli_stmt_bind_param($stmtActualizarPedido, "di", $totalAgregado, $idPedido);
+        $correcto = mysqli_stmt_execute($stmtActualizarPedido);
+        mysqli_stmt_close($stmtActualizarPedido);
+        if (!$correcto) {
+            mysqli_rollback($conexion);
+            responder(array("error" => "No se pudieron actualizar el total y estado del pedido."), 500);
+        }
+        mysqli_commit($conexion);
+        registrar_auditoria($conexion, "agregar_productos_pedido", "pedido", $idPedido, array("productos" => count($productosActualizados), "monto_agregado" => $totalAgregado));
+        if ($faltantes && $forzarStock) {
+            registrar_auditoria($conexion, "forzar_stock_pedido", "pedido", $idPedido, array("faltantes" => $faltantes));
+        }
+        responder(array("ok" => true, "monto_agregado" => $totalAgregado));
+    }
+
     if ($accion === "completar_producto") {
         verificar_permiso("cocina", true);
         $idPedido = filter_var($entradaAccion["id_pedido"] ?? null, FILTER_VALIDATE_INT);
@@ -132,14 +268,13 @@ if ($metodo === "POST") {
         if ($idPedido === false || $idPedido <= 0 || $idProducto === false || $idProducto <= 0) {
             responder(array("error" => "Datos del producto no válidos."), 400);
         }
-        $stmt = mysqli_prepare($conexion, "UPDATE Contiene SET completado = TRUE WHERE id_pedido = ? AND id_producto = ?");
+        $stmt = mysqli_prepare($conexion, "UPDATE Contiene c INNER JOIN Pedido p ON p.id_pedido = c.id_pedido SET c.completado = TRUE WHERE c.id_pedido = ? AND c.id_producto = ? AND p.id_estado = (SELECT id_estado FROM Estado_Pedido WHERE LOWER(nombre) = 'en preparación' LIMIT 1)");
         mysqli_stmt_bind_param($stmt, "ii", $idPedido, $idProducto);
         mysqli_stmt_execute($stmt);
         $actualizado = mysqli_stmt_affected_rows($stmt) > 0;
         mysqli_stmt_close($stmt);
-        if ($actualizado) {
-            registrar_auditoria($conexion, "completar_producto_pedido", "pedido", $idPedido, array("id_producto" => $idProducto));
-        }
+        if (!$actualizado) responder(array("error" => "El producto ya está completo o el pedido ya no está en preparación."), 409);
+        registrar_auditoria($conexion, "completar_producto_pedido", "pedido", $idPedido, array("id_producto" => $idProducto));
         responder(array("ok" => true));
     }
 
@@ -147,20 +282,45 @@ if ($metodo === "POST") {
         verificar_permiso("cocina", true);
         $idPedido = filter_var($entradaAccion["id_pedido"] ?? null, FILTER_VALIDATE_INT);
         if ($idPedido === false || $idPedido <= 0) responder(array("error" => "Pedido no válido."), 400);
-        $stmt = mysqli_prepare($conexion, "UPDATE Pedido SET id_estado = (SELECT id_estado FROM Estado_Pedido WHERE LOWER(nombre) = 'listo' LIMIT 1) WHERE id_pedido = ? AND NOT EXISTS (SELECT 1 FROM Contiene c WHERE c.id_pedido = Pedido.id_pedido AND c.completado = FALSE)");
+        $stmt = mysqli_prepare($conexion, "UPDATE Pedido SET id_estado = (SELECT id_estado FROM Estado_Pedido WHERE LOWER(nombre) = 'comiendo' LIMIT 1) WHERE id_pedido = ? AND id_estado = (SELECT id_estado FROM Estado_Pedido WHERE LOWER(nombre) = 'en preparación' LIMIT 1) AND NOT EXISTS (SELECT 1 FROM Contiene c WHERE c.id_pedido = Pedido.id_pedido AND c.completado = FALSE)");
         mysqli_stmt_bind_param($stmt, "i", $idPedido);
         mysqli_stmt_execute($stmt);
         $actualizado = mysqli_stmt_affected_rows($stmt) > 0;
         mysqli_stmt_close($stmt);
         if (!$actualizado) responder(array("error" => "Todos los productos deben estar completos."), 409);
-        $stmtMesa = mysqli_prepare($conexion, "UPDATE Mesa m INNER JOIN Pedido p ON p.id_mesa = m.id_mesa SET m.id_estado = (SELECT id_estado FROM Estado_Mesa WHERE LOWER(nombre) = 'para limpiar' LIMIT 1) WHERE p.id_pedido = ?");
-        if ($stmtMesa) {
-            mysqli_stmt_bind_param($stmtMesa, "i", $idPedido);
-            mysqli_stmt_execute($stmtMesa);
-            mysqli_stmt_close($stmtMesa);
-        }
         registrar_auditoria($conexion, "marcar_pedido_listo", "pedido", $idPedido);
-        responder(array("ok" => true));
+        responder(array("ok" => true, "estado" => "Comiendo"));
+    }
+
+    if ($accion === "cerrar_pedido") {
+        verificar_permiso("crear_pedido", true);
+        $idPedido = filter_var($entradaAccion["id_pedido"] ?? null, FILTER_VALIDATE_INT);
+        if ($idPedido === false || $idPedido <= 0) responder(array("error" => "Pedido no válido."), 400);
+        mysqli_begin_transaction($conexion);
+        $stmtCerrar = mysqli_prepare($conexion, "UPDATE Pedido SET id_estado = (SELECT id_estado FROM Estado_Pedido WHERE LOWER(nombre) = 'listo' LIMIT 1) WHERE id_pedido = ? AND id_estado = (SELECT id_estado FROM Estado_Pedido WHERE LOWER(nombre) = 'comiendo' LIMIT 1) AND cobrado = FALSE AND NOT EXISTS (SELECT 1 FROM Contiene c WHERE c.id_pedido = Pedido.id_pedido AND c.completado = FALSE)");
+        mysqli_stmt_bind_param($stmtCerrar, "i", $idPedido);
+        $correcto = mysqli_stmt_execute($stmtCerrar);
+        $actualizado = mysqli_stmt_affected_rows($stmtCerrar) > 0;
+        mysqli_stmt_close($stmtCerrar);
+        if (!$correcto || !$actualizado) {
+            mysqli_rollback($conexion);
+            responder(array("error" => "El pedido debe estar en estado Comiendo y todos sus productos listos antes de cerrarlo."), 409);
+        }
+        $stmtMesa = mysqli_prepare($conexion, "UPDATE Mesa m INNER JOIN Pedido p ON p.id_mesa = m.id_mesa SET m.id_estado = (SELECT id_estado FROM Estado_Mesa WHERE LOWER(nombre) = 'para limpiar' LIMIT 1) WHERE p.id_pedido = ?");
+        if (!$stmtMesa) {
+            mysqli_rollback($conexion);
+            responder(array("error" => "No se pudo liberar la mesa para limpieza."), 500);
+        }
+        mysqli_stmt_bind_param($stmtMesa, "i", $idPedido);
+        $correcto = mysqli_stmt_execute($stmtMesa);
+        mysqli_stmt_close($stmtMesa);
+        if (!$correcto) {
+            mysqli_rollback($conexion);
+            responder(array("error" => "No se pudo liberar la mesa para limpieza."), 500);
+        }
+        mysqli_commit($conexion);
+        registrar_auditoria($conexion, "cerrar_pedido", "pedido", $idPedido);
+        responder(array("ok" => true, "estado" => "Listo"));
     }
 }
 
@@ -176,13 +336,15 @@ $fechaEntrega = $fechaEntrega === "" ? null : $fechaEntrega;
 $idMesa = filter_var($entrada["id_mesa"] ?? null, FILTER_VALIDATE_INT);
 $idCliente = empty($entrada["id_cliente"]) ? null : filter_var($entrada["id_cliente"], FILTER_VALIDATE_INT);
 $idDescuento = empty($entrada["id_descuento"]) ? null : filter_var($entrada["id_descuento"], FILTER_VALIDATE_INT);
-$idMetodoPago = filter_var($entrada["id_mp"] ?? null, FILTER_VALIDATE_INT);
 $productos = $entrada["productos"] ?? array();
+$forzarStock = ($entrada["forzar_stock"] ?? false) === true;
 $idEmpleado = (int) $_SESSION["usuario_id"];
 
-if ($idMesa === false || $idMesa <= 0 ||
-    $idMetodoPago === false || $idMetodoPago <= 0 || !is_array($productos) || count($productos) === 0) {
+if ($idMesa === false || $idMesa <= 0 || !is_array($productos) || count($productos) === 0) {
     responder(array("error" => "Faltan datos obligatorios del pedido."), 400);
+}
+if ($idCliente === false || $idDescuento === false) {
+    responder(array("error" => "El cliente o descuento indicado no es válido."), 400);
 }
 
 $resultadoTurno = mysqli_query($conexion, "SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL ORDER BY fecha_hora_apertura DESC LIMIT 1");
@@ -229,6 +391,18 @@ foreach ($productos as $producto) {
 }
 
 mysqli_begin_transaction($conexion);
+$faltantes = array();
+try {
+    $faltantes = obtenerFaltantesStock($conexion, $lineas);
+} catch (Throwable $error) {
+    error_log("No se pudo comprobar stock al crear un pedido: " . $error->getMessage());
+    mysqli_rollback($conexion);
+    responder(array("error" => "No se pudo comprobar el inventario. Intenta nuevamente."), 500);
+}
+if ($faltantes && !$forzarStock) {
+    mysqli_rollback($conexion);
+    responder(array("error" => "No hay stock suficiente para este pedido. Activa “Forzar pedido aunque falte stock” para continuar.", "faltantes" => $faltantes), 409);
+}
 $correcto = true;
 $stmtMesaLibre = mysqli_prepare($conexion, "UPDATE Mesa SET id_estado = (SELECT id_estado FROM Estado_Mesa WHERE LOWER(nombre) = 'ocupada' LIMIT 1) WHERE id_mesa = ? AND id_estado = (SELECT id_estado FROM Estado_Mesa WHERE LOWER(nombre) = 'libre' LIMIT 1)");
 if ($stmtMesaLibre) {
@@ -240,11 +414,11 @@ if (!$correcto) {
     mysqli_rollback($conexion);
     responder(array("error" => "La mesa seleccionada no está libre o ya fue tomada por otro usuario."), 409);
 }
-$sqlPedido = "INSERT INTO Pedido (descripcion, fecha_hora_entrega, monto_total, id_empleado, id_turno, id_mesa, id_estado, id_cliente, id_descuento, id_mp)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+$sqlPedido = "INSERT INTO Pedido (descripcion, fecha_hora_entrega, monto_total, id_empleado, id_turno, id_mesa, id_estado, id_cliente, id_descuento)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 $stmtPedido = mysqli_prepare($conexion, $sqlPedido);
 if ($stmtPedido) {
-    mysqli_stmt_bind_param($stmtPedido, "ssdiiiiiii", $descripcion, $fechaEntrega, $montoTotal, $idEmpleado, $idTurno, $idMesa, $idEstado, $idCliente, $idDescuento, $idMetodoPago);
+    mysqli_stmt_bind_param($stmtPedido, "ssdiiiiii", $descripcion, $fechaEntrega, $montoTotal, $idEmpleado, $idTurno, $idMesa, $idEstado, $idCliente, $idDescuento);
     $correcto = mysqli_stmt_execute($stmtPedido);
     $idPedido = mysqli_insert_id($conexion);
     mysqli_stmt_close($stmtPedido);
@@ -278,4 +452,7 @@ if (!$correcto) {
 
 mysqli_commit($conexion);
 registrar_auditoria($conexion, "crear_pedido", "pedido", $idPedido, array("productos" => count($lineas), "monto_total" => $montoTotal, "id_mesa" => $idMesa));
+if ($faltantes && $forzarStock) {
+    registrar_auditoria($conexion, "forzar_stock_pedido", "pedido", $idPedido, array("faltantes" => $faltantes));
+}
 responder(array("ok" => true, "id_pedido" => $idPedido, "monto_total" => $montoTotal), 201);

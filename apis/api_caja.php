@@ -20,7 +20,7 @@ function obtener_movimientos_turno($conexion, $idTurno) {
     $movimientos = array();
     $totalCobrado = 0;
     $efectivoCobrado = 0;
-    $stmt = mysqli_prepare($conexion, "SELECT p.id_pedido, p.fecha_hora_creacion, p.monto_total, p.cobrado, mp.descripcion AS metodo_pago, ep.nombre AS estado FROM Pedido p INNER JOIN Metodo_pago mp ON mp.id_mp = p.id_mp INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado WHERE p.id_turno = ? ORDER BY p.fecha_hora_creacion DESC");
+    $stmt = mysqli_prepare($conexion, "SELECT p.id_pedido, p.fecha_hora_creacion, p.monto_total, p.cobrado, p.id_mp, COALESCE(mp.descripcion, 'Pendiente de cobro') AS metodo_pago, ep.nombre AS estado FROM Pedido p LEFT JOIN Metodo_pago mp ON mp.id_mp = p.id_mp INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado WHERE p.id_turno = ? AND (LOWER(ep.nombre) = 'listo' OR p.cobrado = TRUE) ORDER BY p.fecha_hora_creacion DESC");
     mysqli_stmt_bind_param($stmt, "i", $idTurno);
     mysqli_stmt_execute($stmt);
     $resultado = mysqli_stmt_get_result($stmt);
@@ -87,9 +87,13 @@ if ($metodo === "GET") {
         while ($sesion = mysqli_fetch_assoc($resultadoHistorial)) $historial[] = $sesion;
         mysqli_stmt_close($stmtHistorial);
     }
+    $metodosPago = array();
+    $resultadoMetodos = mysqli_query($conexion, "SELECT id_mp, descripcion FROM Metodo_pago ORDER BY id_mp");
+    while ($metodoPago = mysqli_fetch_assoc($resultadoMetodos)) $metodosPago[] = $metodoPago;
     responder_caja(array(
         "abierta" => $abierta,
         "movimientos" => $resumen["movimientos"],
+        "metodos_pago" => $metodosPago,
         "total_cobrado" => $resumen["total_cobrado"],
         "efectivo_esperado" => $abierta ? (float) $abierta["monto_inicial"] + $resumen["efectivo_cobrado"] : 0,
         "sesiones_propias" => $sesionesPropias,
@@ -121,6 +125,8 @@ if ($accion === "abrir") {
 if ($accion === "cerrar") {
     $montoFinal = filter_var($entrada["monto_final"] ?? null, FILTER_VALIDATE_FLOAT);
     if ($montoFinal === false || $montoFinal < 0) responder_caja(array("error" => "El monto final no es válido."), 400);
+    $resultadoPendientes = mysqli_query($conexion, "SELECT p.id_pedido FROM Pedido p INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado WHERE p.id_turno IN (SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL) AND p.cobrado = FALSE AND LOWER(ep.nombre) IN ('en preparación', 'comiendo', 'listo') LIMIT 1");
+    if (mysqli_fetch_assoc($resultadoPendientes)) responder_caja(array("error" => "No se puede cerrar la caja mientras haya pedidos en curso o pendientes de cobro."), 409);
     $stmt = mysqli_prepare($conexion, "UPDATE Turno_caja SET fecha_hora_cierre = NOW(), monto_final = ? WHERE fecha_hora_cierre IS NULL");
     mysqli_stmt_bind_param($stmt, "d", $montoFinal);
     mysqli_stmt_execute($stmt);
@@ -133,9 +139,16 @@ if ($accion === "cerrar") {
 
 if ($accion === "cobrar") {
     $idPedido = filter_var($entrada["id_pedido"] ?? null, FILTER_VALIDATE_INT);
-    if ($idPedido === false || $idPedido <= 0) responder_caja(array("error" => "El pedido no es válido."), 400);
-    $stmt = mysqli_prepare($conexion, "UPDATE Pedido p INNER JOIN Estado_Pedido e ON e.id_estado = p.id_estado SET p.cobrado = TRUE WHERE p.id_pedido = ? AND p.id_turno IN (SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL) AND p.cobrado = FALSE AND LOWER(e.nombre) = 'listo'");
-    mysqli_stmt_bind_param($stmt, "i", $idPedido);
+    $idMetodoPago = filter_var($entrada["id_mp"] ?? null, FILTER_VALIDATE_INT);
+    if ($idPedido === false || $idPedido <= 0 || $idMetodoPago === false || $idMetodoPago <= 0) responder_caja(array("error" => "Selecciona un medio de pago válido para cobrar el pedido."), 400);
+    $stmtMetodo = mysqli_prepare($conexion, "SELECT id_mp FROM Metodo_pago WHERE id_mp = ?");
+    mysqli_stmt_bind_param($stmtMetodo, "i", $idMetodoPago);
+    mysqli_stmt_execute($stmtMetodo);
+    $metodoValido = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtMetodo));
+    mysqli_stmt_close($stmtMetodo);
+    if (!$metodoValido) responder_caja(array("error" => "El medio de pago seleccionado no existe."), 400);
+    $stmt = mysqli_prepare($conexion, "UPDATE Pedido p INNER JOIN Estado_Pedido e ON e.id_estado = p.id_estado SET p.cobrado = TRUE, p.id_mp = ? WHERE p.id_pedido = ? AND p.id_turno IN (SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL) AND p.cobrado = FALSE AND LOWER(e.nombre) = 'listo'");
+    mysqli_stmt_bind_param($stmt, "ii", $idMetodoPago, $idPedido);
     mysqli_stmt_execute($stmt);
     $actualizado = mysqli_stmt_affected_rows($stmt) > 0;
     mysqli_stmt_close($stmt);
