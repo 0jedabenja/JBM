@@ -2,6 +2,7 @@
 include_once "includes/funciones.php";
 verificar_permiso("mapa");
 $puedeEditar = obtener_rol_sesion() === "administrador";
+$puedeLimpiar = usuario_tiene_permiso("crear_pedido");
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -16,6 +17,9 @@ $puedeEditar = obtener_rol_sesion() === "administrador";
     </style>
     <style>
         .mapa-superficie{aspect-ratio:1200/700;min-height:0}
+    </style>
+    <style>
+        .mesa-actions button[data-limpiar]{height:auto;padding:5px 8px;white-space:nowrap;color:#765400;font-size:11px}
     </style>
 </head>
 <body>
@@ -79,6 +83,7 @@ $puedeEditar = obtener_rol_sesion() === "administrador";
 
     <script>
     const puedeEditar = <?php echo $puedeEditar ? "true" : "false"; ?>;
+    const puedeLimpiar = <?php echo $puedeLimpiar ? "true" : "false"; ?>;
     const MAPA_WIDTH = 1200;
     const MAPA_HEIGHT = 700;
     const MESA_HEIGHT = 80;
@@ -95,10 +100,6 @@ $puedeEditar = obtener_rol_sesion() === "administrador";
     let arrastrando = false;
 
     function inicializarMapa() {
-        if (!puedeEditar) {
-            return;
-        }
-
         if (btnNuevaMesa) {
             btnNuevaMesa.addEventListener("click", () => abrirDialogMesa());
         }
@@ -201,10 +202,10 @@ $puedeEditar = obtener_rol_sesion() === "administrador";
             elemento.innerHTML = `
                 <strong>Mesa ${escapeHTML(mesa.numero)}</strong>
                 <small>${escapeHTML(mesa.estado)}</small>
-                ${puedeEditar ? `
+                ${puedeEditar || (puedeLimpiar && estado === "paralimpiar") ? `
                     <span class="mesa-actions">
-                        <button type="button" aria-label="Editar" data-editar="${mesa.id_mesa}">✎</button>
-                        <button type="button" aria-label="Eliminar" data-eliminar="${mesa.id_mesa}">×</button>
+                        ${puedeEditar ? `<button type="button" aria-label="Editar" data-editar="${mesa.id_mesa}">✎</button><button type="button" aria-label="Eliminar" data-eliminar="${mesa.id_mesa}">×</button>` : ""}
+                        ${puedeLimpiar && estado === "paralimpiar" ? `<button type="button" aria-label="Marcar mesa como limpia" data-limpiar="${mesa.id_mesa}">Marcar limpia</button>` : ""}
                     </span>
                 ` : ""}
             `;
@@ -219,6 +220,13 @@ $puedeEditar = obtener_rol_sesion() === "administrador";
                         suprimirClick = false;
                         evento.preventDefault();
                         evento.stopPropagation();
+                        return;
+                    }
+
+                    if (evento.target.closest("button[data-limpiar]")) {
+                        evento.preventDefault();
+                        evento.stopPropagation();
+                        marcarMesaLimpia(mesa.id_mesa);
                         return;
                     }
 
@@ -242,6 +250,14 @@ $puedeEditar = obtener_rol_sesion() === "administrador";
                         evento.preventDefault();
                         abrirDialogMesa(mesa.id_mesa);
                     }
+                });
+            }
+
+            if (puedeLimpiar && estado === "paralimpiar" && !puedeEditar) {
+                elemento.querySelector("[data-limpiar]").addEventListener("click", (evento) => {
+                    evento.preventDefault();
+                    evento.stopPropagation();
+                    marcarMesaLimpia(mesa.id_mesa);
                 });
             }
 
@@ -313,6 +329,22 @@ $puedeEditar = obtener_rol_sesion() === "administrador";
         }
 
         mostrarMensaje("Posición actualizada.", false);
+    }
+
+    async function marcarMesaLimpia(idMesa) {
+        try {
+            const respuesta = await fetch("apis/api_mesas.php", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ accion: "marcar_limpia", id_mesa: Number(idMesa) })
+            });
+            const datos = await respuesta.json();
+            if (!respuesta.ok) throw new Error(datos.error || "No se pudo marcar la mesa como limpia.");
+            mostrarMensaje("Mesa marcada como limpia y disponible.", false);
+            await cargarMapa();
+        } catch (error) {
+            mostrarMensaje(error.message, true);
+        }
     }
 
     function abrirDialogMesa(idMesa = null) {

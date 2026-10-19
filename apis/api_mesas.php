@@ -82,11 +82,11 @@ if ($metodo === "GET") {
 }
 
 $rolActual = obtener_rol_sesion();
-if ($rolActual !== "administrador") {
-    responder_mesas(array("error" => "Solo el administrador puede modificar mesas."), 403);
-}
-
 $entrada = entrada_mesas();
+$marcarLimpia = $metodo === "PATCH" && ($entrada["accion"] ?? "") === "marcar_limpia";
+if ($rolActual !== "administrador" && !($marcarLimpia && usuario_tiene_permiso("crear_pedido"))) {
+    responder_mesas(array("error" => "No tienes permiso para realizar esta acción."), 403);
+}
 
 if ($metodo === "POST") {
     $numero = filter_var($entrada["numero"] ?? null, FILTER_VALIDATE_INT);
@@ -141,6 +141,42 @@ if ($metodo === "DELETE") {
 
 if ($metodo === "PATCH") {
     $idMesa = filter_var($entrada["id_mesa"] ?? null, FILTER_VALIDATE_INT);
+    if ($marcarLimpia) {
+        if ($idMesa === false || $idMesa <= 0) {
+            responder_mesas(array("error" => "La mesa no es válida."), 400);
+        }
+        $sqlLimpia = "UPDATE Mesa
+                      SET id_estado = (
+                          SELECT id_estado
+                          FROM Estado_Mesa
+                          WHERE LOWER(nombre) = 'libre'
+                          LIMIT 1
+                      )
+                      WHERE id_mesa = ?
+                        AND id_estado = (
+                            SELECT id_estado
+                            FROM Estado_Mesa
+                            WHERE LOWER(nombre) = 'para limpiar'
+                            LIMIT 1
+                        )";
+        $stmtLimpia = mysqli_prepare($conexion, $sqlLimpia);
+        if (!$stmtLimpia) {
+            responder_mesas(array("error" => "No se pudo preparar la limpieza de la mesa."), 500);
+        }
+        mysqli_stmt_bind_param($stmtLimpia, "i", $idMesa);
+        $correcto = mysqli_stmt_execute($stmtLimpia);
+        $actualizada = mysqli_stmt_affected_rows($stmtLimpia) === 1;
+        mysqli_stmt_close($stmtLimpia);
+        if (!$correcto) {
+            responder_mesas(array("error" => "No se pudo marcar la mesa como limpia."), 500);
+        }
+        if (!$actualizada) {
+            responder_mesas(array("error" => "La mesa no está pendiente de limpieza."), 409);
+        }
+        registrar_auditoria($conexion, "marcar_mesa_limpia", "mesa", $idMesa);
+        responder_mesas(array("ok" => true, "estado" => "Libre"));
+    }
+
     $editaNumero = array_key_exists("numero", $entrada);
     $editaPosicion = array_key_exists("pos_x", $entrada) && array_key_exists("pos_y", $entrada);
     $numero = $editaNumero ? filter_var($entrada["numero"], FILTER_VALIDATE_INT) : null;
