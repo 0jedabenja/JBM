@@ -1,0 +1,101 @@
+.menu .dropdown ul li .theme-toggle {
+    background: transparent;
+    border: 0;
+    color: var(--text-main, #222);
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+    text-align: left;
+}
+
+.menu .dropdown ul li .theme-toggle:hover {
+    opacity: 0.65;
+}
+
+body {
+    --form-bg: #fff;
+    --text-main: #222;
+    --input-border: #ddd;
+}
+
+body[data-theme="dark"] {
+    --form-bg: #1a1c20;
+    --text-main: #f0f1f3;
+    --input-border: #34373d;
+    background: #0b0b0d;
+    color: #f4f4f5;
+    color-scheme: dark;
+}
+
+body[data-theme="dark"] .main {
+    background: #111214;
+    color: #f4f4f5;
+}
+
+body[data-theme="dark"] .main h1,
+body[data-theme="dark"] .main h2,
+body[data-theme="dark"] .main h3,
+body[data-theme="dark"] .main label,
+body[data-theme="dark"] .main th,
+body[data-theme="dark"] .main td,
+body[data-theme="dark"] .main p,
+body[data-theme="dark"] .main summary {
+    color: #f0f1f3;
+}
+
+body[data-theme="dark"] .main section,
+body[data-theme="dark"] .main article,
+body[data-theme="dark"] .main details,
+body[data-theme="dark"] .main .card,
+body[data-theme="dark"] .main .panel,
+body[data-theme="dark"] .main .alta-panel,
+body[data-theme="dark"] .main .grafico-card {
+    background-color: #1a1c20;
+    border-color: #34373d;
+    color: #f0f1f3;
+}
+
+body[data-theme="dark"] .main table {
+    color: #f0f1f3;
+}
+
+body[data-theme="dark"] .main th,
+body[data-theme="dark"] .main td {
+    border-color: #383b42;
+}
+
+body[data-theme="dark"] .main input:not([type="checkbox"]):not([type="radio"]),
+body[data-theme="dark"] .main select,
+body[data-theme="dark"] .main textarea {
+    background-color: #22252a;
+    border-color: #50545c;
+    color: #f4f4f5;
+}
+
+body[data-theme="dark"] .main input::placeholder,
+body[data-theme="dark"] .main textarea::placeholder {
+    color: #b8bbc2;
+}
+
+body[data-theme="dark"] .main a:not(.conteo-inicio) {
+    color: #9bc9ff;
+}
+
+body[data-theme="dark"] .main button:not(.navigation button) {
+    border-color: #50545c;
+}
+
+body[data-theme="dark"] .main .stock-alerta,
+body[data-theme="dark"] .main .stock-vacio,
+body[data-theme="dark"] .main .grafico-vacio {
+    background-color: #202329;
+    color: #f0f1f3;
+}
+
+body[data-theme="dark"] .grafico-svg text {
+    fill: #d5d9e0;
+}
+
+body[data-theme="dark"] .grafico-svg line {
+    stroke: #3a3f47;
+}
