@@ -11,93 +11,8 @@ verificar_permiso("productos");
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Productos</title>
     <script src="assets/js/sidebar.js" defer></script>
-    <style>
-        .navigation ul li:nth-child(7) {
-            background-color: #fff;
-        }
-
-        .navigation ul li:nth-child(7) a {
-            color: #001f47;
-        }
-
-        .navigation ul li:nth-child(7) a .icon img {
-            content: url('assets/img/sidebar/theme-shopping.svg');
-        }
-
-        .modulo-content {
-            padding: 20px 30px;
-        }
-
-        .modulo-content h2 {
-            color: #001f47;
-            margin-bottom: 20px;
-        }
-
-        .modulo-actions {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 20px;
-        }
-
-        .modulo-actions a {
-            background: #001f47;
-            border-radius: 50%;
-            color: #fff;
-            font-size: 1.5rem;
-            line-height: 35px;
-            text-align: center;
-            text-decoration: none;
-            width: 35px;
-            height: 35px;
-        }
-
-        .modulo-table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        .modulo-table th,
-        .modulo-table td {
-            border-bottom: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-        }
-
-        .modulo-table th {
-            color: #001f47;
-        }
-
-        .accion {
-            background: none;
-            border: 0;
-            color: #001f47;
-            cursor: pointer;
-            font-weight: bold;
-            padding: 0;
-        }
-
-        .paginacion {
-            align-items: center;
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .paginacion button {
-            background: #001f47;
-            border: 0;
-            border-radius: 4px;
-            color: #fff;
-            cursor: pointer;
-            padding: 8px 14px;
-        }
-
-        .paginacion button:disabled {
-            cursor: not-allowed;
-            opacity: .5;
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/productos.css">
+    <link rel="stylesheet" href="assets/css/modulos-listado.css">
 </head>
 
 <body>
@@ -132,7 +47,7 @@ verificar_permiso("productos");
                 </thead>
                 <tbody id="tablaProductos">
                     <tr>
-                        <td colspan="5" style="text-align:center;">No se encontraron productos.</td>
+                        <td colspan="5" class="texto-centrado">No se encontraron productos.</td>
                     </tr>
                 </tbody>
             </table>
@@ -163,7 +78,7 @@ verificar_permiso("productos");
                 .then(productos => {
                     tbody.innerHTML = "";
                     if (productos.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No se encontraron productos.</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="5" class="texto-centrado">No se encontraron productos.</td></tr>`;
                     } else {
                         productos.forEach(producto => {
                             const fila = document.createElement("tr");
@@ -176,7 +91,7 @@ verificar_permiso("productos");
                     document.getElementById("infoPagina").textContent = `Página ${paginaActual}`;
                 }).catch(error => {
                     console.error(error);
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No se pudieron cargar los productos.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="texto-centrado">No se pudieron cargar los productos.</td></tr>`;
                 });
         }
 

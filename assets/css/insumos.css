@@ -1,0 +1,3 @@
+.navigation ul li:nth-child(6) { background-color: #fff; }
+        .navigation ul li:nth-child(6) a { color: #001f47; }
+        .navigation ul li:nth-child(6) a .icon img { content: url('../img/sidebar/theme-box.svg'); }

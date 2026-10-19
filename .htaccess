@@ -1,0 +1,18 @@
+# El proyecto se publica en XAMPP como /JBM. Esto se cambia cuando estemos en el hostingh
+ErrorDocument 400 /JBM/errores.php?codigo=400
+ErrorDocument 401 /JBM/errores.php?codigo=401
+ErrorDocument 403 /JBM/errores.php?codigo=403
+ErrorDocument 404 /JBM/errores.php?codigo=404
+ErrorDocument 405 /JBM/errores.php?codigo=405
+ErrorDocument 408 /JBM/errores.php?codigo=408
+ErrorDocument 410 /JBM/errores.php?codigo=410
+ErrorDocument 413 /JBM/errores.php?codigo=413
+ErrorDocument 414 /JBM/errores.php?codigo=414
+ErrorDocument 415 /JBM/errores.php?codigo=415
+ErrorDocument 422 /JBM/errores.php?codigo=422
+ErrorDocument 429 /JBM/errores.php?codigo=429
+ErrorDocument 500 /JBM/errores.php?codigo=500
+ErrorDocument 501 /JBM/errores.php?codigo=501
+ErrorDocument 502 /JBM/errores.php?codigo=502
+ErrorDocument 503 /JBM/errores.php?codigo=503
+ErrorDocument 504 /JBM/errores.php?codigo=504

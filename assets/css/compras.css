@@ -1,0 +1,166 @@
+.menu-compras {
+    background-color: #fff;
+}
+
+.menu-compras a {
+    color: #001f47;
+}
+
+.menu-compras a .icon img {
+    content: url('../img/sidebar/theme-purchase.svg');
+}
+
+.compras-content {
+    color: #1e3035;
+    padding: 28px 32px 48px;
+}
+
+.compras-heading h1,
+.compras-content h2 {
+    color: #001f47;
+}
+
+.compras-heading p {
+    color: #62737a;
+    margin-top: 6px;
+}
+
+.compras-panel,
+.compra-card {
+    background: #fff;
+    border: 1px solid #dce5e4;
+    border-radius: 8px;
+    margin-top: 22px;
+    padding: 20px;
+}
+
+.compras-panel h2,
+.compras-history h2 {
+    margin-bottom: 14px;
+}
+
+.compras-observacion {
+    display: grid;
+    font-weight: 700;
+    gap: 7px;
+    margin-bottom: 16px;
+    max-width: 600px;
+}
+
+.compras-observacion input,
+.compras-table input,
+.compras-table select {
+    border: 1px solid #b9c5c8;
+    border-radius: 5px;
+    font: inherit;
+    min-width: 130px;
+    padding: 9px;
+}
+
+.compras-table-wrap {
+    overflow-x: auto;
+}
+
+.compras-table {
+    border-collapse: collapse;
+    min-width: 720px;
+    width: 100%;
+}
+
+.compras-table th,
+.compras-table td {
+    border-bottom: 1px solid #e0e6e7;
+    padding: 10px;
+    text-align: left;
+}
+
+.compras-table th {
+    color: #001f47;
+}
+
+.compras-actions,
+.compras-pagination {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.compras-actions strong {
+    margin-left: auto;
+}
+
+.compras-button {
+    background: #001f47;
+    border: 1px solid #001f47;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    padding: 9px 14px;
+}
+
+.compras-button.secondary {
+    background: #fff;
+    color: #001f47;
+}
+
+.compras-button:disabled {
+    cursor: not-allowed;
+    opacity: .55;
+}
+
+.compra-quitar {
+    background: transparent;
+    border: 0;
+    color: #a32929;
+    cursor: pointer;
+    font: inherit;
+}
+
+.compras-message {
+    color: #246b3a;
+    min-height: 24px;
+    margin-top: 10px;
+}
+
+.compra-card {
+    margin-top: 12px;
+}
+
+.compra-card header {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: space-between;
+}
+
+.compra-card h3 {
+    color: #001f47;
+}
+
+.compra-card p {
+    margin: 8px 0;
+}
+
+.compras-empty {
+    color: #62737a;
+    padding: 12px 0;
+}
+
+@media (max-width: 700px) {
+    .compras-content {
+        padding: 18px 16px 32px;
+    }
+
+    .compras-panel {
+        padding: 16px;
+    }
+
+    .compras-actions strong {
+        margin-left: 0;
+        width: 100%;
+    }
+}

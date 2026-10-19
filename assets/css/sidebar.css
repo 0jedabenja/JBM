@@ -151,6 +151,18 @@ body {
     content: url('../img/sidebar/theme-team.svg');
 }
 
+.texto-centrado {
+    text-align: center;
+}
+
+.navigation ul li.menu-auditoria:hover a .icon img {
+    content: url('../img/sidebar/theme-audit.svg');
+}
+
+.navigation ul li.menu-compras:hover a .icon img {
+    content: url('../img/sidebar/theme-purchase.svg');
+}
+
 .main {
     position: absolute;
     width: calc(100% - 300px);

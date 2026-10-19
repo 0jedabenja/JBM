@@ -293,7 +293,6 @@ if ($accion === "finalizar") {
         responder_conteo(array("error" => "La contraseña del administrador no es correcta."), 403);
     }
 
-    // Actualiza las existencias y el detalle en una única operación atómica.
     mysqli_begin_transaction($conexion);
     $stmt = mysqli_prepare($conexion, "SELECT estado FROM Conteo_Insumo WHERE id_conteo = ? FOR UPDATE");
     mysqli_stmt_bind_param($stmt, "i", $idConteo);

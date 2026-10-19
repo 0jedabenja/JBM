@@ -4,8 +4,7 @@ include_once("includes/funciones.php");
 verificar_permiso("insumos");
 $id_insumo = filter_input(INPUT_GET, "id", FILTER_VALIDATE_INT);
 if ($id_insumo === false || $id_insumo === null || $id_insumo <= 0) {
-    http_response_code(400);
-    exit("ID de insumo no válido.");
+    mostrar_pagina_error(400);
 }
 
 $mensaje = "";
@@ -82,8 +81,8 @@ $sql = "SELECT id_insumo, nombre, cantidad_actual, stock_minimo, costo, id_medid
 $stmt = mysqli_prepare($conexion, $sql);
 
 if (!$stmt) {
-    http_response_code(500);
-    exit("Error al preparar la consulta.");
+    error_log("No se pudo preparar la consulta de modificación del insumo: " . mysqli_error($conexion));
+    mostrar_pagina_error(500);
 }
 
 mysqli_stmt_bind_param($stmt, "i", $id_insumo);
@@ -93,8 +92,7 @@ $insumo = mysqli_fetch_assoc($resultado);
 mysqli_stmt_close($stmt);
 
 if (!$insumo) {
-    http_response_code(404);
-    exit("Insumo no encontrado.");
+    mostrar_pagina_error(404);
 }
 ?>
 <!DOCTYPE html>
@@ -105,11 +103,7 @@ if (!$insumo) {
     <title>Modificar Insumo</title>
     <link rel="stylesheet" href="assets/css/alta.css">
     <script src="assets/js/sidebar.js" defer></script>
-    <style>
-        .navigation ul li:nth-child(6) { background-color: #fff; }
-        .navigation ul li:nth-child(6) a { color: #001f47; }
-        .navigation ul li:nth-child(6) a .icon img { content: url('assets/img/sidebar/theme-box.svg'); }
-    </style>
+    <link rel="stylesheet" href="assets/css/modificar_insumo.css">
 </head>
 <body>
     <?php include_once "includes/sidebar.php"; ?>

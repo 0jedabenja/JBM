@@ -26,7 +26,6 @@
             try {
                 localStorage.setItem(storageKey, nextTheme);
             } catch (error) {
-                // The selected theme still applies for the current page if storage is unavailable.
             }
         });
     }

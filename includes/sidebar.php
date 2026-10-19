@@ -83,6 +83,22 @@
                     </a>
                 </li>
                 <?php endif; ?>
+                <?php if (usuario_tiene_permiso("auditoria")): ?>
+                <li class="menu-auditoria">
+                    <a href="<?php echo $rutaBase ?? ""; ?>auditoria.php">
+                        <span class="icon"><img src="<?php echo $rutaBase ?? ""; ?>assets/img/sidebar/light-audit.svg"></span>
+                        <span class="title">Auditoría</span>
+                    </a>
+                </li>
+                <?php endif; ?>
+                <?php if (usuario_tiene_permiso("compras")): ?>
+                <li class="menu-compras">
+                    <a href="<?php echo $rutaBase ?? ""; ?>compras.php">
+                        <span class="icon"><img src="<?php echo $rutaBase ?? ""; ?>assets/img/sidebar/light-purchase.svg"></span>
+                        <span class="title">Compras</span>
+                    </a>
+                </li>
+                <?php endif; ?>
             </ul>
         </div>
     </div>

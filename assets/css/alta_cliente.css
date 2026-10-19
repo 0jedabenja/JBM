@@ -1,0 +1,105 @@
+.navigation ul li:nth-child(5) {
+            background-color: #fff;
+        }
+
+        .navigation ul li:nth-child(5) a {
+            color: #001f47;
+        }
+
+        .navigation ul li:nth-child(5) a .icon img {
+            content: url('../img/sidebar/theme-person.svg');
+        }
+
+        .alta-content {
+            padding: 30px;
+        }
+
+        .alta-panel {
+            background: #fff;
+            border: 1px solid #e4e7eb;
+            border-radius: 12px;
+            margin: 20px auto;
+            max-width: 760px;
+            padding: 30px;
+        }
+
+        .alta-panel h1 {
+            color: #001f47;
+            margin-bottom: 8px;
+        }
+
+        .alta-panel p {
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .alta-form {
+            display: grid;
+            gap: 8px;
+        }
+
+        .alta-form label {
+            color: #001f47;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .alta-form input {
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            font-size: 1rem;
+            padding: 12px;
+        }
+
+        .alta-form input:focus {
+            border-color: #001f47;
+            outline: 2px solid rgba(0, 31, 71, 0.15);
+        }
+
+        .alta-error {
+            background: #fff1f1;
+            border: 1px solid #d9534f;
+            border-radius: 6px;
+            color: #a52b27;
+            padding: 12px;
+        }
+
+        .alta-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .alta-actions button,
+        .alta-actions a {
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            padding: 12px 18px;
+            text-decoration: none;
+        }
+
+        .alta-actions button {
+            background: #001f47;
+            border: 1px solid #001f47;
+            color: #fff;
+        }
+
+        .alta-actions a {
+            border: 1px solid #001f47;
+            color: #001f47;
+        }
+
+        @media (max-width: 700px) {
+            .alta-content {
+                padding: 15px;
+            }
+
+            .alta-panel {
+                padding: 20px;
+            }
+
+            .alta-actions {
+                flex-direction: column;
+            }
+        }

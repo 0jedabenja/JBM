@@ -71,13 +71,20 @@ function obtener_rol_sesion() {
 function usuario_tiene_permiso($permiso) {
     $rol = obtener_rol_sesion();
     $permisos = array(
-        "administrador" => array("inicio", "pedidos", "crear_pedido", "cocina", "mapa", "caja", "clientes", "insumos", "productos", "empleados", "conteos", "auditoria"),
-        "cajero" => array("inicio", "pedidos", "crear_pedido", "mapa", "caja"),
+        "administrador" => array("inicio", "pedidos", "crear_pedido", "cocina", "mapa", "caja", "clientes", "insumos", "productos", "empleados", "conteos", "auditoria", "compras"),
+        "cajero" => array("inicio", "pedidos", "crear_pedido", "mapa", "caja", "compras"),
         "mozo" => array("inicio", "pedidos", "crear_pedido", "mapa"),
         "cocina" => array("inicio", "pedidos", "cocina")
     );
 
     return isset($permisos[$rol]) && in_array($permiso, $permisos[$rol], true);
+}
+
+function mostrar_pagina_error($codigo) {
+    $codigoError = (int)$codigo;
+    http_response_code($codigoError);
+    include __DIR__ . "/../errores.php";
+    exit();
 }
 
 function verificar_permiso($permiso, $es_api = false) {
@@ -92,8 +99,7 @@ function verificar_permiso($permiso, $es_api = false) {
         header("Content-Type: application/json; charset=utf-8");
         echo json_encode(array("error" => "No tiene permisos para realizar esta operación."), JSON_UNESCAPED_UNICODE);
     } else {
-        http_response_code(403);
-        exit("No tiene permisos para acceder a esta sección.");
+        mostrar_pagina_error(403);
     }
     exit();
 }

@@ -100,11 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <title>Nuevo Producto</title>
     <link rel="stylesheet" href="../assets/css/alta.css">
     <script src="../assets/js/sidebar.js" defer></script>
-    <style>
-        .navigation ul li:nth-child(7) { background-color: #fff; }
-        .navigation ul li:nth-child(7) a { color: #001f47; }
-        .navigation ul li:nth-child(7) a .icon img { content: url('../assets/img/sidebar/theme-shopping.svg'); }
-    </style>
+    <link rel="stylesheet" href="../assets/css/alta_producto.css">
 </head>
 <body>
     <?php include_once "../includes/sidebar.php"; ?>
