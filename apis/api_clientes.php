@@ -24,7 +24,19 @@ $filtro = obtener_parametro_get("filtro");
 
 if ($filtro !== "" && $filtro !== "undefined") {
 	$filtro = "%" . $filtro . "%";
-	if (isset($camposPermitidos[$campo])) {
+	if ($campo === "nombre_apellido") {
+		$sql = "SELECT id_cliente, nombre, apellido, telefono, direccion
+				FROM Cliente
+				WHERE activo = TRUE
+				  AND (CONCAT(nombre, ' ', apellido) LIKE ?
+				   OR CONCAT(apellido, ' ', nombre) LIKE ?
+				   OR nombre LIKE ?
+				   OR apellido LIKE ?)
+				ORDER BY apellido, nombre
+				LIMIT ? OFFSET ?";
+		$stmt = mysqli_prepare($conexion, $sql);
+		mysqli_stmt_bind_param($stmt, "ssssii", $filtro, $filtro, $filtro, $filtro, $limite, $desdequeelemento);
+	} elseif (isset($camposPermitidos[$campo])) {
 		$sql = "SELECT id_cliente, nombre, apellido, telefono, direccion
 				FROM Cliente
 				WHERE activo = TRUE AND {$camposPermitidos[$campo]} LIKE ?

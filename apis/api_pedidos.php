@@ -25,14 +25,18 @@ function obtenerEntrada()
     return $_POST;
 }
 
-function obtenerProductosPedido($conexion, $id_pedido)
+function obtenerProductosPedido($conexion, $id_pedido, $soloCocina = false)
 {
     $productos = array();
     $sql = "SELECT c.id_producto, p.nombre, c.cantidad, c.precio, c.total, c.completado
             FROM Contiene c
             INNER JOIN Producto p ON p.id_producto = c.id_producto
-            WHERE c.id_pedido = ?
-            ORDER BY p.nombre";
+            LEFT JOIN Categoria cat ON cat.id_categoria = p.id_categoria
+            WHERE c.id_pedido = ?";
+    if ($soloCocina) {
+        $sql .= " AND LOWER(COALESCE(cat.titulo, '')) <> 'bebidas'";
+    }
+    $sql .= " ORDER BY p.nombre";
     $stmt = mysqli_prepare($conexion, $sql);
     if (!$stmt) {
         return $productos;
@@ -98,9 +102,19 @@ $vista = obtener_parametro_get("vista");
 $condicionVista = "";
 if ($vista === "cocina") {
     verificar_permiso("cocina", true);
-    $condicionVista = " AND LOWER(ep.nombre) = 'en preparación'";
+    $condicionVista = " AND p.cobrado = FALSE
+                        AND LOWER(ep.nombre) = 'en preparación'
+                        AND EXISTS (
+                            SELECT 1
+                            FROM Contiene cc
+                            INNER JOIN Producto pp ON pp.id_producto = cc.id_producto
+                            LEFT JOIN Categoria cp ON cp.id_categoria = pp.id_categoria
+                            WHERE cc.id_pedido = p.id_pedido
+                              AND LOWER(COALESCE(cp.titulo, '')) <> 'bebidas'
+                        )";
 } elseif ($vista === "pendientes") {
-    $condicionVista = " AND LOWER(ep.nombre) IN ('en preparación', 'comiendo', 'listo')";
+    $condicionVista = " AND p.cobrado = FALSE
+                        AND LOWER(ep.nombre) IN ('en preparación', 'comiendo', 'listo')";
 }
 // Los estados de la vista son condiciones internas; los valores ingresados por el usuario siempre se enlazan.
 
@@ -162,7 +176,7 @@ if ($metodo === "GET") {
     $resultado = mysqli_stmt_get_result($stmt);
     $pedidos = array();
     while ($pedido = mysqli_fetch_assoc($resultado)) {
-        $pedido["productos"] = obtenerProductosPedido($conexion, (int)$pedido["id_pedido"]);
+        $pedido["productos"] = obtenerProductosPedido($conexion, (int)$pedido["id_pedido"], $vista === "cocina");
         $pedidos[] = $pedido;
     }
     mysqli_stmt_close($stmt);
@@ -188,7 +202,7 @@ if ($metodo === "POST") {
                       FROM Pedido p
                       INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado
                       WHERE p.id_pedido = ?
-                        AND LOWER(ep.nombre) = 'comiendo'
+                        AND LOWER(ep.nombre) IN ('en preparación', 'comiendo')
                         AND p.cobrado = FALSE
                         AND p.id_turno IN (
                             SELECT id_turno
@@ -207,11 +221,12 @@ if ($metodo === "POST") {
         mysqli_stmt_close($stmtPedido);
         if (!$pedido) {
             mysqli_rollback($conexion);
-            responder(array("error" => "Solo se pueden agregar productos a un pedido en estado Comiendo."), 409);
+            responder(array("error" => "Solo se pueden agregar productos a un pedido que aún no esté cerrado ni cobrado."), 409);
         }
 
         $productosActualizados = array();
         $totalAgregado = 0;
+        $hayProductoCocina = false;
         foreach ($productos as $producto) {
             $idProducto = filter_var($producto["id_producto"] ?? null, FILTER_VALIDATE_INT);
             $cantidad = filter_var($producto["cantidad"] ?? null, FILTER_VALIDATE_INT);
@@ -226,7 +241,10 @@ if ($metodo === "POST") {
 
             $stmtPrecio = mysqli_prepare(
                 $conexion,
-                "SELECT precio FROM Producto WHERE id_producto = ? AND activo = TRUE"
+                "SELECT p.precio, c.titulo AS categoria
+                 FROM Producto p
+                 LEFT JOIN Categoria c ON c.id_categoria = p.id_categoria
+                 WHERE p.id_producto = ? AND p.activo = TRUE"
             );
             if (!$stmtPrecio) {
                 mysqli_rollback($conexion);
@@ -242,12 +260,17 @@ if ($metodo === "POST") {
             }
 
             $precio = (float) $filaPrecio["precio"];
+            $esBebida = strtolower(trim($filaPrecio["categoria"] ?? "")) === "bebidas";
+            if (!$esBebida) {
+                $hayProductoCocina = true;
+            }
             $total = $precio * $cantidad;
             $totalAgregado += $total;
             $productosActualizados[$idProducto] = array(
                 "cantidad" => $cantidad,
                 "precio" => $precio,
-                "total" => $total
+                "total" => $total,
+                "es_bebida" => $esBebida
             );
         }
 
@@ -300,15 +323,17 @@ if ($metodo === "POST") {
             }
         }
         mysqli_stmt_close($stmtLinea);
-        $sqlActualizarPedido = "UPDATE Pedido
-                                SET monto_total = monto_total + ?,
+        $sqlActualizarPedido = "UPDATE Pedido SET monto_total = monto_total + ?";
+        if (!empty($hayProductoCocina)) {
+            $sqlActualizarPedido .= ",
                                     id_estado = (
                                         SELECT id_estado
                                         FROM Estado_Pedido
                                         WHERE LOWER(nombre) = 'en preparación'
                                         LIMIT 1
-                                    )
-                                WHERE id_pedido = ?";
+                                    )";
+        }
+        $sqlActualizarPedido .= " WHERE id_pedido = ?";
         $stmtActualizarPedido = mysqli_prepare($conexion, $sqlActualizarPedido);
         mysqli_stmt_bind_param($stmtActualizarPedido, "di", $totalAgregado, $idPedido);
         $correcto = mysqli_stmt_execute($stmtActualizarPedido);
@@ -341,9 +366,12 @@ if ($metodo === "POST") {
         }
         $sql = "UPDATE Contiene c
                 INNER JOIN Pedido p ON p.id_pedido = c.id_pedido
+                INNER JOIN Producto px ON px.id_producto = c.id_producto
+                LEFT JOIN Categoria cx ON cx.id_categoria = px.id_categoria
                 SET c.completado = TRUE
                 WHERE c.id_pedido = ?
                   AND c.id_producto = ?
+                  AND LOWER(COALESCE(cx.titulo, '')) <> 'bebidas'
                   AND p.id_estado = (
                       SELECT id_estado
                       FROM Estado_Pedido
@@ -356,7 +384,7 @@ if ($metodo === "POST") {
         $actualizado = mysqli_stmt_affected_rows($stmt) > 0;
         mysqli_stmt_close($stmt);
         if (!$actualizado) {
-            responder(array("error" => "El producto ya está completo o el pedido ya no está en preparación."), 409);
+            responder(array("error" => "El producto ya está completo, es una bebida o el pedido ya no está en preparación."), 409);
         }
         registrar_auditoria($conexion, "completar_producto_pedido", "pedido", $idPedido, array(
             "id_producto" => $idProducto
@@ -384,11 +412,22 @@ if ($metodo === "POST") {
                       WHERE LOWER(nombre) = 'en preparación'
                       LIMIT 1
                   )
+                  AND EXISTS (
+                      SELECT 1
+                      FROM Contiene cc
+                      INNER JOIN Producto pp ON pp.id_producto = cc.id_producto
+                      LEFT JOIN Categoria cp ON cp.id_categoria = pp.id_categoria
+                      WHERE cc.id_pedido = Pedido.id_pedido
+                        AND LOWER(COALESCE(cp.titulo, '')) <> 'bebidas'
+                  )
                   AND NOT EXISTS (
                       SELECT 1
                       FROM Contiene c
+                      INNER JOIN Producto p ON p.id_producto = c.id_producto
+                      LEFT JOIN Categoria cat ON cat.id_categoria = p.id_categoria
                       WHERE c.id_pedido = Pedido.id_pedido
                         AND c.completado = FALSE
+                        AND LOWER(COALESCE(cat.titulo, '')) <> 'bebidas'
                   )";
         $stmt = mysqli_prepare($conexion, $sql);
         mysqli_stmt_bind_param($stmt, "i", $idPedido);
@@ -428,8 +467,11 @@ if ($metodo === "POST") {
                         AND NOT EXISTS (
                             SELECT 1
                             FROM Contiene c
+                            INNER JOIN Producto p ON p.id_producto = c.id_producto
+                            LEFT JOIN Categoria cat ON cat.id_categoria = p.id_categoria
                             WHERE c.id_pedido = Pedido.id_pedido
                               AND c.completado = FALSE
+                              AND LOWER(COALESCE(cat.titulo, '')) <> 'bebidas'
                         )";
         $stmtCerrar = mysqli_prepare($conexion, $sqlCerrar);
         mysqli_stmt_bind_param($stmtCerrar, "i", $idPedido);
@@ -494,6 +536,22 @@ if (
 if ($idCliente === false || $idDescuento === false) {
     responder(array("error" => "El cliente o descuento indicado no es válido."), 400);
 }
+if ($idCliente !== null) {
+    $stmtCliente = mysqli_prepare(
+        $conexion,
+        "SELECT id_cliente FROM Cliente WHERE id_cliente = ? AND activo = TRUE LIMIT 1"
+    );
+    if (!$stmtCliente) {
+        responder(array("error" => "No se pudo validar el cliente."), 500);
+    }
+    mysqli_stmt_bind_param($stmtCliente, "i", $idCliente);
+    mysqli_stmt_execute($stmtCliente);
+    $clienteActivo = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtCliente));
+    mysqli_stmt_close($stmtCliente);
+    if (!$clienteActivo) {
+        responder(array("error" => "El cliente seleccionado no existe o está inactivo. Vuelve a seleccionarlo."), 400);
+    }
+}
 
 $sqlTurno = "SELECT id_turno
              FROM Turno_caja
@@ -524,6 +582,7 @@ $idEstado = (int) $estadoPreparacion["id_estado"];
 $lineas = array();
 $idsProductos = array();
 $montoTotal = 0;
+$hayProductoCocina = false;
 foreach ($productos as $producto) {
     $idProducto = filter_var($producto["id_producto"] ?? null, FILTER_VALIDATE_INT);
     $cantidad = filter_var($producto["cantidad"] ?? null, FILTER_VALIDATE_INT);
@@ -537,7 +596,10 @@ foreach ($productos as $producto) {
 
     $stmtPrecio = mysqli_prepare(
         $conexion,
-        "SELECT precio FROM Producto WHERE id_producto = ? AND activo = TRUE"
+        "SELECT p.precio, c.titulo AS categoria
+         FROM Producto p
+         LEFT JOIN Categoria c ON c.id_categoria = p.id_categoria
+         WHERE p.id_producto = ? AND p.activo = TRUE"
     );
     if (!$stmtPrecio) {
         responder(array("error" => "No se pudo consultar el producto."), 500);
@@ -552,6 +614,10 @@ foreach ($productos as $producto) {
     }
 
     $precio = (float) $filaPrecio["precio"];
+    $esBebida = strtolower(trim($filaPrecio["categoria"] ?? "")) === "bebidas";
+    if (!$esBebida) {
+        $hayProductoCocina = true;
+    }
     $total = $precio * $cantidad;
     $montoTotal += $total;
     $idsProductos[$idProducto] = true;
@@ -559,8 +625,25 @@ foreach ($productos as $producto) {
         "id_producto" => $idProducto,
         "cantidad" => $cantidad,
         "precio" => $precio,
-        "total" => $total
+        "total" => $total,
+        "es_bebida" => $esBebida
     );
+}
+if (!$hayProductoCocina) {
+    $stmtEstadoBebidas = mysqli_prepare(
+        $conexion,
+        "SELECT id_estado FROM Estado_Pedido WHERE LOWER(nombre) = 'comiendo' LIMIT 1"
+    );
+    if (!$stmtEstadoBebidas) {
+        responder(array("error" => "No se pudo consultar el estado del pedido."), 500);
+    }
+    mysqli_stmt_execute($stmtEstadoBebidas);
+    $estadoBebidas = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtEstadoBebidas));
+    mysqli_stmt_close($stmtEstadoBebidas);
+    if (!$estadoBebidas) {
+        responder(array("error" => "No existe el estado Comiendo."), 500);
+    }
+    $idEstado = (int) $estadoBebidas["id_estado"];
 }
 
 // La reserva de mesa y el alta del pedido son una sola operación: no se deja una mesa tomada sin pedido.
