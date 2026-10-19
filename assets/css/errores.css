@@ -1,0 +1,85 @@
+@font-face {
+    font-family: 'Montserrat';
+    src: url('../font/Montserrat-Regular.ttf');
+}
+
+:root {
+    color-scheme: light;
+    font-family: 'Montserrat', Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    align-items: center;
+    background: #f3f6fa;
+    color: #1e3035;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    min-height: 100vh;
+    padding: 24px;
+}
+
+.error-card {
+    background: #fff;
+    border: 1px solid #e1e7ef;
+    border-radius: 14px;
+    box-shadow: 0 14px 42px rgba(0, 31, 71, .1);
+    max-width: 560px;
+    padding: 42px;
+    width: 100%;
+}
+
+.error-code {
+    color: #1677c8;
+    font-size: clamp(3.5rem, 14vw, 6rem);
+    font-weight: 700;
+    letter-spacing: -.06em;
+    line-height: 1;
+    margin: 0 0 16px;
+}
+
+.error-card h1 {
+    color: #001f47;
+    font-size: clamp(1.5rem, 6vw, 2.1rem);
+    margin: 0 0 12px;
+}
+
+.error-card > p:not(.error-code) {
+    color: #53657a;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.error-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 28px;
+}
+
+.error-button {
+    background: #001f47;
+    border: 1px solid #001f47;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    display: inline-block;
+    font: inherit;
+    padding: 11px 16px;
+    text-decoration: none;
+}
+
+.error-button.secondary {
+    background: #fff;
+    color: #001f47;
+}
+
+@media (max-width: 480px) {
+    .error-card {
+        padding: 28px 22px;
+    }
+}

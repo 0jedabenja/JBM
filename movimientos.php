@@ -6,8 +6,7 @@ verificar_sesion();
 $tipo = obtener_parametro_get("tipo");
 $id = filter_var(obtener_parametro_get("id"), FILTER_VALIDATE_INT);
 if (!in_array($tipo, array("insumo", "producto"), true) || $id === false || $id <= 0) {
-    http_response_code(400);
-    exit("El producto o insumo solicitado no es válido.");
+    mostrar_pagina_error(400);
 }
 verificar_permiso($tipo === "insumo" ? "insumos" : "productos");
 
@@ -19,8 +18,7 @@ mysqli_stmt_execute($stmt);
 $fila = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 mysqli_stmt_close($stmt);
 if (!$fila) {
-    http_response_code(404);
-    exit("No se encontró el producto o insumo.");
+    mostrar_pagina_error(404);
 }
 $nombre = $fila["nombre"];
 ?>
@@ -31,62 +29,9 @@ $nombre = $fila["nombre"];
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Movimientos de <?php echo htmlspecialchars($nombre, ENT_QUOTES, "UTF-8"); ?></title>
     <script src="assets/js/sidebar.js" defer></script>
-    <style>
-        .navigation ul li:nth-child(<?php echo $tipo === "insumo" ? "6" : "7"; ?>) { background-color: #fff; }
-        .navigation ul li:nth-child(<?php echo $tipo === "insumo" ? "6" : "7"; ?>) a { color: #001f47; }
-        .navigation ul li:nth-child(<?php echo $tipo === "insumo" ? "6" : "7"; ?>) a .icon img {
-            content: url('assets/img/sidebar/theme-<?php echo $tipo === "insumo" ? "box" : "shopping"; ?>.svg');
-        }
-        .modulo-content { padding: 20px 30px; }
-        .modulo-content h2 { color: #001f47; margin-bottom: 8px; }
-        .descripcion { color: #555; margin-bottom: 20px; }
-        .filtros-movimientos {
-            align-items: end;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin: 20px 0;
-        }
-        .filtros-movimientos label { display: grid; gap: 5px; }
-        .filtros-movimientos input,
-        .filtros-movimientos select {
-            border: 1px solid #999;
-            border-radius: 4px;
-            font: inherit;
-            min-height: 38px;
-            padding: 7px 10px;
-        }
-        .boton, .filtros-movimientos button {
-            background: #001f47;
-            border: 0;
-            border-radius: 4px;
-            color: #fff;
-            cursor: pointer;
-            display: inline-block;
-            font: inherit;
-            padding: 9px 14px;
-            text-decoration: none;
-        }
-        .tabla-contenedor { overflow-x: auto; }
-        .modulo-table { border-collapse: collapse; min-width: 850px; width: 100%; }
-        .modulo-table th, .modulo-table td {
-            border-bottom: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-        }
-        .modulo-table th { color: #001f47; white-space: nowrap; }
-        .paginacion {
-            align-items: center;
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 20px;
-        }
-        .paginacion button:disabled { cursor: not-allowed; opacity: .5; }
-        #mensajeMovimientos { color: #a01818; }
-    </style>
+    <link rel="stylesheet" href="assets/css/movimientos.css">
 </head>
-<body>
+<body class="<?php echo htmlspecialchars($tipo, ENT_QUOTES, "UTF-8"); ?>">
     <?php include_once 'includes/sidebar.php'; ?>
     <div class="main">
         <div class="topbar">
@@ -118,7 +63,7 @@ $nombre = $fila["nombre"];
             <div class="tabla-contenedor">
                 <table class="modulo-table">
                     <thead><tr><th>Fecha y hora</th><th>Tipo</th><th><?php echo $tipo === "insumo" ? "Variación" : "Unidades vendidas"; ?></th><th>Valor unitario</th><th>Total</th><th>Referencia</th><th>Responsable</th></tr></thead>
-                    <tbody id="filasMovimientos"><tr><td colspan="7" style="text-align:center;">Cargando movimientos...</td></tr></tbody>
+                    <tbody id="filasMovimientos"><tr><td colspan="7" class="texto-centrado">Cargando movimientos...</td></tr></tbody>
                 </table>
             </div>
             <div class="paginacion">

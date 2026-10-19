@@ -14,7 +14,6 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 $entrada = json_decode(file_get_contents("php://input"), true);
 if (!is_array($entrada)) $entrada = $_POST;
 
-// Solo se interpolan identificadores de esta lista; el ID se enlaza como parámetro.
     $entidades = array(
         "insumo" => array("permiso" => "insumos", "tabla" => "Insumo", "columna" => "id_insumo"),
         "cliente" => array("permiso" => "clientes", "tabla" => "Cliente", "columna" => "id_cliente"),

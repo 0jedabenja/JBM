@@ -10,22 +10,8 @@ verificar_permiso("empleados");
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Empleados</title>
     <script src="assets/js/sidebar.js" defer></script>
-    <style>
-        .navigation ul li:nth-child(8) { background-color: #fff; }
-        .navigation ul li:nth-child(8) a { color: #001f47; }
-        .navigation ul li:nth-child(8) a .icon img { content: url('assets/img/sidebar/theme-team.svg'); }
-        .modulo-content { padding: 20px 30px; }
-        .modulo-content h2 { color: #001f47; margin-bottom: 20px; }
-        .modulo-actions { display: flex; justify-content: flex-end; margin-bottom: 20px; }
-        .modulo-actions a { background: #001f47; border-radius: 50%; color: #fff; font-size: 1.5rem; line-height: 35px; text-align: center; text-decoration: none; width: 35px; height: 35px; }
-        .modulo-table { border-collapse: collapse; width: 100%; }
-        .modulo-table th, .modulo-table td { border-bottom: 1px solid #ddd; padding: 12px; text-align: left; }
-        .modulo-table th { color: #001f47; }
-        .accion { background: none; border: 0; color: #001f47; cursor: pointer; font-weight: bold; padding: 0; }
-        .paginacion { align-items: center; display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
-        .paginacion button { background: #001f47; border: 0; border-radius: 4px; color: #fff; cursor: pointer; padding: 8px 14px; }
-        .paginacion button:disabled { cursor: not-allowed; opacity: .5; }
-    </style>
+    <link rel="stylesheet" href="assets/css/empleados.css">
+    <link rel="stylesheet" href="assets/css/modulos-listado.css">
 </head>
 <body>
     <?php include_once 'includes/sidebar.php'; ?>
@@ -49,7 +35,7 @@ verificar_permiso("empleados");
             <h2>Listado de Empleados</h2>
             <div class="modulo-actions"><a href="altas/alta_empleado.php" title="Cargar empleado">+</a></div>
             <table class="modulo-table"><thead><tr><th>ID</th><th>Nombre</th><th>Apellido</th><th>Usuario</th><th>Rol</th><th>Acciones</th></tr></thead>
-                <tbody id="tablaEmpleados"><tr><td colspan="6" style="text-align:center;">No se encontraron empleados.</td></tr></tbody>
+                <tbody id="tablaEmpleados"><tr><td colspan="6" class="texto-centrado">No se encontraron empleados.</td></tr></tbody>
             </table>
             <div class="paginacion"><button type="button" id="btnAnterior">Anterior</button><span id="infoPagina">Página 1</span><button type="button" id="btnSiguiente">Siguiente</button></div>
         </main>
@@ -74,7 +60,7 @@ verificar_permiso("empleados");
                 .then(empleados => {
                     tbody.innerHTML = "";
                     if (empleados.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No se encontraron empleados.</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="6" class="texto-centrado">No se encontraron empleados.</td></tr>`;
                     } else {
                         empleados.forEach(empleado => {
                             const fila = document.createElement("tr");
@@ -85,7 +71,7 @@ verificar_permiso("empleados");
                     document.getElementById("btnAnterior").disabled = paginaActual === 1;
                     document.getElementById("btnSiguiente").disabled = empleados.length < limitePorPagina;
                     document.getElementById("infoPagina").textContent = `Página ${paginaActual}`;
-                }).catch(error => { console.error(error); tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No se pudieron cargar los empleados.</td></tr>`; });
+                }).catch(error => { console.error(error); tbody.innerHTML = `<tr><td colspan="6" class="texto-centrado">No se pudieron cargar los empleados.</td></tr>`; });
         }
         function cambiarPagina(delta) { paginaActual = Math.max(1, paginaActual + delta); cargarEmpleados(); }
         function buscarEmpleados() { clearTimeout(timeoutBusqueda); timeoutBusqueda = setTimeout(() => { paginaActual = 1; cargarEmpleados(); }, 300); }

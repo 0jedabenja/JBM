@@ -1,0 +1,80 @@
+.auditoria-content {
+            padding: 24px 30px 40px;
+        }
+
+        .auditoria-content h1 {
+            color: #001f47;
+            margin-bottom: 8px;
+        }
+
+        .auditoria-description {
+            margin-bottom: 18px;
+        }
+
+        .auditoria-table {
+            border-collapse: collapse;
+            margin: 12px 0;
+            width: 100%;
+        }
+
+        .auditoria-table th,
+        .auditoria-table td {
+            border-bottom: 1px solid #dfe5e6;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .auditoria-table th {
+            color: #001f47;
+        }
+
+        .auditoria-pagination {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .auditoria-button {
+            background: #001f47;
+            border: 0;
+            border-radius: 5px;
+            color: #fff;
+            cursor: pointer;
+            font: inherit;
+            padding: 9px 14px;
+        }
+
+        .auditoria-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+
+        .auditoria-status {
+            min-height: 24px;
+        }
+
+        .navigation ul li.menu-auditoria {
+            background-color: #fff;
+        }
+
+        .navigation ul li.menu-auditoria a {
+            color: #001f47;
+        }
+
+        .navigation ul li.menu-auditoria a .icon img {
+            content: url('../img/sidebar/theme-audit.svg');
+        }
+
+        @media (max-width: 700px) {
+            .auditoria-content {
+                padding: 18px 16px 32px;
+            }
+
+            .auditoria-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+        }

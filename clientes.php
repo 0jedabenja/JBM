@@ -11,119 +11,7 @@ verificar_permiso("clientes");
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Clientes</title>
     <script src="assets/js/sidebar.js" defer></script>
-    <style>
-    .navigation ul li:nth-child(5) {
-        background-color: #fff;
-    }
-
-    .navigation ul li:nth-child(5) a {
-        color: #001f47;
-    }
-
-    .navigation ul li:nth-child(5) a::before {
-        content: "";
-        position: absolute;
-        right: 0;
-        top: -50px;
-        width: 50px;
-        height: 50px;
-        background-color: transparent;
-        border-radius: 50%;
-        box-shadow: 35px 35px 0 10px #fff;
-        pointer-events: none;
-    }
-
-    .navigation ul li:nth-child(5) a::after {
-        content: "";
-        position: absolute;
-        right: 0;
-        bottom: -50px;
-        width: 50px;
-        height: 50px;
-        background-color: transparent;
-        border-radius: 50%;
-        box-shadow: 35px -35px 0 10px #fff;
-        pointer-events: none;
-    }
-
-    .navigation ul li:nth-child(5) a .icon img {
-        content: url('assets/img/sidebar/theme-person.svg');
-    }
-
-    .clientes-content {
-        padding: 20px 30px;
-    }
-
-    .clientes-content h2 {
-        color: #001f47;
-        margin-bottom: 20px;
-    }
-
-    .clientes-actions {
-        display: flex;
-        justify-content: flex-end;
-        margin-bottom: 20px;
-    }
-
-    .clientes-actions a {
-        color: #fff;
-        background-color: #001f47;
-        border-radius: 50%;
-        font-size: 1.5rem;
-        line-height: 35px;
-        text-align: center;
-        text-decoration: none;
-        width: 35px;
-        height: 35px;
-    }
-
-    .clientes-table {
-        border-collapse: collapse;
-        width: 100%;
-    }
-
-    .clientes-table th,
-    .clientes-table td {
-        border-bottom: 1px solid #ddd;
-        padding: 12px;
-        text-align: left;
-    }
-
-    .clientes-table th {
-        color: #001f47;
-    }
-
-    .clientes-table .accion {
-        background: none;
-        border: 0;
-        color: #001f47;
-        cursor: pointer;
-        font-weight: bold;
-        padding: 0;
-    }
-
-    .paginacion {
-        align-items: center;
-        display: flex;
-        gap: 15px;
-        justify-content: center;
-        margin-top: 20px;
-    }
-
-    .paginacion button {
-        background-color: #001f47;
-        border: 0;
-        border-radius: 4px;
-        color: #fff;
-        cursor: pointer;
-        padding: 8px 14px;
-    }
-
-    .paginacion button:disabled {
-        cursor: not-allowed;
-        opacity: 0.5;
-    }
-    </style>
+    <link rel="stylesheet" href="assets/css/clientes.css">
 </head>
 
 <body>
@@ -180,7 +68,7 @@ verificar_permiso("clientes");
                 </thead>
                 <tbody id="tablaClientes">
                     <tr>
-                        <td colspan="6" style="text-align:center;">No se encontraron clientes.</td>
+                        <td colspan="6" class="texto-centrado">No se encontraron clientes.</td>
                     </tr>
                 </tbody>
             </table>
@@ -223,7 +111,7 @@ verificar_permiso("clientes");
                     tbody.innerHTML = "";
 
                     if (clientes.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No se encontraron clientes.</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="6" class="texto-centrado">No se encontraron clientes.</td></tr>`;
                     } else {
                         clientes.forEach(cliente => {
                             const fila = document.createElement("tr");
@@ -247,7 +135,7 @@ verificar_permiso("clientes");
                 })
                 .catch(error => {
                     console.error("Error al cargar los clientes:", error);
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No se pudieron cargar los clientes.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="6" class="texto-centrado">No se pudieron cargar los clientes.</td></tr>`;
                 });
         }
 

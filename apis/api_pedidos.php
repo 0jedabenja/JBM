@@ -116,8 +116,6 @@ if ($vista === "cocina") {
     $condicionVista = " AND p.cobrado = FALSE
                         AND LOWER(ep.nombre) IN ('en preparación', 'comiendo', 'listo')";
 }
-// Los estados de la vista son condiciones internas; los valores ingresados por el usuario siempre se enlazan.
-
 if ($metodo === "GET") {
     if (obtener_parametro_get("caja") === "estado") {
         $sqlCaja = "SELECT id_turno, fecha_hora_apertura
@@ -196,7 +194,6 @@ if ($metodo === "POST") {
             responder(array("error" => "Datos del pedido no válidos."), 400);
         }
 
-        // Bloqueamos el pedido para evitar que se agreguen extras al mismo tiempo que se cierra o cobra.
         mysqli_begin_transaction($conexion);
         $sqlPedido = "SELECT p.monto_total
                       FROM Pedido p
@@ -348,7 +345,6 @@ if ($metodo === "POST") {
             "monto_agregado" => $totalAgregado
         ));
         if ($faltantes && $forzarStock) {
-            // El override autoriza el pedido, pero deja constancia de los faltantes que se aceptaron.
             registrar_auditoria($conexion, "forzar_stock_pedido", "pedido", $idPedido, array("faltantes" => $faltantes));
         }
         responder(array("ok" => true, "monto_agregado" => $totalAgregado));
@@ -448,7 +444,6 @@ if ($metodo === "POST") {
             responder(array("error" => "Pedido no válido."), 400);
         }
         mysqli_begin_transaction($conexion);
-        // Caja solo puede cobrar pedidos cerrados; la mesa se libera en la misma transacción.
         $sqlCerrar = "UPDATE Pedido
                       SET id_estado = (
                           SELECT id_estado
@@ -646,7 +641,6 @@ if (!$hayProductoCocina) {
     $idEstado = (int) $estadoBebidas["id_estado"];
 }
 
-// La reserva de mesa y el alta del pedido son una sola operación: no se deja una mesa tomada sin pedido.
 mysqli_begin_transaction($conexion);
 $faltantes = array();
 try {
