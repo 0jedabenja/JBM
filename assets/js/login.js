@@ -73,6 +73,10 @@ function applyLanguage(language) {
 	document.querySelector('.form-description').innerHTML = translation.description;
 	document.querySelector('input[name="username"]').placeholder = translation.username;
 	document.querySelector('input[name="password"]').placeholder = translation.password;
+	const captchaWidget = document.querySelector('altcha-widget');
+	if (captchaWidget) {
+		captchaWidget.setAttribute('language', language);
+	}
 	document.querySelector('.forgot-password').textContent = translation.help;
 	document.querySelector('.btn-login').textContent = translation.button;
 	document.querySelector('.about-us').textContent = translation['about-us'];

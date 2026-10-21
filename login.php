@@ -1,17 +1,44 @@
 <?php
+require_once __DIR__ . "/vendor/autoload.php";
+
+use AltchaOrg\Altcha\Algorithm\Pbkdf2;
+use AltchaOrg\Altcha\Altcha;
+use AltchaOrg\Altcha\VerifySolutionOptions;
+
 include_once "includes/conexionBD.php";
 include_once "includes/funciones.php";
 
 iniciar_sesion_segura();
 $mensaje = "";
+$captchaSecret = $_SESSION["altcha_secret"] ??= bin2hex(random_bytes(32));
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $usuario = trim($_POST["username"] ?? "");
     $contrasena = $_POST["password"] ?? "";
     $token_csrf = $_POST["csrf_token"] ?? "";
+    $captchaValido = false;
+
+    if (validar_token_csrf($token_csrf)) {
+        $payloadCaptcha = $_POST["altcha"] ?? "";
+        if (is_string($payloadCaptcha) && $payloadCaptcha !== "") {
+            try {
+                $altcha = new Altcha(hmacSignatureSecret: $captchaSecret);
+                $resultadoCaptcha = $altcha->verifySolution(new VerifySolutionOptions(
+                    payload: $payloadCaptcha,
+                    algorithm: new Pbkdf2()
+                ));
+                $captchaValido = $resultadoCaptcha->verified;
+            } catch (InvalidArgumentException $error) {
+                $captchaValido = false;
+            }
+        }
+    }
+    $_SESSION["altcha_secret"] = bin2hex(random_bytes(32));
 
     if (!validar_token_csrf($token_csrf)) {
         $mensaje = "La solicitud no es válida. Intente nuevamente.";
+    } elseif (!$captchaValido) {
+        $mensaje = "Complete la verificación anti-robots e intente nuevamente.";
     } elseif ($usuario === "" || $contrasena === "") {
         $mensaje = "Ingrese su usuario y contraseña.";
     } elseif (strlen($usuario) > 50) {
@@ -53,7 +80,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 }
 ?>
 <!DOCTYPE html>
-<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -61,6 +87,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title></title>
     <link rel="stylesheet" href="assets/css/login.css">
+    <script src="https://cdn.jsdelivr.net/gh/altcha-org/altcha/dist/main/altcha.min.js" type="module"></script>
     <script src="assets/js/login.js" defer></script>
 </head>
 
@@ -84,6 +111,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <img src="assets/img/login/light-lock.svg" class="icon-lock">
                 <img src="assets/img/login/light-eye.svg" class="icon-password">
             </div>
+            <altcha-widget challenge="apis/altcha_challenge.php" language="es"></altcha-widget>
             <a href="" class="forgot-password">¿Olvidaste tu contraseña?</a>
             <button type="submit" class="btn-login">Iniciar sesión</button>
         </form>

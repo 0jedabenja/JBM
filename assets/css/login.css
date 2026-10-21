@@ -51,7 +51,8 @@ form {
     align-items: center;
     justify-content: center;
     width: 28rem;
-    height: 32rem;
+    height: auto;
+    min-height: 32rem;
     padding: 2rem 3rem;
     background-color: var(--form-bg);
     border-radius: 2rem;
@@ -310,4 +311,3 @@ footer {
         gap: 1rem;
     }
 }
-

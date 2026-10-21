@@ -120,7 +120,6 @@ if ($rolActual === "administrador") {
             <main class="inicio-content">
                 <h1>Inicio</h1>
                 <?php if ($rolActual === "administrador"): ?>
-                    <a class="conteo-inicio" href="conteos.php">Iniciar conteo de insumos</a>
                     <section class="graficos-inicio" aria-label="Indicadores del negocio">
                         <article class="grafico-card">
                             <h2>Ventas cobradas</h2>

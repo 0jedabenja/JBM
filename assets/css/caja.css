@@ -12,4 +12,5 @@
         dialog.caja-dialog[open].cerrando{animation:caja-dialog-salida .18s ease-in both;pointer-events:none}
         dialog.caja-dialog[open].cerrando::backdrop{animation:caja-fondo-salida .18s ease-in both}
         @media(prefers-reduced-motion:reduce){dialog.caja-dialog[open],dialog.caja-dialog[open]::backdrop,dialog.caja-dialog[open].cerrando,dialog.caja-dialog[open].cerrando::backdrop{animation-duration:.01ms}}
+        a.caja-button{text-decoration:none}
         @media(max-width:720px){.caja-content{padding:22px 16px 36px}.caja-heading,.caja-current-top{align-items:flex-start;flex-direction:column}.caja-heading h1{font-size:26px}.caja-metrics{grid-template-columns:1fr}.caja-metric{padding:13px 15px}.caja-current-state{align-items:flex-start;flex-direction:column}.caja-detail-summary{grid-template-columns:1fr}.caja-dialog-inner{padding:20px}}

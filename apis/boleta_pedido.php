@@ -2,7 +2,10 @@
 include_once __DIR__ . "/../includes/conexionBD.php";
 include_once __DIR__ . "/../includes/funciones.php";
 require_once __DIR__ . "/../lib/fpdf19/fpdf.php";
-verificar_permiso("pedidos");
+verificar_sesion();
+if (!usuario_tiene_permiso("pedidos") && !usuario_tiene_permiso("caja")) {
+    responder_error_boleta("No tiene permiso para imprimir este comprobante.", 403);
+}
 
 function responder_error_boleta($mensaje, $codigo, $detalle = "") {
     if ($detalle !== "") {
@@ -26,9 +29,11 @@ class PDFBoletaPedido extends FPDF {
 
     function Header() {
         $this->SetFont("Arial", "B", 12);
-        $this->Cell(0, 7, texto_boleta("JBM - BOLETA DE PEDIDO"), 0, 1, "C");
+        $this->Cell(0, 7, texto_boleta("Lo de Torres"), 0, 1, "C");
         $this->SetFont("Arial", "", 9);
-        $this->Cell(0, 5, texto_boleta("Pedido #" . $this->idPedido), 0, 1, "C");
+        $this->Cell(0, 5, texto_boleta("RUT: 00.000.000-0 (provisorio)"), 0, 1, "C");
+        $this->Cell(0, 5, texto_boleta("Dirección: Dirección pendiente (provisoria)"), 0, 1, "C");
+        $this->Cell(0, 5, texto_boleta("COMPROBANTE DE VENTA · Pedido #" . $this->idPedido), 0, 1, "C");
         $this->Ln(2);
     }
 
@@ -55,7 +60,7 @@ if ($idPedido === false || $idPedido <= 0) {
 
 $stmt = mysqli_prepare(
     $conexion,
-    "SELECT p.id_pedido, p.fecha_hora_creacion, p.monto_total,
+    "SELECT p.id_pedido, p.fecha_hora_creacion, p.monto_total, p.cobrado,
             COALESCE(CONCAT(c.nombre, ' ', c.apellido), 'Consumidor final') AS cliente,
             COALESCE(CAST(m.numero AS CHAR), '-') AS mesa,
             COALESCE(mp.descripcion, 'Pendiente de cobro') AS metodo_pago,
@@ -80,8 +85,29 @@ if (!mysqli_stmt_execute($stmt)) {
 }
 $pedido = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 mysqli_stmt_close($stmt);
-if (!$pedido || strtolower($pedido["estado"]) !== "listo") {
-    responder_error_boleta("La boleta estará disponible cuando el pedido esté listo.", 409);
+if (!$pedido || strtolower($pedido["estado"]) !== "listo" || (int)$pedido["cobrado"] !== 1) {
+    responder_error_boleta("El comprobante estará disponible cuando el pedido esté listo y cobrado.", 409);
+}
+$efectivoRecibido = null;
+$vuelto = null;
+$entradaEfectivo = $_GET["efectivo_recibido"] ?? null;
+if ($entradaEfectivo !== null) {
+    if (
+        !is_string($entradaEfectivo)
+        || !is_numeric($entradaEfectivo)
+        || !is_finite((float)$entradaEfectivo)
+        || (float)$entradaEfectivo < 0
+        || strtolower($pedido["metodo_pago"]) !== "efectivo"
+    ) {
+        responder_error_boleta("Los datos del pago en efectivo no son válidos.", 400);
+    }
+    $totalCentavos = (int)round((float)$pedido["monto_total"] * 100);
+    $recibidoCentavos = (int)round((float)$entradaEfectivo * 100);
+    if ($recibidoCentavos < $totalCentavos) {
+        responder_error_boleta("El efectivo recibido no puede ser menor que el total.", 400);
+    }
+    $efectivoRecibido = $recibidoCentavos / 100;
+    $vuelto = ($recibidoCentavos - $totalCentavos) / 100;
 }
 
 $stmt = mysqli_prepare(
@@ -120,7 +146,8 @@ try {
     $fecha = DateTime::createFromFormat("Y-m-d H:i:s", $pedido["fecha_hora_creacion"]);
     $fechaTexto = $fecha ? $fecha->format("d/m/Y H:i") : $pedido["fecha_hora_creacion"];
     $pdf->SetFont("Arial", "", 8);
-    $pdf->Cell(0, 5, texto_boleta("Fecha: " . $fechaTexto), 0, 1);
+    $pdf->Cell(0, 5, texto_boleta("Fecha y hora del comprobante: " . date("d/m/Y H:i")), 0, 1);
+    $pdf->Cell(0, 5, texto_boleta("Pedido creado: " . $fechaTexto), 0, 1);
     $pdf->Cell(0, 5, texto_boleta("Mesa: " . $pedido["mesa"]), 0, 1);
     $pdf->MultiCell(0, 5, texto_boleta("Cliente: " . $pedido["cliente"]), 0, "L");
     $pdf->Cell(0, 5, texto_boleta("Atendió: " . $pedido["empleado"]), 0, 1);
@@ -140,6 +167,14 @@ try {
     $pdf->SetFont("Arial", "B", 10);
     $pdf->Cell(34, 6, texto_boleta("TOTAL"), 0, 0, "L");
     $pdf->Cell(34, 6, texto_boleta("$ " . number_format((float)$pedido["monto_total"], 2, ",", ".")), 0, 1, "R");
+    if ($efectivoRecibido !== null) {
+        $pdf->Ln(1);
+        $pdf->SetFont("Arial", "", 8);
+        $pdf->Cell(34, 5, texto_boleta("Efectivo recibido"), 0, 0, "L");
+        $pdf->Cell(34, 5, texto_boleta("$ " . number_format($efectivoRecibido, 2, ",", ".")), 0, 1, "R");
+        $pdf->Cell(34, 5, texto_boleta("Vuelto"), 0, 0, "L");
+        $pdf->Cell(34, 5, texto_boleta("$ " . number_format($vuelto, 2, ",", ".")), 0, 1, "R");
+    }
     $pdf->Ln(4);
     $pdf->SetFont("Arial", "", 8);
     $pdf->Cell(0, 5, texto_boleta("Gracias por su compra"), 0, 1, "C");

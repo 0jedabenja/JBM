@@ -28,7 +28,8 @@ function obtenerEntrada()
 function obtenerProductosPedido($conexion, $id_pedido, $soloCocina = false)
 {
     $productos = array();
-    $sql = "SELECT c.id_producto, p.nombre, c.cantidad, c.precio, c.total, c.completado
+    $sql = "SELECT c.id_producto, p.nombre, c.cantidad, c.precio, c.total, c.completado,
+                   (LOWER(COALESCE(cat.titulo, '')) = 'bebidas') AS es_bebida
             FROM Contiene c
             INNER JOIN Producto p ON p.id_producto = c.id_producto
             LEFT JOIN Categoria cat ON cat.id_categoria = p.id_categoria
@@ -388,6 +389,48 @@ if ($metodo === "POST") {
         responder(array("ok" => true));
     }
 
+    if ($accion === "marcar_bebida_pickeada") {
+        verificar_permiso("crear_pedido", true);
+        $idPedido = filter_var($entradaAccion["id_pedido"] ?? null, FILTER_VALIDATE_INT);
+        $idProducto = filter_var($entradaAccion["id_producto"] ?? null, FILTER_VALIDATE_INT);
+        if ($idPedido === false || $idPedido <= 0 || $idProducto === false || $idProducto <= 0) {
+            responder(array("error" => "Datos de la bebida no válidos."), 400);
+        }
+        $sql = "UPDATE Contiene c
+                INNER JOIN Pedido p ON p.id_pedido = c.id_pedido
+                INNER JOIN Producto px ON px.id_producto = c.id_producto
+                INNER JOIN Categoria cx ON cx.id_categoria = px.id_categoria
+                SET c.completado = TRUE
+                WHERE c.id_pedido = ?
+                  AND c.id_producto = ?
+                  AND LOWER(cx.titulo) = 'bebidas'
+                  AND p.cobrado = FALSE
+                  AND p.id_estado = (
+                      SELECT id_estado
+                      FROM Estado_Pedido
+                      WHERE LOWER(nombre) IN ('en preparación', 'comiendo')
+                      LIMIT 1
+                  )";
+        $stmt = mysqli_prepare($conexion, $sql);
+        if (!$stmt) {
+            responder(array("error" => "No se pudo preparar la confirmación de la bebida."), 500);
+        }
+        mysqli_stmt_bind_param($stmt, "ii", $idPedido, $idProducto);
+        $correcto = mysqli_stmt_execute($stmt);
+        $actualizado = mysqli_stmt_affected_rows($stmt) > 0;
+        mysqli_stmt_close($stmt);
+        if (!$correcto) {
+            responder(array("error" => "No se pudo marcar la bebida como retirada."), 500);
+        }
+        if (!$actualizado) {
+            responder(array("error" => "La bebida no pertenece a un pedido activo o ya fue pickeada."), 409);
+        }
+        registrar_auditoria($conexion, "marcar_bebida_pickeada", "pedido", $idPedido, array(
+            "id_producto" => $idProducto
+        ));
+        responder(array("ok" => true));
+    }
+
     if ($accion === "finalizar") {
         verificar_permiso("cocina", true);
         $idPedido = filter_var($entradaAccion["id_pedido"] ?? null, FILTER_VALIDATE_INT);
@@ -467,7 +510,16 @@ if ($metodo === "POST") {
                             WHERE c.id_pedido = Pedido.id_pedido
                               AND c.completado = FALSE
                               AND LOWER(COALESCE(cat.titulo, '')) <> 'bebidas'
-                        )";
+                            )
+                            AND NOT EXISTS (
+                                SELECT 1
+                                FROM Contiene c
+                                INNER JOIN Producto p ON p.id_producto = c.id_producto
+                                LEFT JOIN Categoria cat ON cat.id_categoria = p.id_categoria
+                                WHERE c.id_pedido = Pedido.id_pedido
+                                  AND c.completado = FALSE
+                                  AND LOWER(COALESCE(cat.titulo, '')) = 'bebidas'
+                            )";
         $stmtCerrar = mysqli_prepare($conexion, $sqlCerrar);
         mysqli_stmt_bind_param($stmtCerrar, "i", $idPedido);
         $correcto = mysqli_stmt_execute($stmtCerrar);
@@ -475,7 +527,7 @@ if ($metodo === "POST") {
         mysqli_stmt_close($stmtCerrar);
         if (!$correcto || !$actualizado) {
             mysqli_rollback($conexion);
-            responder(array("error" => "El pedido debe estar en estado Comiendo y todos sus productos listos antes de cerrarlo."), 409);
+            responder(array("error" => "El pedido debe estar en estado Comiendo, con todos los productos de cocina listos y las bebidas pickeadas."), 409);
         }
         $sqlMesa = "UPDATE Mesa m
                     INNER JOIN Pedido p ON p.id_mesa = m.id_mesa
