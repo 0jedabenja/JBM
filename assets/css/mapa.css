@@ -4,3 +4,4 @@
 .mapa-superficie{aspect-ratio:1200/700;min-height:0}
 
 .mesa-actions button[data-limpiar]{height:auto;padding:5px 8px;white-space:nowrap;color:#765400;font-size:11px}
+.mesa.seleccionada .mesa-actions{display:flex}

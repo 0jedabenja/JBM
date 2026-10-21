@@ -23,6 +23,7 @@ $puedeCocina = in_array($rolActual, array("administrador", "cocina"), true);
             <nav class="pedido-tabs" aria-label="Secciones de pedidos">
                 <?php if ($puedeCrear): ?><button type="button" data-vista="creacion">Crear pedido</button><?php endif; ?>
                 <?php if ($puedeCrear): ?><button type="button" data-vista="pendientes">Pendientes</button><?php endif; ?>
+                <?php if ($puedeCrear): ?><button type="button" data-vista="limpieza">Mesas para limpiar</button><?php endif; ?>
                 <?php if ($puedeCocina): ?><button type="button" data-vista="cocina">Cocina</button><?php endif; ?>
             </nav>
             <?php if ($puedeCrear): ?>
@@ -32,6 +33,7 @@ $puedeCocina = in_array($rolActual, array("administrador", "cocina"), true);
                 <div class="pedido-panel"><h3>Pedido actual</h3><div id="carrito" class="carrito">No hay productos agregados.</div><form id="formPedido" class="pedido-form"><label>Cliente<div class="cliente-selector"><input id="buscarCliente" type="search" autocomplete="off" placeholder="Buscar por nombre o apellido" aria-controls="resultadosClientes"><input id="idCliente" type="hidden" value="1"><div id="resultadosClientes" class="cliente-resultados" role="listbox" hidden></div></div><small id="clienteElegido" class="cliente-elegido">Cliente genérico (#1)</small></label><label>Detalle del pedido (opcional)<textarea id="descripcionPedido" maxlength="500" placeholder="Indicaciones o detalles del pedido"></textarea></label><button type="submit">Crear pedido</button></form></div>
             </section>
             <section id="vista-pendientes" class="pedido-view"><h2>Pedidos pendientes</h2><div class="cocina-toolbar"><button id="activarSonidoPendientes" class="boton-sonido" type="button">🔔 Activar sonido</button></div><div id="listaPendientes"></div></section>
+            <section id="vista-limpieza" class="pedido-view"><h2>Mesas para limpiar</h2><p id="mensajeLimpieza" class="mensaje" role="status" aria-live="polite">Cargando mesas...</p><div id="listaMesasLimpieza" class="lista-mesas-limpieza"></div></section>
             <?php endif; ?>
             <?php if ($puedeCocina): ?><section id="vista-cocina" class="pedido-view"><h2>Cocina</h2><p>Las bebidas se muestran al mozo en pedidos pendientes.</p><div class="cocina-toolbar"><button id="activarSonidoCocina" class="boton-sonido" type="button">🔔 Activar sonido</button></div><p id="mensajeBoleta" class="mensaje" role="status" aria-live="polite"></p><div id="listaCocina"></div></section><?php endif; ?>
         </main>
@@ -65,7 +67,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (puedeCrear) {
         cargarEstadoCajaPedido();
         cargarMapaPedido();
+        document.getElementById("listaPendientes").addEventListener("click", manejarAccionesPendientes);
         document.getElementById("editarMesa").addEventListener("click", editarMesa);
+        document.getElementById("listaMesasLimpieza").addEventListener("click", marcarMesaLimpiaPedidos);
         document.getElementById("formPedido").addEventListener("submit", crearPedido);
         document.getElementById("buscarCliente").addEventListener("input", buscarClientes);
         document.getElementById("resultadosClientes").addEventListener("click", seleccionarCliente);
@@ -81,13 +85,57 @@ document.addEventListener("DOMContentLoaded", () => {
         const boton = document.getElementById(id);
         if (boton) boton.addEventListener("click", activarSonido);
     });
+    if (puedeCocina) {
+        document.getElementById("listaCocina").addEventListener("click", manejarAccionesCocina);
+    }
 });
 function activarVista(vista) {
     document.querySelectorAll(".pedido-view").forEach(seccion => seccion.classList.remove("active"));
     document.querySelectorAll(".pedido-tabs button").forEach(boton => boton.classList.toggle("active", boton.dataset.vista === vista));
     const seccion = document.getElementById(`vista-${vista}`); if (seccion) seccion.classList.add("active");
     if (vista === "pendientes") cargarPedidos("pendientes");
+    if (vista === "limpieza" && puedeCrear) cargarMesasLimpieza();
     if (vista === "cocina") { cargarPedidos("cocina"); setTimeout(() => cargarPedidos("cocina"), 300); }
+}
+async function cargarMesasLimpieza() {
+    const contenedor = document.getElementById("listaMesasLimpieza");
+    const mensaje = document.getElementById("mensajeLimpieza");
+    try {
+        const respuesta = await fetch("apis/api_mesas.php", { cache: "no-store" });
+        const datos = await respuesta.json();
+        if (!respuesta.ok) throw new Error(datos.error || "No se pudieron cargar las mesas.");
+        mensaje.classList.remove("error");
+        const mesas = (datos.mesas || []).filter(mesa => String(mesa.estado).toLowerCase() === "para limpiar");
+        contenedor.innerHTML = mesas.length ? mesas.map(mesa => `
+            <article class="mesa-pendiente-limpieza">
+                <h3>Mesa ${escapeHTML(mesa.numero)}</h3>
+                <button class="boton-accion-pedido" type="button" data-limpiar-mesa="${Number(mesa.id_mesa)}">Marcar limpia</button>
+            </article>`).join("") : '<p class="mensaje">No hay mesas pendientes de limpieza.</p>';
+        mensaje.textContent = mesas.length ? "Tocá «Marcar limpia» cuando termines de limpiar la mesa." : "";
+    } catch (error) {
+        mensaje.textContent = error.message;
+        mensaje.classList.add("error");
+    }
+}
+async function marcarMesaLimpiaPedidos(evento) {
+    const boton = evento.target.closest("button[data-limpiar-mesa]");
+    if (!boton) return;
+    boton.disabled = true;
+    try {
+        const respuesta = await fetch("apis/api_mesas.php", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ accion: "marcar_limpia", id_mesa: Number(boton.dataset.limpiarMesa) })
+        });
+        const datos = await respuesta.json();
+        if (!respuesta.ok) throw new Error(datos.error || "No se pudo marcar la mesa como limpia.");
+        mostrarNotificacion(`Mesa ${boton.closest(".mesa-pendiente-limpieza").querySelector("h3").textContent.replace("Mesa ", "")} marcada como limpia.`);
+        await cargarMesasLimpieza();
+        await cargarMapaPedido();
+    } catch (error) {
+        mostrarNotificacion(error.message, true);
+        boton.disabled = false;
+    }
 }
 async function cargarMenu() {
     try {
@@ -388,14 +436,28 @@ function renderPendientes(pedidos) {
     estadosPendientesAnteriores = new Map(pedidos.map(p => [Number(p.id_pedido), String(p.estado).toLowerCase()]));
     const contenedor = document.getElementById("listaPendientes");
     contenedor.innerHTML = pedidos.length ? pedidos.map(p => {
-        const productos = p.productos.map(x => `<li>${escapeHTML(x.nombre)} × ${Number(x.cantidad)}</li>`).join("");
-        const descripcion = p.descripcion ? `<p>Detalle: ${escapeHTML(p.descripcion)}</p>` : "";
         const estado = String(p.estado).toLowerCase();
-        const acciones = `<div class="pedido-pendiente-actions">${estado !== "listo" ? `<button type="button" class="boton-accion-pedido" data-agregar="${Number(p.id_pedido)}">Agregar productos</button>` : ""}${estado === "comiendo" ? `<button type="button" class="boton-accion-pedido" data-cerrar="${Number(p.id_pedido)}">Cerrar pedido</button>` : ""}</div>`;
-        return `<article class="pedido-panel"><h3>Pedido #${Number(p.id_pedido)} <span class="estado-pedido">${escapeHTML(p.estado)}</span></h3><p>Mesa: ${escapeHTML(p.mesa || "-")} | Creado: ${escapeHTML(p.fecha_hora_creacion)}</p>${descripcion}<ul>${productos}</ul>${acciones}</article>`;
+        const bebidasPendientes = p.productos.some(x => Number(x.es_bebida) === 1 && Number(x.completado) !== 1);
+        const productos = p.productos.map(x => {
+            if (Number(x.es_bebida) !== 1) return `<li>${escapeHTML(x.nombre)} × ${Number(x.cantidad)}</li>`;
+            const pickeada = Number(x.completado) === 1;
+            const control = ["en preparación", "comiendo"].includes(estado)
+                ? `<button type="button" class="boton-accion-pedido boton-bebida-pickeada" data-pickear-bebida="${Number(p.id_pedido)}" data-producto="${Number(x.id_producto)}" ${pickeada ? "disabled" : ""}>${pickeada ? "Pickeada" : "Pickear bebida"}</button>`
+                : `<span class="estado-bebida">${pickeada ? "Pickeada" : "Pendiente de retirar"}</span>`;
+            return `<li class="pedido-bebida"><span>${escapeHTML(x.nombre)} × ${Number(x.cantidad)} · Bebida</span>${control}</li>`;
+        }).join("");
+        const descripcion = p.descripcion ? `<p>Detalle: ${escapeHTML(p.descripcion)}</p>` : "";
+        const avisoBebidas = estado === "comiendo" && bebidasPendientes ? '<p class="aviso-bebidas">Marca todas las bebidas como pickeadas para poder cerrar el pedido.</p>' : "";
+        const acciones = `<div class="pedido-pendiente-actions">${estado !== "listo" ? `<button type="button" class="boton-accion-pedido" data-agregar="${Number(p.id_pedido)}">Agregar productos</button>` : ""}${estado === "comiendo" ? `<button type="button" class="boton-accion-pedido" data-cerrar="${Number(p.id_pedido)}" ${bebidasPendientes ? "disabled" : ""}>Cerrar pedido</button>` : ""}</div>`;
+        return `<article class="pedido-panel"><h3>Pedido #${Number(p.id_pedido)} <span class="estado-pedido">${escapeHTML(p.estado)}</span></h3><p>Mesa: ${escapeHTML(p.mesa || "-")} | Creado: ${escapeHTML(p.fecha_hora_creacion)}</p>${descripcion}<ul class="pedido-productos">${productos}</ul>${avisoBebidas}${acciones}</article>`;
     }).join("") : "No hay pedidos pendientes.";
 }
 function manejarAccionesPendientes(evento) {
+    const botonPickear = evento.target.closest("button[data-pickear-bebida]");
+    if (botonPickear) {
+        marcarBebidaPickeada(Number(botonPickear.dataset.pickearBebida), Number(botonPickear.dataset.producto), botonPickear);
+        return;
+    }
     const botonAgregar = evento.target.closest("button[data-agregar]");
     if (botonAgregar) {
         abrirExtras(Number(botonAgregar.dataset.agregar));
@@ -403,6 +465,22 @@ function manejarAccionesPendientes(evento) {
     }
     const botonCerrar = evento.target.closest("button[data-cerrar]");
     if (botonCerrar) cerrarPedido(Number(botonCerrar.dataset.cerrar));
+}
+async function marcarBebidaPickeada(idPedido, idProducto, boton) {
+    boton.disabled = true;
+    try {
+        const respuesta = await fetch("apis/api_pedidos.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ accion: "marcar_bebida_pickeada", id_pedido: idPedido, id_producto: idProducto })
+        });
+        const datos = await respuesta.json();
+        if (!respuesta.ok) throw new Error(datos.error || "No se pudo marcar la bebida como pickeada.");
+        await cargarPedidos("pendientes");
+    } catch (error) {
+        boton.disabled = false;
+        mostrarNotificacion(error.message, true);
+    }
 }
 async function cerrarPedido(idPedido) {
     try {
@@ -488,7 +566,7 @@ async function marcarPedidoListo(idPedido) {
     }
 }
 function actualizarRelojes() { document.querySelectorAll(".reloj").forEach(el => { const minutos=Math.floor((Date.now()-new Date(el.dataset.inicio).getTime())/60000); const segundos=Math.max(0,Math.floor((Date.now()-new Date(el.dataset.inicio).getTime())/1000)); el.textContent=`Tiempo: ${String(Math.floor(segundos/60)).padStart(2,"0")}:${String(segundos%60).padStart(2,"0")}`; el.className=`reloj ${minutos>=30?"rojo":minutos>=20?"naranja":minutos>=10?"amarillo":""}`; }); }
-setInterval(() => { actualizarRelojes(); if (puedeCrear) cargarEstadoCajaPedido(); if (puedeCocina && document.getElementById("vista-cocina")?.classList.contains("active")) cargarPedidos("cocina"); if (puedeCrear && document.visibilityState === "visible") cargarPedidos("pendientes"); }, 5000);
+setInterval(() => { actualizarRelojes(); if (puedeCrear) { cargarEstadoCajaPedido(); if (document.getElementById("vista-limpieza")?.classList.contains("active")) cargarMesasLimpieza(); } if (puedeCocina && document.getElementById("vista-cocina")?.classList.contains("active")) cargarPedidos("cocina"); if (puedeCrear && document.visibilityState === "visible") cargarPedidos("pendientes"); }, 5000);
 function mostrarNotificacion(texto, error = false) {
     const alerta = document.getElementById("notificacionPedido");
     alerta.textContent = texto;

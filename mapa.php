@@ -42,7 +42,7 @@ $puedeLimpiar = usuario_tiene_permiso("crear_pedido");
                 <span class="mapa-legend-item"><span class="dot ocupada"></span>Ocupada</span>
                 <span class="mapa-legend-item"><span class="dot paralimpiar"></span>Para limpiar</span>
             </div>
-            <div class="mapa-mobile-note">Arrastrá una mesa para reposicionarla. Tocá una mesa para editarla.</div>
+            <div class="mapa-mobile-note"><?php echo $puedeEditar ? "Arrastrá una mesa para reposicionarla. Tocá una mesa para editarla." : ($puedeLimpiar ? "Tocá una mesa pendiente de limpieza y luego presioná «Marcar limpia»." : "Tocá una mesa para verla."); ?></div>
             <p id="mensajeMapa" class="mapa-mensaje" role="status" aria-live="polite"></p>
             <section id="superficie" class="mapa-superficie" aria-label="Mapa del local"></section>
         </main>
@@ -245,10 +245,24 @@ $puedeLimpiar = usuario_tiene_permiso("crear_pedido");
             }
 
             if (puedeLimpiar && estado === "paralimpiar" && !puedeEditar) {
-                elemento.querySelector("[data-limpiar]").addEventListener("click", (evento) => {
-                    evento.preventDefault();
-                    evento.stopPropagation();
-                    marcarMesaLimpia(mesa.id_mesa);
+                elemento.setAttribute("aria-label", `Mesa ${mesa.numero}, para limpiar. Tócala para mostrar las acciones.`);
+                elemento.addEventListener("click", (evento) => {
+                    if (evento.target.closest("[data-limpiar]")) {
+                        evento.preventDefault();
+                        evento.stopPropagation();
+                        marcarMesaLimpia(mesa.id_mesa);
+                        return;
+                    }
+                    document.querySelectorAll(".mesa.seleccionada").forEach((seleccionada) => {
+                        if (seleccionada !== elemento) seleccionada.classList.remove("seleccionada");
+                    });
+                    elemento.classList.toggle("seleccionada");
+                });
+                elemento.addEventListener("keydown", (evento) => {
+                    if (evento.target === elemento && (evento.key === "Enter" || evento.key === " ")) {
+                        evento.preventDefault();
+                        elemento.classList.toggle("seleccionada");
+                    }
                 });
             }
 

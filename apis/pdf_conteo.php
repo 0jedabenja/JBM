@@ -217,17 +217,21 @@ if ($tipo === "diferencias" && !in_array($conteo["estado"], array("En curso", "F
 
 $stmt = mysqli_prepare(
     $conexion,
-    "SELECT d.id_insumo, i.nombre, i.costo, COALESCE(m.simbolo, m.unidad, '-') AS unidad,
-            d.cantidad_sistema, d.cantidad_contada,
-            CASE
-                WHEN d.cantidad_contada IS NOT NULL THEN d.cantidad_contada - d.cantidad_sistema
-                ELSE d.diferencia
-            END AS diferencia
-     FROM Detalle_Conteo_Insumo d
-     INNER JOIN Insumo i ON i.id_insumo = d.id_insumo
-     LEFT JOIN Medida m ON m.id_medida = i.id_medida
-     WHERE d.id_conteo = ?
-     ORDER BY i.nombre"
+    "WITH ConsultaBase AS (
+    SELECT d.id_insumo, i.nombre, i.costo, COALESCE(m.simbolo, m.unidad, '-') AS unidad,
+           d.cantidad_sistema, d.cantidad_contada,
+           CASE
+               WHEN d.cantidad_contada IS NOT NULL THEN d.cantidad_contada - d.cantidad_sistema
+               ELSE d.diferencia
+           END AS diferencia
+    FROM Detalle_Conteo_Insumo d
+    INNER JOIN Insumo i ON i.id_insumo = d.id_insumo
+    LEFT JOIN Medida m ON m.id_medida = i.id_medida
+    WHERE d.id_conteo = ?
+)
+SELECT * 
+FROM ConsultaBase
+ORDER BY (diferencia * costo) DESC;"
 );
 if (!$stmt) {
     responder_error_pdf("No se pudo consultar el detalle del conteo.", 500, mysqli_error($conexion));
@@ -255,12 +259,9 @@ if ($tipo === "diferencias") {
         responder_error_pdf("Todavía no hay diferencias contadas para imprimir.", 422);
     }
     usort($items, function ($a, $b) {
-        $diferenciaA = (float)$a["diferencia"];
-        $diferenciaB = (float)$b["diferencia"];
-        $grupoA = $diferenciaA < 0 ? 0 : 1;
-        $grupoB = $diferenciaB < 0 ? 0 : 1;
-        return $grupoA <=> $grupoB
-            ?: abs($diferenciaB) <=> abs($diferenciaA)
+        $valorizadaA = round((float)$a["diferencia"] * (float)$a["costo"], 2);
+        $valorizadaB = round((float)$b["diferencia"] * (float)$b["costo"], 2);
+        return $valorizadaB <=> $valorizadaA
             ?: strcasecmp($a["nombre"], $b["nombre"]);
     });
 }
