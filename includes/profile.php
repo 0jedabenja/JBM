@@ -1,6 +1,6 @@
 <div class="menu">
     <div class="profile">
-        <img src="">
+        <img src="./assets/img/usuario.png">
     </div>
 
     <div class="dropdown">
