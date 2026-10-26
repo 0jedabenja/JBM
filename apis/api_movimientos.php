@@ -24,7 +24,7 @@ verificar_permiso($tipoEntidad === "insumo" ? "insumos" : "productos", true);
 
 $filtroTipo = obtener_parametro_get("movimiento", "todos");
 $tiposPermitidos = $tipoEntidad === "insumo"
-    ? array("todos", "saldo_inicial", "inventario", "compra")
+    ? array("todos", "saldo_inicial", "inventario", "compra", "perdida", "averia", "consumo_personal")
     : array("todos", "venta");
 if (!in_array($filtroTipo, $tiposPermitidos, true)) {
     responder_movimientos(array("error" => "El tipo de movimiento no es válido."), 400);
@@ -64,9 +64,10 @@ if ($tipoEntidad === "producto") {
     $sqlBase = "SELECT m.fecha_hora, m.tipo, m.cantidad, m.costo_unitario,
                        m.cantidad * m.costo_unitario AS total,
                        CASE
-                           WHEN m.referencia_id IS NULL THEN '-'
                            WHEN m.tipo = 'compra' THEN CONCAT('Compra #', m.referencia_id)
-                           ELSE CONCAT('Conteo #', m.referencia_id)
+                           WHEN m.tipo = 'inventario' THEN CONCAT('Conteo #', m.referencia_id)
+                           WHEN m.observacion IS NOT NULL THEN m.observacion
+                           ELSE '-'
                        END AS referencia,
                        COALESCE(CONCAT(e.nombre, ' ', e.apellido), '-') AS responsable
                 FROM Movimiento_Insumo m
@@ -123,7 +124,7 @@ try {
 } catch (mysqli_sql_exception $error) {
     if (isset($stmt) && $stmt instanceof mysqli_stmt) mysqli_stmt_close($stmt);
     error_log("Error al consultar movimientos: " . $error->getMessage());
-    responder_movimientos(array("error" => "No se pudieron consultar los movimientos. Verificá que la migración de auditoría y movimientos esté aplicada."), 500);
+    responder_movimientos(array("error" => "No se pudieron consultar los movimientos. Verificá que la base coincida con creacionbd.sql."), 500);
 }
 $hayMas = count($movimientos) > $porPagina;
 if ($hayMas) array_pop($movimientos);

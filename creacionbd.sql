@@ -165,6 +165,8 @@ CREATE TABLE Pedido (
     id_descuento INT,
     id_mp INT,
     cobrado BOOLEAN NOT NULL DEFAULT FALSE,
+    porcentaje_descuento DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+    monto_descuento DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     PRIMARY KEY (id_pedido),
     FOREIGN KEY (id_empleado) REFERENCES Empleado(id_empleado) ON UPDATE CASCADE,
     FOREIGN KEY (id_turno) REFERENCES Turno_caja(id_turno) ON UPDATE CASCADE,
@@ -182,8 +184,8 @@ CREATE TABLE Incluye (
     costo DECIMAL(10,2) NOT NULL,
     total DECIMAL(10,2) NOT NULL,
     PRIMARY KEY (id_compra, id_insumo),
-    FOREIGN KEY (id_compra) REFERENCES Compra(id_compra) ON DELETE CASCADE,
-    FOREIGN KEY (id_insumo) REFERENCES Insumo(id_insumo) ON DELETE CASCADE
+    FOREIGN KEY (id_compra) REFERENCES Compra(id_compra) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_insumo) REFERENCES Insumo(id_insumo) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE Compone (
@@ -191,8 +193,8 @@ CREATE TABLE Compone (
     id_insumo INT,
     cantidad DECIMAL(10,2) NOT NULL,
     PRIMARY KEY (id_producto, id_insumo),
-    FOREIGN KEY (id_producto) REFERENCES Producto(id_producto) ON DELETE CASCADE,
-    FOREIGN KEY (id_insumo) REFERENCES Insumo(id_insumo) ON DELETE CASCADE
+    FOREIGN KEY (id_producto) REFERENCES Producto(id_producto) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_insumo) REFERENCES Insumo(id_insumo) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE Contiene (
@@ -203,8 +205,8 @@ CREATE TABLE Contiene (
     total DECIMAL(10,2) NOT NULL,
     completado BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (id_pedido, id_producto),
-    FOREIGN KEY (id_pedido) REFERENCES Pedido(id_pedido) ON DELETE CASCADE,
-    FOREIGN KEY (id_producto) REFERENCES Producto(id_producto) ON DELETE CASCADE
+    FOREIGN KEY (id_pedido) REFERENCES Pedido(id_pedido) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_producto) REFERENCES Producto(id_producto) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE Auditoria (
@@ -231,6 +233,7 @@ CREATE TABLE Movimiento_Insumo (
     cantidad DECIMAL(12,2) NOT NULL,
     costo_unitario DECIMAL(10,2) NOT NULL,
     referencia_id BIGINT,
+    observacion VARCHAR(255),
     PRIMARY KEY (id_movimiento),
     KEY idx_movimiento_insumo_fecha (id_insumo, fecha_hora),
     KEY idx_movimiento_tipo_fecha (tipo, fecha_hora),

@@ -405,11 +405,10 @@ if ($metodo === "POST") {
                   AND c.id_producto = ?
                   AND LOWER(cx.titulo) = 'bebidas'
                   AND p.cobrado = FALSE
-                  AND p.id_estado = (
+                  AND p.id_estado IN (
                       SELECT id_estado
                       FROM Estado_Pedido
                       WHERE LOWER(nombre) IN ('en preparación', 'comiendo')
-                      LIMIT 1
                   )";
         $stmt = mysqli_prepare($conexion, $sql);
         if (!$stmt) {
@@ -569,7 +568,6 @@ $idMesa = filter_var($entrada["id_mesa"] ?? null, FILTER_VALIDATE_INT);
 $idCliente = empty($entrada["id_cliente"])
     ? null
     : filter_var($entrada["id_cliente"], FILTER_VALIDATE_INT);
-$idDescuento = empty($entrada["id_descuento"]) ? null : filter_var($entrada["id_descuento"], FILTER_VALIDATE_INT);
 $productos = $entrada["productos"] ?? array();
 $forzarStock = ($entrada["forzar_stock"] ?? false) === true;
 $idEmpleado = (int) $_SESSION["usuario_id"];
@@ -580,8 +578,8 @@ if (
 ) {
     responder(array("error" => "Faltan datos obligatorios del pedido."), 400);
 }
-if ($idCliente === false || $idDescuento === false) {
-    responder(array("error" => "El cliente o descuento indicado no es válido."), 400);
+if ($idCliente === false) {
+    responder(array("error" => "El cliente indicado no es válido."), 400);
 }
 if ($idCliente !== null) {
     $stmtCliente = mysqli_prepare(
@@ -736,14 +734,14 @@ if (!$correcto) {
 }
 $sqlPedido = "INSERT INTO Pedido (
                   descripcion, fecha_hora_entrega, monto_total, id_empleado,
-                  id_turno, id_mesa, id_estado, id_cliente, id_descuento
+                  id_turno, id_mesa, id_estado, id_cliente
               )
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 $stmtPedido = mysqli_prepare($conexion, $sqlPedido);
 if ($stmtPedido) {
     mysqli_stmt_bind_param(
         $stmtPedido,
-        "ssdiiiiii",
+        "ssdiiiii",
         $descripcion,
         $fechaEntrega,
         $montoTotal,
@@ -751,8 +749,7 @@ if ($stmtPedido) {
         $idTurno,
         $idMesa,
         $idEstado,
-        $idCliente,
-        $idDescuento
+        $idCliente
     );
     $correcto = mysqli_stmt_execute($stmtPedido);
     $idPedido = mysqli_insert_id($conexion);

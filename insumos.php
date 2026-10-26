@@ -34,7 +34,7 @@ verificar_permiso("insumos");
         </div>
         <main class="modulo-content">
             <h2>Listado de Insumos</h2>
-            <div class="modulo-actions"><a href="altas/alta_insumo.php" title="Cargar insumo">+</a></div>
+            <div class="modulo-actions"><a class="accion-stock" href="ajustes_stock.php" title="Registrar pérdida, avería o consumo del personal">Registrar salida de stock</a><a href="altas/alta_insumo.php" title="Cargar insumo">+</a></div>
             <table class="modulo-table"><thead><tr><th>ID</th><th>Nombre</th><th>Unidad de Medida</th><th>Cant. Actual</th><th>Stock Mínimo</th><th>Costo</th><th>Acciones</th></tr></thead>
                 <tbody id="tablaInsumos"><tr><td colspan="7" class="texto-centrado">No se encontraron insumos.</td></tr></tbody>
             </table>

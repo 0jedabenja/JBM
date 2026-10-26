@@ -1,0 +1,79 @@
+.ajuste-stock {
+    margin: 24px auto;
+    max-width: 720px;
+    padding: 24px;
+}
+
+.ajuste-stock h1 {
+    color: #001f47;
+}
+
+.ajuste-stock form {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 3px 14px #001f4714;
+    display: grid;
+    gap: 10px;
+    padding: 24px;
+}
+
+.ajuste-stock label {
+    color: #001f47;
+    font-weight: 600;
+}
+
+.ajuste-stock input,
+.ajuste-stock select,
+.ajuste-stock textarea {
+    border: 1px solid #bdc7d3;
+    border-radius: 5px;
+    font: inherit;
+    padding: 10px;
+    width: 100%;
+}
+
+.ajuste-stock .disponible {
+    color: #526273;
+    margin: 0;
+}
+
+.ajuste-stock #mensajeAjuste {
+    color: #146c43;
+    margin: 0;
+}
+
+.ajuste-stock #mensajeAjuste.error {
+    color: #b42318;
+}
+
+.ajuste-stock .acciones {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.ajuste-stock .acciones a,
+.ajuste-stock .acciones button {
+    background: #001f47;
+    border: 0;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+    padding: 10px 16px;
+    text-decoration: none;
+}
+
+.ajuste-stock .acciones button:disabled {
+    cursor: wait;
+    opacity: .65;
+}
+
+@media (max-width: 600px) {
+    .ajuste-stock {
+        padding: 16px;
+    }
+
+    .ajuste-stock form {
+        padding: 16px;
+    }
+}

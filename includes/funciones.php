@@ -168,24 +168,25 @@ function registrar_auditoria($conexion, $accion, $entidad, $idEntidad = null, $d
     return $registrado;
 }
 
-function registrar_movimiento_insumo($conexion, $idInsumo, $tipo, $cantidad, $costoUnitario, $referenciaId = null) {
+function registrar_movimiento_insumo($conexion, $idInsumo, $tipo, $cantidad, $costoUnitario, $referenciaId = null, $observacion = null) {
     $idEmpleado = empty($_SESSION["usuario_id"]) ? null : (int)$_SESSION["usuario_id"];
     $idInsumo = (int)$idInsumo;
     $referenciaId = $referenciaId === null ? null : (int)$referenciaId;
     $cantidad = round((float)$cantidad, 2);
     $costoUnitario = round((float)$costoUnitario, 2);
+    $observacion = $observacion === null ? null : substr(trim((string)$observacion), 0, 255);
     if ($cantidad == 0) return true;
 
     $stmt = mysqli_prepare(
         $conexion,
-        "INSERT INTO Movimiento_Insumo (id_insumo, id_empleado, tipo, cantidad, costo_unitario, referencia_id)
-         VALUES (?, ?, ?, ?, ?, ?)"
+        "INSERT INTO Movimiento_Insumo (id_insumo, id_empleado, tipo, cantidad, costo_unitario, referencia_id, observacion)
+         VALUES (?, ?, ?, ?, ?, ?, ?)"
     );
     if (!$stmt) {
         error_log("Movimiento de insumo no registrado: " . mysqli_error($conexion));
         return false;
     }
-    mysqli_stmt_bind_param($stmt, "iisddi", $idInsumo, $idEmpleado, $tipo, $cantidad, $costoUnitario, $referenciaId);
+    mysqli_stmt_bind_param($stmt, "iisddis", $idInsumo, $idEmpleado, $tipo, $cantidad, $costoUnitario, $referenciaId, $observacion);
     $registrado = mysqli_stmt_execute($stmt);
     if (!$registrado) {
         error_log("Movimiento de insumo no registrado: " . mysqli_stmt_error($stmt));
