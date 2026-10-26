@@ -20,7 +20,7 @@ function obtener_movimientos_turno($conexion, $idTurno) {
     $movimientos = array();
     $totalCobrado = 0;
     $efectivoCobrado = 0;
-    $stmt = mysqli_prepare($conexion, "SELECT p.id_pedido, p.fecha_hora_creacion, p.monto_total, p.cobrado, p.id_mp, COALESCE(mp.descripcion, 'Pendiente de cobro') AS metodo_pago, ep.nombre AS estado FROM Pedido p LEFT JOIN Metodo_pago mp ON mp.id_mp = p.id_mp INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado WHERE p.id_turno = ? AND (LOWER(ep.nombre) = 'listo' OR p.cobrado = TRUE) ORDER BY p.fecha_hora_creacion DESC");
+    $stmt = mysqli_prepare($conexion, "SELECT p.id_pedido, p.fecha_hora_creacion, p.monto_total, p.cobrado, p.id_mp, p.id_cliente, m.numero AS numero_mesa, COALESCE(mp.descripcion, 'Pendiente de cobro') AS metodo_pago, ep.nombre AS estado FROM Pedido p LEFT JOIN Metodo_pago mp ON mp.id_mp = p.id_mp LEFT JOIN Mesa m ON m.id_mesa = p.id_mesa INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado WHERE p.id_turno = ? AND (LOWER(ep.nombre) = 'listo' OR p.cobrado = TRUE) ORDER BY CASE WHEN p.cobrado = FALSE AND LOWER(ep.nombre) = 'listo' THEN 0 WHEN p.cobrado = TRUE THEN 1 ELSE 2 END, p.fecha_hora_creacion DESC");
     mysqli_stmt_bind_param($stmt, "i", $idTurno);
     mysqli_stmt_execute($stmt);
     $resultado = mysqli_stmt_get_result($stmt);
@@ -90,10 +90,18 @@ if ($metodo === "GET") {
     $metodosPago = array();
     $resultadoMetodos = mysqli_query($conexion, "SELECT id_mp, descripcion FROM Metodo_pago ORDER BY id_mp");
     while ($metodoPago = mysqli_fetch_assoc($resultadoMetodos)) $metodosPago[] = $metodoPago;
+    $descuentos = array();
+    $resultadoDescuentos = mysqli_query($conexion, "SELECT id_descuento, valor FROM Descuento WHERE LOWER(tipo) = 'porcentaje' AND valor > 0 AND valor <= 100 ORDER BY valor");
+    if (!$resultadoDescuentos) {
+        error_log("No se pudieron consultar los descuentos: " . mysqli_error($conexion));
+        responder_caja(array("error" => "No se pudieron cargar los descuentos."), 500);
+    }
+    while ($descuento = mysqli_fetch_assoc($resultadoDescuentos)) $descuentos[] = $descuento;
     responder_caja(array(
         "abierta" => $abierta,
         "movimientos" => $resumen["movimientos"],
         "metodos_pago" => $metodosPago,
+        "descuentos" => $descuentos,
         "total_cobrado" => $resumen["total_cobrado"],
         "efectivo_esperado" => $abierta ? (float) $abierta["monto_inicial"] + $resumen["efectivo_cobrado"] : 0,
         "sesiones_propias" => $sesionesPropias,
@@ -103,6 +111,10 @@ if ($metodo === "GET") {
         "por_pagina" => $porPagina,
         "total_sesiones" => $totalSesiones
     ));
+}
+
+if (!validar_token_csrf($_SERVER["HTTP_X_CSRF_TOKEN"] ?? "")) {
+    responder_caja(array("error" => "La solicitud expiró. Recarga la página e inténtalo nuevamente."), 403);
 }
 
 $entrada = entrada_caja();
@@ -138,59 +150,163 @@ if ($accion === "cerrar") {
 }
 
 if ($accion === "cobrar") {
+    $transaccionIniciada = false;
+    try {
     $idPedido = filter_var($entrada["id_pedido"] ?? null, FILTER_VALIDATE_INT);
     $idMetodoPago = filter_var($entrada["id_mp"] ?? null, FILTER_VALIDATE_INT);
     if ($idPedido === false || $idPedido <= 0 || $idMetodoPago === false || $idMetodoPago <= 0) responder_caja(array("error" => "Selecciona un medio de pago válido para cobrar el pedido."), 400);
+
     $stmtMetodo = mysqli_prepare($conexion, "SELECT id_mp, descripcion FROM Metodo_pago WHERE id_mp = ?");
+    if (!$stmtMetodo) responder_caja(array("error" => "No se pudo validar el medio de pago."), 500);
     mysqli_stmt_bind_param($stmtMetodo, "i", $idMetodoPago);
     mysqli_stmt_execute($stmtMetodo);
     $metodoValido = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtMetodo));
     mysqli_stmt_close($stmtMetodo);
     if (!$metodoValido) responder_caja(array("error" => "El medio de pago seleccionado no existe."), 400);
+
+    $tipoDescuento = $entrada["tipo_descuento"] ?? "ninguno";
+    if (!is_string($tipoDescuento)) responder_caja(array("error" => "El tipo de descuento no es válido."), 400);
+    $idDescuento = null;
+    $porcentaje = 0.0;
+    if ($tipoDescuento === "fijo") {
+        $idDescuento = filter_var($entrada["id_descuento"] ?? null, FILTER_VALIDATE_INT);
+        if ($idDescuento === false || $idDescuento <= 0) responder_caja(array("error" => "Selecciona un descuento fijo válido."), 400);
+        $stmtDescuento = mysqli_prepare($conexion, "SELECT valor FROM Descuento WHERE id_descuento = ? AND LOWER(tipo) = 'porcentaje' AND valor > 0 AND valor <= 100");
+        if (!$stmtDescuento) responder_caja(array("error" => "No se pudo validar el descuento."), 500);
+        mysqli_stmt_bind_param($stmtDescuento, "i", $idDescuento);
+        mysqli_stmt_execute($stmtDescuento);
+        $descuento = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtDescuento));
+        mysqli_stmt_close($stmtDescuento);
+        if (!$descuento) responder_caja(array("error" => "El descuento seleccionado no existe o no es válido."), 400);
+        $porcentaje = (float)$descuento["valor"];
+    } elseif ($tipoDescuento === "personalizado") {
+        $valorDescuento = $entrada["porcentaje"] ?? null;
+        if (!is_numeric($valorDescuento) || !is_finite((float)$valorDescuento) || (float)$valorDescuento <= 0 || (float)$valorDescuento > 100) {
+            responder_caja(array("error" => "El descuento personalizado debe ser mayor que 0 y no superar el 100 por ciento."), 400);
+        }
+        $porcentaje = round((float)$valorDescuento, 2);
+        if ($porcentaje <= 0 || $porcentaje > 100) {
+            responder_caja(array("error" => "El descuento personalizado debe ser mayor que 0 y no superar el 100 por ciento."), 400);
+        }
+    } elseif ($tipoDescuento !== "ninguno") {
+        responder_caja(array("error" => "El tipo de descuento no es válido."), 400);
+    }
+
     $esEfectivo = strtolower(trim($metodoValido["descripcion"])) === "efectivo";
     $efectivoRecibido = null;
     $vuelto = null;
+    mysqli_begin_transaction($conexion);
+    $transaccionIniciada = true;
+    $stmtPedido = mysqli_prepare(
+        $conexion,
+        "SELECT p.id_cliente,
+                (SELECT COALESCE(SUM(c.total), 0) FROM Contiene c WHERE c.id_pedido = p.id_pedido) AS subtotal
+         FROM Pedido p
+         WHERE p.id_pedido = ? AND p.cobrado = FALSE
+           AND p.id_turno IN (SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL)
+           AND p.id_estado = (SELECT id_estado FROM Estado_Pedido WHERE LOWER(nombre) = 'listo' LIMIT 1)
+         FOR UPDATE"
+    );
+    if (!$stmtPedido) {
+        mysqli_rollback($conexion);
+        responder_caja(array("error" => "No se pudo validar el pedido."), 500);
+    }
+    mysqli_stmt_bind_param($stmtPedido, "i", $idPedido);
+    if (!mysqli_stmt_execute($stmtPedido)) {
+        mysqli_stmt_close($stmtPedido);
+        mysqli_rollback($conexion);
+        responder_caja(array("error" => "No se pudo validar el pedido."), 500);
+    }
+    $pedido = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtPedido));
+    mysqli_stmt_close($stmtPedido);
+    if (!$pedido) {
+        mysqli_rollback($conexion);
+        responder_caja(array("error" => "El pedido no está listo para cobrar, ya fue cobrado o no pertenece a la caja abierta."), 409);
+    }
+    if ($porcentaje > 0 && (int)$pedido["id_cliente"] <= 1) {
+        mysqli_rollback($conexion);
+        responder_caja(array("error" => "El cliente genérico no puede recibir descuentos."), 400);
+    }
+    $subtotal = round((float)$pedido["subtotal"], 2);
+    if ($subtotal <= 0) {
+        mysqli_rollback($conexion);
+        responder_caja(array("error" => "El pedido no tiene un importe válido para cobrar."), 400);
+    }
+    $montoDescuento = round($subtotal * $porcentaje / 100, 2);
+    $totalCobro = round($subtotal - $montoDescuento, 2);
     if ($esEfectivo) {
         $entradaEfectivo = $entrada["efectivo_recibido"] ?? null;
         if (!is_numeric($entradaEfectivo) || !is_finite((float)$entradaEfectivo) || (float)$entradaEfectivo < 0) {
+            mysqli_rollback($conexion);
             responder_caja(array("error" => "Ingresa un monto de efectivo válido."), 400);
         }
         $efectivoRecibido = round((float)$entradaEfectivo, 2);
-        $stmtPedido = mysqli_prepare($conexion, "SELECT monto_total FROM Pedido WHERE id_pedido = ? AND cobrado = FALSE AND id_turno IN (SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL) AND id_estado = (SELECT id_estado FROM Estado_Pedido WHERE LOWER(nombre) = 'listo' LIMIT 1)");
-        if (!$stmtPedido) responder_caja(array("error" => "No se pudo validar el pedido."), 500);
-        mysqli_stmt_bind_param($stmtPedido, "i", $idPedido);
-        mysqli_stmt_execute($stmtPedido);
-        $pedido = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtPedido));
-        mysqli_stmt_close($stmtPedido);
-        if (!$pedido) responder_caja(array("error" => "El pedido no está listo para cobrar, ya fue cobrado o no pertenece a la caja abierta."), 409);
-        $totalCentavos = (int)round((float)$pedido["monto_total"] * 100);
+        $totalCentavos = (int)round($totalCobro * 100);
         $recibidoCentavos = (int)round($efectivoRecibido * 100);
         if ($recibidoCentavos < $totalCentavos) {
+            mysqli_rollback($conexion);
             responder_caja(array("error" => "El efectivo recibido no puede ser menor que el total del pedido."), 400);
         }
         $efectivoRecibido = $recibidoCentavos / 100;
         $vuelto = ($recibidoCentavos - $totalCentavos) / 100;
-        $stmt = mysqli_prepare($conexion, "UPDATE Pedido p INNER JOIN Estado_Pedido e ON e.id_estado = p.id_estado SET p.cobrado = TRUE, p.id_mp = ? WHERE p.id_pedido = ? AND p.id_turno IN (SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL) AND p.cobrado = FALSE AND LOWER(e.nombre) = 'listo'");
-        if (!$stmt) responder_caja(array("error" => "No se pudo preparar el cobro del pedido."), 500);
-        mysqli_stmt_bind_param($stmt, "ii", $idMetodoPago, $idPedido);
-    } else {
-        $stmt = mysqli_prepare($conexion, "UPDATE Pedido p INNER JOIN Estado_Pedido e ON e.id_estado = p.id_estado SET p.cobrado = TRUE, p.id_mp = ? WHERE p.id_pedido = ? AND p.id_turno IN (SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL) AND p.cobrado = FALSE AND LOWER(e.nombre) = 'listo'");
-        if (!$stmt) responder_caja(array("error" => "No se pudo preparar el cobro del pedido."), 500);
-        mysqli_stmt_bind_param($stmt, "ii", $idMetodoPago, $idPedido);
     }
+
+    $stmt = mysqli_prepare(
+        $conexion,
+        "UPDATE Pedido
+         SET cobrado = TRUE, id_mp = ?, id_descuento = ?, monto_total = ?,
+            porcentaje_descuento = ?, monto_descuento = ?
+         WHERE id_pedido = ? AND cobrado = FALSE
+           AND id_turno IN (SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL)
+           AND id_estado = (SELECT id_estado FROM Estado_Pedido WHERE LOWER(nombre) = 'listo' LIMIT 1)"
+    );
+    if (!$stmt) {
+        mysqli_rollback($conexion);
+        responder_caja(array("error" => "No se pudo preparar el cobro del pedido."), 500);
+    }
+    mysqli_stmt_bind_param($stmt, "iidddi", $idMetodoPago, $idDescuento, $totalCobro, $porcentaje, $montoDescuento, $idPedido);
     if (!mysqli_stmt_execute($stmt)) {
         $detalleError = mysqli_stmt_error($stmt);
         mysqli_stmt_close($stmt);
+        mysqli_rollback($conexion);
         error_log("Error al cobrar el pedido #{$idPedido}: " . $detalleError);
         responder_caja(array("error" => "No se pudo registrar el cobro."), 500);
     }
     $actualizado = mysqli_stmt_affected_rows($stmt) > 0;
     mysqli_stmt_close($stmt);
-    if (!$actualizado) responder_caja(array("error" => "El pedido no está listo para cobrar, ya fue cobrado o no pertenece a la caja abierta."), 409);
-    registrar_auditoria($conexion, "cobrar_pedido", "pedido", $idPedido, array(
-        "metodo_pago" => $metodoValido["descripcion"]
+    if (!$actualizado) {
+        mysqli_rollback($conexion);
+        responder_caja(array("error" => "El pedido no está listo para cobrar, ya fue cobrado o no pertenece a la caja abierta."), 409);
+    }
+    if (!registrar_auditoria($conexion, "cobrar_pedido", "pedido", $idPedido, array(
+        "metodo_pago" => $metodoValido["descripcion"],
+        "porcentaje_descuento" => $porcentaje,
+        "monto_descuento" => $montoDescuento
+    ))) {
+        mysqli_rollback($conexion);
+        $transaccionIniciada = false;
+        responder_caja(array("error" => "No se pudo registrar la auditoría del cobro."), 500);
+    }
+    if (!mysqli_commit($conexion)) {
+        mysqli_rollback($conexion);
+        $transaccionIniciada = false;
+        responder_caja(array("error" => "No se pudo confirmar el cobro."), 500);
+    }
+    $transaccionIniciada = false;
+    responder_caja(array(
+        "ok" => true,
+        "subtotal" => $subtotal,
+        "porcentaje_descuento" => $porcentaje,
+        "monto_descuento" => $montoDescuento,
+        "total" => $totalCobro,
+        "efectivo_recibido" => $efectivoRecibido,
+        "vuelto" => $vuelto
     ));
-    responder_caja(array("ok" => true, "efectivo_recibido" => $efectivoRecibido, "vuelto" => $vuelto));
+    } catch (mysqli_sql_exception $error) {
+        if ($transaccionIniciada) mysqli_rollback($conexion);
+        error_log("Error de base de datos al cobrar el pedido: " . $error->getMessage());
+        responder_caja(array("error" => "No se pudo registrar el cobro."), 500);
+    }
 }
 
 responder_caja(array("error" => "Acción no válida."), 400);

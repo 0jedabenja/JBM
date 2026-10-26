@@ -20,40 +20,54 @@ $camposPermitidos = array(
 );
 $campo = obtener_parametro_get("campo", "todos");
 $filtro = obtener_parametro_get("filtro");
-
+$where = "WHERE i.activo = TRUE";
+$sqlFiltro = "";
 if ($filtro !== "" && $filtro !== "undefined") {
     $filtro = "%" . $filtro . "%";
     if (isset($camposPermitidos[$campo])) {
-        $sql = "SELECT i.id_insumo, i.nombre, i.cantidad_actual, i.stock_minimo, i.costo, i.id_medida, m.unidad
-                FROM Insumo i
-                LEFT JOIN Medida m ON m.id_medida = i.id_medida
-                WHERE i.activo = TRUE AND {$camposPermitidos[$campo]} LIKE ?
-                ORDER BY i.nombre LIMIT ? OFFSET ?";
-        $stmt = mysqli_prepare($conexion, $sql);
+        $sqlFiltro = " AND {$camposPermitidos[$campo]} LIKE ?";
+    } else {
+        $sqlFiltro = " AND (i.nombre LIKE ? OR i.id_insumo LIKE ? OR m.unidad LIKE ?
+                           OR i.cantidad_actual LIKE ? OR i.stock_minimo LIKE ? OR i.costo LIKE ?)";
+    }
+}
+$sql = "SELECT i.id_insumo, i.nombre, i.cantidad_actual, i.stock_minimo, i.costo, i.id_medida, m.unidad
+        FROM Insumo i
+        LEFT JOIN Medida m ON m.id_medida = i.id_medida
+        {$where}{$sqlFiltro}
+        ORDER BY i.nombre
+        LIMIT ? OFFSET ?";
+$stmt = mysqli_prepare($conexion, $sql);
+if (!$stmt) {
+    error_log("No se pudo preparar el listado de insumos: " . mysqli_error($conexion));
+    http_response_code(500);
+    echo json_encode(array("error" => "No se pudieron cargar los insumos."), JSON_UNESCAPED_UNICODE);
+    exit();
+}
+if ($filtro !== "" && $filtro !== "undefined") {
+    if (isset($camposPermitidos[$campo])) {
         mysqli_stmt_bind_param($stmt, "sii", $filtro, $limite, $desdequeelemento);
     } else {
-        $sql = "SELECT i.id_insumo, i.nombre, i.cantidad_actual, i.stock_minimo, i.costo, i.id_medida, m.unidad
-                FROM Insumo i
-                LEFT JOIN Medida m ON m.id_medida = i.id_medida
-                WHERE i.activo = TRUE
-                  AND (i.nombre LIKE ? OR i.id_insumo LIKE ? OR m.unidad LIKE ?
-                   OR i.cantidad_actual LIKE ? OR i.stock_minimo LIKE ? OR i.costo LIKE ?)
-                ORDER BY i.nombre LIMIT ? OFFSET ?";
-        $stmt = mysqli_prepare($conexion, $sql);
         mysqli_stmt_bind_param($stmt, "ssssssii", $filtro, $filtro, $filtro, $filtro, $filtro, $filtro, $limite, $desdequeelemento);
     }
 } else {
-        $sql = "SELECT i.id_insumo, i.nombre, i.cantidad_actual, i.stock_minimo, i.costo, i.id_medida, m.unidad
-            FROM Insumo i
-            LEFT JOIN Medida m ON m.id_medida = i.id_medida
-            WHERE i.activo = TRUE
-            ORDER BY nombre 
-            LIMIT ? OFFSET ?";        
-    $stmt = mysqli_prepare($conexion, $sql);
     mysqli_stmt_bind_param($stmt, "ii", $limite, $desdequeelemento);
 }
-mysqli_stmt_execute($stmt);
+if (!mysqli_stmt_execute($stmt)) {
+    error_log("No se pudo consultar el listado de insumos: " . mysqli_stmt_error($stmt));
+    mysqli_stmt_close($stmt);
+    http_response_code(500);
+    echo json_encode(array("error" => "No se pudieron cargar los insumos."), JSON_UNESCAPED_UNICODE);
+    exit();
+}
 $resultado = mysqli_stmt_get_result($stmt);
+if (!$resultado) {
+    error_log("No se pudo obtener el resultado del listado de insumos: " . mysqli_stmt_error($stmt));
+    mysqli_stmt_close($stmt);
+    http_response_code(500);
+    echo json_encode(array("error" => "No se pudieron cargar los insumos."), JSON_UNESCAPED_UNICODE);
+    exit();
+}
 
 $insumos = array();
 while ($row = mysqli_fetch_assoc($resultado)) {

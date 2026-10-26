@@ -61,6 +61,7 @@ if ($idPedido === false || $idPedido <= 0) {
 $stmt = mysqli_prepare(
     $conexion,
     "SELECT p.id_pedido, p.fecha_hora_creacion, p.monto_total, p.cobrado,
+            p.porcentaje_descuento, p.monto_descuento,
             COALESCE(CONCAT(c.nombre, ' ', c.apellido), 'Consumidor final') AS cliente,
             COALESCE(CAST(m.numero AS CHAR), '-') AS mesa,
             COALESCE(mp.descripcion, 'Pendiente de cobro') AS metodo_pago,
@@ -161,9 +162,20 @@ try {
         $pdf->ImprimirProducto($producto["nombre"], $producto["cantidad"], $producto["precio"], $producto["total"]);
     }
 
+    $subtotal = array_sum(array_map(function ($producto) {
+        return (float)$producto["total"];
+    }, $productos));
     $pdf->Ln(2);
     $pdf->Line(6, $pdf->GetY(), 74, $pdf->GetY());
     $pdf->Ln(2);
+    if ((float)$pedido["monto_descuento"] > 0) {
+        $pdf->SetFont("Arial", "", 8);
+        $pdf->Cell(34, 5, texto_boleta("Subtotal"), 0, 0, "L");
+        $pdf->Cell(34, 5, texto_boleta("$ " . number_format($subtotal, 2, ",", ".")), 0, 1, "R");
+        $etiquetaDescuento = "Descuento (" . number_format((float)$pedido["porcentaje_descuento"], 2, ",", ".") . "%)";
+        $pdf->Cell(34, 5, texto_boleta($etiquetaDescuento), 0, 0, "L");
+        $pdf->Cell(34, 5, texto_boleta("- $ " . number_format((float)$pedido["monto_descuento"], 2, ",", ".")), 0, 1, "R");
+    }
     $pdf->SetFont("Arial", "B", 10);
     $pdf->Cell(34, 6, texto_boleta("TOTAL"), 0, 0, "L");
     $pdf->Cell(34, 6, texto_boleta("$ " . number_format((float)$pedido["monto_total"], 2, ",", ".")), 0, 1, "R");

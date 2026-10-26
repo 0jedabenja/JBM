@@ -49,6 +49,9 @@ $nombre = $fila["nombre"];
                             <option value="saldo_inicial">Saldo inicial</option>
                             <option value="inventario">Ajuste de inventario</option>
                             <option value="compra">Compra</option>
+                            <option value="perdida">Pérdida</option>
+                            <option value="averia">Insumo dañado</option>
+                            <option value="consumo_personal">Consumo del personal</option>
                         <?php else: ?>
                             <option value="venta">Venta / pedido</option>
                         <?php endif; ?>
@@ -109,7 +112,7 @@ async function cargarMovimientos() {
         try {
             datos = JSON.parse(contenido);
         } catch {
-            throw new Error("El servidor devolvió una respuesta inválida. Verificá que la migración de auditoría y movimientos esté aplicada.");
+            throw new Error("El servidor devolvió una respuesta inválida. Verificá la conexión y la estructura de la base de datos.");
         }
         if (!respuesta.ok) throw new Error(datos.error || "No se pudieron cargar los movimientos.");
         const cuerpo = document.getElementById("filasMovimientos");
@@ -136,7 +139,7 @@ async function cargarMovimientos() {
 }
 
 function etiquetaTipo(tipo) {
-    return ({ saldo_inicial: "Saldo inicial", inventario: "Ajuste de inventario", compra: "Compra", venta: "Venta / pedido" })[tipo] || tipo;
+    return ({ saldo_inicial: "Saldo inicial", inventario: "Ajuste de inventario", compra: "Compra", perdida: "Pérdida", averia: "Producto dañado", consumo_personal: "Consumo del personal", venta: "Venta / pedido" })[tipo] || tipo;
 }
 function formatearCantidad(valor, conSigno) {
     const formato = Number(valor).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });

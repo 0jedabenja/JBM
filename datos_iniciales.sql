@@ -18,6 +18,9 @@ INSERT INTO Categoria (titulo, descripcion) VALUES
 ('Bebidas', 'Bebidas con y sin alcohol.'),
 ('Postres', 'Postres y opciones dulces.');
 
+INSERT INTO Cliente (id_cliente, nombre, apellido, activo) VALUES
+(1, 'Consumidor', 'Final', TRUE);
+
 INSERT INTO Estado_Mesa (nombre) VALUES
 ('Libre'),
 ('Ocupada'),
@@ -34,7 +37,8 @@ INSERT INTO Estado_Pedido (nombre) VALUES
 INSERT INTO Descuento (tipo, valor) VALUES
 ('porcentaje', 0.00),
 ('porcentaje', 10.00),
-('porcentaje', 20.00);
+('porcentaje', 20.00),
+('porcentaje', 100.00);
 
 INSERT INTO Metodo_pago (descripcion) VALUES
 ('Efectivo'),
