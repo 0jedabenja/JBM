@@ -63,6 +63,7 @@ if ($tipoEntidad === "producto") {
 } else {
     $sqlBase = "SELECT m.fecha_hora, m.tipo, m.cantidad, m.costo_unitario,
                        m.cantidad * m.costo_unitario AS total,
+                       m.referencia_id,
                        CASE
                            WHEN m.tipo = 'compra' THEN CONCAT('Compra #', m.referencia_id)
                            WHEN m.tipo = 'inventario' THEN CONCAT('Conteo #', m.referencia_id)

@@ -10,7 +10,9 @@ $tokenCsrf = obtener_token_csrf();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Caja</title>
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <script src="assets/js/sidebar.js" defer></script>
+    <script src="assets/js/notificaciones.js" defer></script>
     <link rel="stylesheet" href="assets/css/caja.css">
 </head>
 <body>
@@ -46,7 +48,7 @@ $tokenCsrf = obtener_token_csrf();
 </div>
 
 <dialog id="dialogAbrir" class="caja-dialog" aria-labelledby="tituloDialogAbrir"><form id="formAbrir" class="caja-dialog-inner"><div class="caja-dialog-head"><div><h2 id="tituloDialogAbrir">Abrir caja</h2><p>Indica el efectivo disponible al iniciar el turno.</p></div><button class="caja-dialog-close" type="button" data-cerrar-dialog="dialogAbrir" aria-label="Cerrar">&times;</button></div><div class="caja-field"><label for="montoInicial">Monto inicial</label><input id="montoInicial" type="number" min="0" step="0.01" required inputmode="decimal" placeholder="0,00"></div><p id="errorAbrir" class="caja-message error" role="alert"></p><div class="caja-dialog-footer"><button class="caja-button secondary" type="button" data-cerrar-dialog="dialogAbrir">Cancelar</button><button class="caja-button" type="submit">Confirmar apertura</button></div></form></dialog>
-<dialog id="dialogCerrar" class="caja-dialog" aria-labelledby="tituloDialogCerrar"><form id="formCerrar" class="caja-dialog-inner"><div class="caja-dialog-head"><div><h2 id="tituloDialogCerrar">Cerrar caja</h2><p>Cuenta el efectivo y registra el monto final del turno.</p></div><button class="caja-dialog-close" type="button" data-cerrar-dialog="dialogCerrar" aria-label="Cerrar">&times;</button></div><div class="caja-current-state"><p>Efectivo esperado</p><strong id="efectivoEsperadoCierre">$ 0,00</strong></div><div class="caja-field"><label for="montoFinal">Efectivo contado al cierre</label><input id="montoFinal" type="number" min="0" step="0.01" required inputmode="decimal" placeholder="0,00"></div><p id="diferenciaCierre" class="caja-subtitle"></p><p id="errorCerrar" class="caja-message error" role="alert"></p><div class="caja-dialog-footer"><button class="caja-button secondary" type="button" data-cerrar-dialog="dialogCerrar">Cancelar</button><button class="caja-button" type="submit">Confirmar cierre</button></div></form></dialog>
+<dialog id="dialogCerrar" class="caja-dialog" aria-labelledby="tituloDialogCerrar"><form id="formCerrar" class="caja-dialog-inner"><div class="caja-dialog-head"><div><h2 id="tituloDialogCerrar">Cerrar caja</h2><p>Cuenta el efectivo y registra el monto final del turno.</p></div><button class="caja-dialog-close" type="button" data-cerrar-dialog="dialogCerrar" aria-label="Cerrar">&times;</button></div><div class="caja-current-state"><p>Efectivo esperado</p><strong id="efectivoEsperadoCierre">$ 0,00</strong></div><div class="caja-field"><label for="montoFinal">Efectivo contado al cierre</label><input id="montoFinal" type="number" min="0" step="0.01" required inputmode="decimal" placeholder="0,00"></div><p id="diferenciaCierre" class="caja-subtitle"></p><div id="confirmacionPasswordCierre" class="caja-field" hidden><label for="passwordCierre">Contraseña del usuario</label><input id="passwordCierre" type="password" autocomplete="current-password" placeholder="Ingresa tu contraseña"></div><p id="errorCerrar" class="caja-message error" role="alert"></p><div class="caja-dialog-footer"><button class="caja-button secondary" type="button" data-cerrar-dialog="dialogCerrar">Cancelar</button><button class="caja-button" type="submit">Confirmar cierre</button></div></form></dialog>
 <dialog id="dialogDetalle" class="caja-dialog" aria-labelledby="tituloDialogDetalle"><div class="caja-dialog-inner"><div class="caja-dialog-head"><div><h2 id="tituloDialogDetalle">Detalle de sesión</h2><p id="subtituloDetalle"></p></div><button class="caja-dialog-close" type="button" data-cerrar-dialog="dialogDetalle" aria-label="Cerrar">&times;</button></div><dl id="resumenDetalle" class="caja-detail-summary"></dl><h3>Movimientos</h3><div class="caja-detail-movements caja-table-wrap"><table class="caja-table"><thead><tr><th>Pedido</th><th>Fecha</th><th>Importe</th><th>Medio</th><th>Estado</th></tr></thead><tbody id="movimientosDetalle"></tbody></table></div><p id="sinMovimientosDetalle" class="caja-empty" hidden>No hay movimientos en esta sesión.</p></div></dialog>
 <dialog id="dialogCobroEfectivo" class="caja-dialog" aria-labelledby="tituloCobroEfectivo"><form id="formCobroEfectivo" class="caja-dialog-inner"><div class="caja-dialog-head"><div><h2 id="tituloCobroEfectivo">Cobrar pedido</h2><p id="clienteCobroEfectivo"></p><p id="mesaCobroEfectivo"></p></div><button class="caja-dialog-close" type="button" data-cerrar-dialog="dialogCobroEfectivo" aria-label="Cerrar">&times;</button></div><div class="caja-current-state"><p>Subtotal</p><strong id="subtotalCobroEfectivo">$ 0,00</strong></div><div id="bloqueDescuentoCobro"><div class="caja-field"><label for="tipoDescuento">Descuento</label><select id="tipoDescuento"><option value="ninguno">Sin descuento</option><option value="personalizado">Personalizado (%)</option></select></div><div id="campoPorcentajeDescuento" class="caja-field" hidden><label for="porcentajeDescuento">Porcentaje personalizado</label><input id="porcentajeDescuento" type="number" min="0.01" max="100" step="0.01" inputmode="decimal" value="10"></div><div class="caja-current-state"><p>Descuento aplicado</p><strong id="montoDescuentoCobro">$ 0,00</strong></div></div><div class="caja-current-state"><p>Total a cobrar</p><strong id="totalCobroEfectivo">$ 0,00</strong></div><div id="campoEfectivoRecibido" class="caja-field"><label for="efectivoRecibido">Efectivo recibido</label><input id="efectivoRecibido" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00"></div><div id="campoVueltoCobro" class="caja-current-state"><p>Vuelto</p><strong id="vueltoCobroEfectivo">$ 0,00</strong></div><p id="errorCobroEfectivo" class="caja-message error" role="alert"></p><div class="caja-dialog-footer"><button class="caja-button secondary" type="button" data-cerrar-dialog="dialogCobroEfectivo">Cancelar</button><button id="confirmarCobroEfectivo" class="caja-button" type="submit">Confirmar cobro</button></div></form></dialog>
 
@@ -61,6 +63,7 @@ let metodosPago = [];
 let descuentosFijos = [];
 let cobroEfectivoActual = null;
 const pagosEfectivoTemporales = new Map();
+let pedidosListosCajaAnteriores = null;
 
 async function cargarCaja(pagina = paginaHistorial) {
     paginaHistorial = pagina;
@@ -103,7 +106,18 @@ function renderizarTurno(datos) {
     document.getElementById("totalCobrado").textContent = moneda(datos.total_cobrado);
     efectivoEsperadoActual = Number(datos.efectivo_esperado || 0);
     document.getElementById("efectivoEsperado").textContent = moneda(efectivoEsperadoActual);
-    renderizarMovimientos(datos.movimientos || [], "movimientosCaja", true);
+    const movimientos = datos.movimientos || [];
+    const pedidosListos = new Set(movimientos.filter(movimiento => String(movimiento.estado).toLowerCase() === "listo" && Number(movimiento.cobrado) !== 1).map(movimiento => Number(movimiento.id_pedido)));
+    if (pedidosListosCajaAnteriores) {
+        pedidosListos.forEach(idPedido => {
+            if (!pedidosListosCajaAnteriores.has(idPedido)) {
+                window.AlertasJBM?.reproducir("cobro");
+                window.AlertasJBM?.navegador("Pedido listo para cobrar", `El pedido #${idPedido} está esperando en caja.`);
+            }
+        });
+    }
+    pedidosListosCajaAnteriores = pedidosListos;
+    renderizarMovimientos(movimientos, "movimientosCaja", true);
     actualizarTiempoCaja();
 }
 
@@ -288,6 +302,8 @@ async function confirmarCobroEfectivo(evento) {
         if (esEfectivo) pagosEfectivoTemporales.set(cobroEfectivoActual.idPedido, Math.round(efectivoRecibido * 100) / 100);
         cerrarDialogo("dialogCobroEfectivo");
         mostrarMensaje(esEfectivo ? `Pedido cobrado. Vuelto: ${moneda(resultado.vuelto)}.` : "Pedido cobrado.", false);
+        window.AlertasJBM?.reproducir("cobrado");
+        window.AlertasJBM?.navegador("Cobro confirmado", `El pedido #${resultado.id_pedido || cobroEfectivoActual.idPedido} fue cobrado.`);
         cobroEfectivoActual = null;
         await cargarCaja();
     } catch (error) {
@@ -298,10 +314,28 @@ async function confirmarCobroEfectivo(evento) {
 }
 
 document.getElementById("botonAbrir").addEventListener("click", () => { document.getElementById("errorAbrir").textContent = ""; document.getElementById("formAbrir").reset(); document.getElementById("dialogAbrir").showModal(); document.getElementById("montoInicial").focus(); });
-document.getElementById("botonCerrar").addEventListener("click", () => { document.getElementById("errorCerrar").textContent = ""; document.getElementById("formCerrar").reset(); document.getElementById("efectivoEsperadoCierre").textContent = moneda(efectivoEsperadoActual); document.getElementById("dialogCerrar").showModal(); document.getElementById("montoFinal").focus(); });
+document.getElementById("botonCerrar").addEventListener("click", () => { document.getElementById("errorCerrar").textContent = ""; document.getElementById("formCerrar").reset(); document.getElementById("confirmacionPasswordCierre").hidden = true; document.getElementById("passwordCierre").required = false; document.getElementById("diferenciaCierre").textContent = ""; document.getElementById("efectivoEsperadoCierre").textContent = moneda(efectivoEsperadoActual); document.getElementById("dialogCerrar").showModal(); document.getElementById("montoFinal").focus(); });
 document.getElementById("formAbrir").addEventListener("submit", async evento => { evento.preventDefault(); await enviar({accion:"abrir", monto_inicial:Number(document.getElementById("montoInicial").value)}, "Caja abierta.", "errorAbrir"); });
-document.getElementById("formCerrar").addEventListener("submit", async evento => { evento.preventDefault(); await enviar({accion:"cerrar", monto_final:Number(document.getElementById("montoFinal").value)}, "Caja cerrada.", "errorCerrar"); });
-document.getElementById("montoFinal").addEventListener("input", evento => { const diferencia = Number(evento.target.value || 0) - efectivoEsperadoActual; document.getElementById("diferenciaCierre").textContent = evento.target.value === "" ? "" : `Diferencia respecto al efectivo esperado: ${moneda(diferencia)}`; });
+document.getElementById("formCerrar").addEventListener("submit", async evento => {
+    evento.preventDefault();
+    const montoFinal = Number(document.getElementById("montoFinal").value);
+    const diferencia = montoFinal - efectivoEsperadoActual;
+    if (Math.abs(diferencia) > 200 && !document.getElementById("passwordCierre").value) {
+        document.getElementById("errorCerrar").textContent = "Esta diferencia requiere confirmar tu contraseña.";
+        document.getElementById("passwordCierre").focus();
+        return;
+    }
+    await enviar({accion:"cerrar", monto_final:montoFinal, password_cierre:document.getElementById("passwordCierre").value}, "Caja cerrada.", "errorCerrar");
+});
+document.getElementById("montoFinal").addEventListener("input", evento => {
+    const montoFinal = Number(evento.target.value || 0);
+    const diferencia = montoFinal - efectivoEsperadoActual;
+    document.getElementById("diferenciaCierre").textContent = evento.target.value === "" ? "" : `Diferencia respecto al efectivo esperado: ${moneda(diferencia)}`;
+    const requierePassword = evento.target.value !== "" && Math.abs(diferencia) > 200;
+    document.getElementById("confirmacionPasswordCierre").hidden = !requierePassword;
+    document.getElementById("passwordCierre").required = requierePassword;
+    if (!requierePassword) document.getElementById("passwordCierre").value = "";
+});
 document.getElementById("efectivoRecibido").addEventListener("input", actualizarVuelto);
 document.getElementById("formCobroEfectivo").addEventListener("submit", confirmarCobroEfectivo);
 document.getElementById("tipoDescuento").addEventListener("change", actualizarResumenCobro);

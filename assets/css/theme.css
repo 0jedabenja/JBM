@@ -99,3 +99,352 @@ body[data-theme="dark"] .grafico-svg text {
 body[data-theme="dark"] .grafico-svg line {
     stroke: #3a3f47;
 }
+
+/* Base oscura y componentes reutilizados en todo el sistema. */
+body[data-theme="dark"] {
+    --form-bg: #1a1c20;
+    --text-main: #f0f1f3;
+    --input-border: #50545c;
+    scrollbar-color: #50545c #111214;
+}
+
+body[data-theme="dark"] .container,
+body[data-theme="dark"] .main {
+    background: #111214;
+}
+
+body[data-theme="dark"] .topbar,
+body[data-theme="dark"] .menu .dropdown {
+    background: #17191d;
+    border-color: #34373d;
+    color: #f4f4f5;
+}
+
+body[data-theme="dark"] .navigation {
+    background: #071d36;
+    border-color: #071d36;
+}
+
+body[data-theme="dark"] .navigation ul li a {
+    color: #f1f4f8;
+}
+
+body[data-theme="dark"] .navigation ul li:hover,
+body[data-theme="dark"] .navigation ul li.active {
+    background-color: #111214;
+}
+
+body[data-theme="dark"] .navigation ul li:hover > a,
+body[data-theme="dark"] .navigation ul li.active > a {
+    color: #f4f4f5;
+}
+
+body[data-theme="dark"] .navigation ul li:hover > a::before,
+body[data-theme="dark"] .navigation ul li.active > a::before {
+    box-shadow: 35px 35px 0 10px #111214;
+}
+
+body[data-theme="dark"] .navigation ul li:hover > a::after,
+body[data-theme="dark"] .navigation ul li.active > a::after {
+    box-shadow: 35px -35px 0 10px #111214;
+}
+
+body[data-theme="dark"] .menu .dropdown ul li a,
+body[data-theme="dark"] .menu .dropdown ul li .theme-toggle {
+    color: #f0f1f3;
+}
+
+body[data-theme="dark"] .main :where(div, section, article, aside, fieldset, form, details, summary, nav, header, footer, dialog) {
+    border-color: #34373d;
+}
+
+body[data-theme="dark"] .main :where(h1, h2, h3, h4, h5, h6, p, span, small, label, legend, th, td, dt, dd, summary) {
+    color: #f0f1f3;
+}
+
+body[data-theme="dark"] .main :where(div, section, article, aside, fieldset, details, dialog, .card, .panel, .form-container, .pedido-panel, .cocina-pedido, .producto-card, .producto-extra, .mesa-pendiente-limpieza, .stock-alerta, .stock-vacio, .grafico-card) {
+    background-color: #1a1c20;
+}
+
+body[data-theme="dark"] .main :where(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]),
+body[data-theme="dark"] .main button,
+body[data-theme="dark"] .main [role="button"] {
+    background-color: #25282e;
+    border-color: #50545c;
+    color: #f4f4f5;
+}
+
+body[data-theme="dark"] .main :where(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):focus,
+body[data-theme="dark"] .main button:focus-visible,
+body[data-theme="dark"] .main [role="button"]:focus-visible {
+    outline-color: #7bb8ff;
+}
+
+body[data-theme="dark"] .main button:disabled,
+body[data-theme="dark"] .main [aria-disabled="true"] {
+    background-color: #34373d !important;
+    color: #9da2aa !important;
+    opacity: 0.72;
+}
+
+body[data-theme="dark"] .main table,
+body[data-theme="dark"] .main tbody,
+body[data-theme="dark"] .main tr {
+    background-color: transparent;
+    color: #f0f1f3;
+}
+
+body[data-theme="dark"] .main th {
+    background-color: #25282e;
+}
+
+body[data-theme="dark"] .main tbody tr:nth-child(even),
+body[data-theme="dark"] .main .alternado {
+    background-color: #202329;
+}
+
+body[data-theme="dark"] .main hr {
+    border-color: #3b3e45;
+}
+
+body[data-theme="dark"] .main dialog {
+    background-color: #1a1c20;
+    color: #f0f1f3;
+}
+
+body[data-theme="dark"] dialog::backdrop {
+    background: rgba(0, 0, 0, 0.72);
+}
+
+body[data-theme="dark"] .main .producto-sin-insumos,
+body[data-theme="dark"] .main .stock-alerta,
+body[data-theme="dark"] .main .advertencia-caja,
+body[data-theme="dark"] .main .notificacion-pedido.error,
+body[data-theme="dark"] .main .mensaje.error,
+body[data-theme="dark"] .main .graficos-error {
+    background-color: #402427 !important;
+    border-color: #8d3a40;
+    color: #ffd1d4 !important;
+}
+
+body[data-theme="dark"] .main .producto-sin-insumos :where(h4, p, span, strong) {
+    color: #ffd1d4 !important;
+}
+
+body[data-theme="dark"] .main .exito,
+body[data-theme="dark"] .main .stock-vacio,
+body[data-theme="dark"] .main .notificacion-pedido:not(.error) {
+    background-color: #1f3a28 !important;
+    border-color: #477c56;
+    color: #d5f7df !important;
+}
+
+body[data-theme="dark"] .main .bienvenida-inicio {
+    background: linear-gradient(135deg, #091b32, #183d61);
+    border-color: #274f74;
+}
+
+body[data-theme="dark"] .main img:not(.foto-perfil):not(.imagen-producto) {
+    opacity: 0.92;
+}
+
+body[data-theme="dark"] .main input[type="checkbox"] + label,
+body[data-theme="dark"] .main input[type="radio"] + label {
+    color: #f0f1f3;
+}
+
+/* Pantallas públicas sin contenedor .main (login y recuperación). */
+body[data-theme="dark"]:has(.form-container, .card) {
+    background: #111214;
+    color: #f0f1f3;
+}
+
+body[data-theme="dark"] .form-container,
+body[data-theme="dark"] .card {
+    background: #1a1c20;
+    border-color: #34373d;
+    color: #f0f1f3;
+}
+
+body[data-theme="dark"] .form-container :where(h1, h2, h3, p, label, small),
+body[data-theme="dark"] .card :where(h1, h2, h3, p, label, small) {
+    color: #f0f1f3;
+}
+
+body[data-theme="dark"] :where(.form-container, .card) input:not([type="checkbox"]):not([type="radio"]),
+body[data-theme="dark"] :where(.form-container, .card) select,
+body[data-theme="dark"] :where(.form-container, .card) textarea {
+    background: #25282e;
+    border-color: #50545c;
+    color: #f4f4f5;
+}
+
+body[data-theme="dark"] :where(.form-container, .card) button,
+body[data-theme="dark"] :where(.form-container, .card) input[type="submit"] {
+    background: #294d75;
+    border-color: #527da8;
+    color: #fff;
+}
+
+body[data-theme="dark"] :where(.form-container, .card) a {
+    color: #9bc9ff;
+}
+
+/* Mapa de mesas y sus estados. */
+body[data-theme="dark"] .main .mapa-superficie {
+    background: linear-gradient(rgba(15, 25, 34, .72), rgba(15, 25, 34, .72)), url('../img/Salon.png') center/cover no-repeat;
+    border-color: #3a4249;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .25);
+}
+
+body[data-theme="dark"] .main .mapa-superficie::before {
+    background: linear-gradient(rgba(210, 224, 236, .06) 1px, transparent 1px), linear-gradient(90deg, rgba(210, 224, 236, .06) 1px, transparent 1px);
+    background-size: 12.5% 12.5%;
+}
+
+body[data-theme="dark"] .main .mesa.libre {
+    background: linear-gradient(180deg, #173d31, #122d27);
+    border-color: #4a9b7c;
+}
+
+body[data-theme="dark"] .main .mesa.ocupada {
+    background: linear-gradient(180deg, #50292d, #382125);
+    border-color: #ce7378;
+}
+
+body[data-theme="dark"] .main .mesa.paralimpiar {
+    background: linear-gradient(180deg, #514126, #39301f);
+    border-color: #d0a24c;
+}
+
+body[data-theme="dark"] .main .mesa strong,
+body[data-theme="dark"] .main .mesa small,
+body[data-theme="dark"] .main .mapa-legend-item {
+    color: #f0f1f3;
+}
+
+body[data-theme="dark"] .main .mesa-actions button {
+    background: #25282e;
+    border: 1px solid #50545c;
+}
+
+body[data-theme="dark"] .main .mapa-salida span,
+body[data-theme="dark"] .main .mapa-summary .chip,
+body[data-theme="dark"] .main .mapa-mobile-note {
+    background: #25282e;
+    border-color: #46505b;
+    color: #d9e5ef;
+}
+
+/* Apartado seleccionado oscuro, conservando los bordes curvos originales. */
+body[data-theme="dark"] .navigation ul li.active {
+    background-color: #111214;
+}
+
+body[data-theme="dark"] .navigation ul li.active > a {
+    color: #f4f4f5;
+}
+
+body[data-theme="dark"] .navigation ul li.active > a::before {
+    box-shadow: 35px 35px 0 10px #111214;
+}
+
+body[data-theme="dark"] .navigation ul li.active > a::after {
+    box-shadow: 35px -35px 0 10px #111214;
+}
+
+/* Los pseudo-elementos deben ocupar exactamente una sola curva por enlace. */
+body[data-theme="dark"] .navigation ul li:not(:hover):not(.active) > a::before,
+body[data-theme="dark"] .navigation ul li:not(:hover):not(.active) > a::after {
+    content: none;
+}
+
+body[data-theme="dark"] .navigation ul li[data-menu="inicio"] .icon img { content: url('../img/sidebar/light-home.svg'); }
+body[data-theme="dark"] .navigation ul li[data-menu="pedidos"] .icon img { content: url('../img/sidebar/light-restaurant.svg'); }
+body[data-theme="dark"] .navigation ul li[data-menu="mapa"] .icon img { content: url('../img/sidebar/light-map.svg'); }
+body[data-theme="dark"] .navigation ul li[data-menu="caja"] .icon img { content: url('../img/sidebar/light-payments.svg'); }
+body[data-theme="dark"] .navigation ul li[data-menu="clientes"] .icon img { content: url('../img/sidebar/light-person.svg'); }
+body[data-theme="dark"] .navigation ul li[data-menu="insumos"] .icon img,
+body[data-theme="dark"] .navigation ul li[data-menu="conteos"] .icon img { content: url('../img/sidebar/light-box.svg'); }
+body[data-theme="dark"] .navigation ul li[data-menu="productos"] .icon img { content: url('../img/sidebar/light-shopping.svg'); }
+body[data-theme="dark"] .navigation ul li[data-menu="empleados"] .icon img { content: url('../img/sidebar/light-team.svg'); }
+body[data-theme="dark"] .navigation ul li[data-menu="auditoria"] .icon img { content: url('../img/sidebar/light-audit.svg'); }
+body[data-theme="dark"] .navigation ul li[data-menu="compras"] .icon img { content: url('../img/sidebar/light-purchase.svg'); }
+
+/* Estados, chips y botones de acciones en todos los módulos. */
+body[data-theme="dark"] .main .caja-status.abierta {
+    background: #163a27;
+    border: 1px solid #3f8058;
+    color: #9fe5b6 !important;
+}
+
+body[data-theme="dark"] .main .caja-status.cerrada {
+    background: #49351c;
+    border: 1px solid #80612f;
+    color: #ffd68a !important;
+}
+
+body[data-theme="dark"] .main .chip,
+body[data-theme="dark"] .main .estado-pedido,
+body[data-theme="dark"] .main .estado-bebida,
+body[data-theme="dark"] .main .caja-movement-state,
+body[data-theme="dark"] .main [class*="estado-"] {
+    background: #2a3340;
+    border-color: #46556a;
+    color: #d7e5f4 !important;
+}
+
+body[data-theme="dark"] .main [class*="accion-"],
+body[data-theme="dark"] .main .accion,
+body[data-theme="dark"] .main [class*="-button"],
+body[data-theme="dark"] .main [class*="-actions"] a,
+body[data-theme="dark"] .main [class*="-actions"] button {
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+body[data-theme="dark"] .main .acciones-producto .accion-movimientos,
+body[data-theme="dark"] .main .accion-movimientos,
+body[data-theme="dark"] .main a.accion-stock,
+body[data-theme="dark"] .main .secondary:not(.navigation *) {
+    background: #28384a !important;
+    border-color: #587491 !important;
+    color: #cfe6ff !important;
+}
+
+body[data-theme="dark"] .main .acciones-producto .accion-editar,
+body[data-theme="dark"] .main .accion-editar,
+body[data-theme="dark"] .main .primary,
+body[data-theme="dark"] .main .caja-button:not(.secondary),
+body[data-theme="dark"] .main .boton-accion-pedido,
+body[data-theme="dark"] .main .compras-button,
+body[data-theme="dark"] .main .auditoria-button,
+body[data-theme="dark"] .main .conteo-button:not(.secondary),
+body[data-theme="dark"] .main .mapa-button {
+    background: #294d75 !important;
+    border-color: #527da8 !important;
+    color: #fff !important;
+}
+
+body[data-theme="dark"] .main .accion-desactivar,
+body[data-theme="dark"] .main .danger,
+body[data-theme="dark"] .main button[data-eliminar],
+body[data-theme="dark"] .main .clientes-table .accion[data-eliminar] {
+    background: #402427 !important;
+    border-color: #955158 !important;
+    color: #ffbfc4 !important;
+}
+
+body[data-theme="dark"] .main .paginacion button,
+body[data-theme="dark"] .main .boton,
+body[data-theme="dark"] .main .caja-pagination button {
+    background: #294d75 !important;
+    border-color: #527da8 !important;
+    color: #fff !important;
+}
+
+body[data-theme="dark"] .main [class*="accion"]:hover,
+body[data-theme="dark"] .main [class*="-button"]:hover:not(:disabled),
+body[data-theme="dark"] .main [class*="-actions"] a:hover,
+body[data-theme="dark"] .main [class*="-actions"] button:hover:not(:disabled) {
+    filter: brightness(1.15);
+}

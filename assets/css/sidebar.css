@@ -11,6 +11,34 @@
     --black2: #999;
 }
 
+/* Estado seleccionado compartido por todas las páginas y permisos. */
+.navigation ul li.active { background: var(--white); }
+.navigation ul li.active a { color: var(--blue); }
+.navigation ul li.active a::before,
+.navigation ul li.active a::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    width: 50px;
+    height: 50px;
+    background: transparent;
+    border-radius: 50%;
+    pointer-events: none;
+}
+.navigation ul li.active a::before { top: -50px; box-shadow: 35px 35px 0 10px var(--white); }
+.navigation ul li.active a::after { bottom: -50px; box-shadow: 35px -35px 0 10px var(--white); }
+.navigation ul li.active[data-menu="inicio"] a .icon img { content: url('../img/sidebar/theme-home.svg'); }
+.navigation ul li.active[data-menu="pedidos"] a .icon img { content: url('../img/sidebar/theme-restaurant.svg'); }
+.navigation ul li.active[data-menu="mapa"] a .icon img { content: url('../img/sidebar/theme-map.svg'); }
+.navigation ul li.active[data-menu="caja"] a .icon img { content: url('../img/sidebar/theme-payments.svg'); }
+.navigation ul li.active[data-menu="clientes"] a .icon img { content: url('../img/sidebar/theme-person.svg'); }
+.navigation ul li.active[data-menu="insumos"] a .icon img { content: url('../img/sidebar/theme-box.svg'); }
+.navigation ul li.active[data-menu="productos"] a .icon img { content: url('../img/sidebar/theme-shopping.svg'); }
+.navigation ul li.active[data-menu="empleados"] a .icon img { content: url('../img/sidebar/theme-team.svg'); }
+.navigation ul li.active[data-menu="conteos"] a .icon img { content: url('../img/sidebar/theme-box.svg'); }
+.navigation ul li.active[data-menu="auditoria"] a .icon img { content: url('../img/sidebar/theme-audit.svg'); }
+.navigation ul li.active[data-menu="compras"] a .icon img { content: url('../img/sidebar/theme-purchase.svg'); }
+
 * {
     margin: 0;
     padding: 0;
@@ -371,4 +399,48 @@ body {
 
 .menu .dropdown ul li:hover a {
     opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+    .navigation {
+        width: 300px;
+        max-width: 86vw;
+        z-index: 100;
+        box-shadow: 12px 0 30px rgba(0, 0, 0, .22);
+    }
+
+    .navigation.active {
+        width: 0;
+        border-left-width: 0;
+    }
+
+    .main,
+    .main.active {
+        width: 100%;
+        left: 0;
+    }
+
+    .topbar {
+        grid-template-columns: 60px minmax(0, 1fr) 60px;
+    }
+
+    .toggle {
+        position: relative;
+        z-index: 102;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .mesa {
+        width: 9% !important;
+        min-height: 38px !important;
+        height: 38px;
+        border-width: 2px;
+        border-radius: 10px;
+        gap: 0;
+    }
+
+    .mesa strong { font-size: 10px; }
+    .mesa small { font-size: 9px; }
+
 }

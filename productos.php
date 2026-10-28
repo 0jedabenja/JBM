@@ -7,6 +7,7 @@ verificar_permiso("productos");
 <html lang="es">
 
 <head>
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Productos</title>
@@ -47,7 +48,7 @@ verificar_permiso("productos");
                 </thead>
                 <tbody id="tablaProductos">
                     <tr>
-                        <td colspan="5" class="texto-centrado">No se encontraron productos.</td>
+                        <td colspan="6" class="texto-centrado">No se encontraron productos.</td>
                     </tr>
                 </tbody>
             </table>
@@ -78,11 +79,13 @@ verificar_permiso("productos");
                 .then(productos => {
                     tbody.innerHTML = "";
                     if (productos.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="5" class="texto-centrado">No se encontraron productos.</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="6" class="texto-centrado">No se encontraron productos.</td></tr>`;
                     } else {
                         productos.forEach(producto => {
                             const fila = document.createElement("tr");
-                            fila.innerHTML = `<td>${escapeHTML(producto.id_producto)}</td><td>${escapeHTML(producto.nombre)}</td><td>$ ${escapeHTML(producto.precio)}</td><td>${escapeHTML(producto.categoria)}</td><td><a href="movimientos.php?tipo=producto&id=${encodeURIComponent(producto.id_producto)}">Movimientos</a> <a href="modificar_producto.php?id=${encodeURIComponent(producto.id_producto)}">Editar</a> <button type="button" class="accion" onclick="eliminarProducto(${producto.id_producto})">Desactivar</button></td>`;
+                            const sinInsumos = Number(producto.disponible) === 0;
+                            fila.innerHTML = `<td>${escapeHTML(producto.id_producto)}</td><td>${escapeHTML(producto.nombre)}</td><td>$ ${escapeHTML(producto.precio)}</td><td>${escapeHTML(producto.categoria)}</td><td class="acciones-producto"><a class="accion accion-movimientos" href="movimientos.php?tipo=producto&id=${encodeURIComponent(producto.id_producto)}">Movimientos</a><a class="accion accion-editar" href="modificar_producto.php?id=${encodeURIComponent(producto.id_producto)}">Editar</a><button type="button" class="accion accion-desactivar" onclick="eliminarProducto(${producto.id_producto})">Desactivar</button></td>`;
+                            if (sinInsumos) fila.classList.add("producto-sin-stock");
                             tbody.appendChild(fila);
                         });
                     }
@@ -91,7 +94,7 @@ verificar_permiso("productos");
                     document.getElementById("infoPagina").textContent = `Página ${paginaActual}`;
                 }).catch(error => {
                     console.error(error);
-                    tbody.innerHTML = `<tr><td colspan="5" class="texto-centrado">No se pudieron cargar los productos.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="6" class="texto-centrado">No se pudieron cargar los productos.</td></tr>`;
                 });
         }
 

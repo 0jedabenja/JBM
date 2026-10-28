@@ -295,6 +295,26 @@ footer {
     font-size: 0.75rem;
 }
 
+altcha-widget {
+    width: 100%;
+    margin-bottom: 1rem;
+    color-scheme: light;
+    --altcha-color: var(--text-main);
+    --altcha-background-color: var(--form-bg);
+    --altcha-border-color: var(--input-border);
+    --altcha-border-radius: 6px;
+}
+
+:root[data-theme="dark"] altcha-widget {
+    color-scheme: dark;
+}
+
+altcha-widget::part(checkbox),
+altcha-widget::part(label),
+altcha-widget::part(text) {
+    color: var(--text-main);
+}
+
 @media (max-width: 600px) {
     form {
         width: min(28rem, calc(100% - 2rem));

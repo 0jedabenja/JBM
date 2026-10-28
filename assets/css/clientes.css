@@ -79,15 +79,6 @@
         color: #001f47;
     }
 
-    .clientes-table .accion {
-        background: none;
-        border: 0;
-        color: #001f47;
-        cursor: pointer;
-        font-weight: bold;
-        padding: 0;
-    }
-
     .paginacion {
         align-items: center;
         display: flex;
