@@ -45,3 +45,6 @@ INSERT INTO Metodo_pago (descripcion) VALUES
 ('Tarjeta de débito'),
 ('Tarjeta de crédito'),
 ('Transferencia bancaria');
+
+INSERT INTO Empleado (nombre, apellido, activo, usuario, contraseña, id_rol) VALUES
+('Luis', 'Torres', TRUE, 'Luistorres', '$2y$10$ygA54RXXYRe0oHhRJaxGPOkYN3JHXPsrySdJ7ztzY155nTHUiQhDS', 1)
