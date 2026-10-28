@@ -271,6 +271,7 @@ $puedeLimpiar = usuario_tiene_permiso("crear_pedido");
         });
     }
 
+    //callback
     function iniciarArrastre(evento, mesa, elemento, marcarArrastre) {
         if (!puedeEditar || evento.target.closest("button")) return;
         if (evento.button !== 0) return;
@@ -477,7 +478,7 @@ $puedeLimpiar = usuario_tiene_permiso("crear_pedido");
     cargarMapa();
     setInterval(() => {
         if (document.visibilityState === "visible" && !arrastrando) cargarMapa(false);
-    }, 4000);
+    }, 1000);
     </script>
 
 </body>
