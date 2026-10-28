@@ -139,7 +139,18 @@ try {
             );
         }
         mysqli_stmt_close($stmtReceta);
-        if (!$requeridos) throw new DomainException("El producto no tiene una receta de insumos configurada.");
+        if (!$requeridos) {
+            if (!registrar_auditoria($conexion, "salida_stock_" . $tipoMovimiento, "producto", $idElemento, array(
+                "elemento" => $nombreElemento,
+                "cantidad" => $cantidad,
+                "detalle" => $observacion !== "" ? $observacion : "Salida de producto sin receta configurada.",
+                "insumos_afectados" => 0
+            ))) {
+                throw new RuntimeException("No se pudo registrar la salida del producto.");
+            }
+            if (!mysqli_commit($conexion)) throw new RuntimeException("No se pudo confirmar la salida del producto.");
+            responder_ajuste_stock(array("ok" => true, "movimientos" => array(), "sin_receta" => true), 201);
+        }
     }
 
     foreach ($requeridos as $requerido) {

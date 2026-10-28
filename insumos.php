@@ -6,6 +6,7 @@ verificar_permiso("insumos");
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Insumos</title>
@@ -65,7 +66,7 @@ verificar_permiso("insumos");
                     } else {
                         insumos.forEach(insumo => {
                             const fila = document.createElement("tr");
-                            fila.innerHTML = `<td>${escapeHTML(insumo.id_insumo)}</td><td>${escapeHTML(insumo.nombre)}</td><td>${escapeHTML(insumo.unidad)}</td><td>${escapeHTML(insumo.cantidad_actual)}</td><td>${escapeHTML(insumo.stock_minimo)}</td><td>$ ${escapeHTML(insumo.costo)}</td><td><a href="movimientos.php?tipo=insumo&id=${encodeURIComponent(insumo.id_insumo)}">Movimientos</a> <a href="modificar_insumo.php?id=${encodeURIComponent(insumo.id_insumo)}">Editar</a> <button type="button" class="accion" onclick="eliminarInsumo(${insumo.id_insumo})">Desactivar</button></td>`;
+                            fila.innerHTML = `<td>${escapeHTML(insumo.id_insumo)}</td><td>${escapeHTML(insumo.nombre)}</td><td>${escapeHTML(insumo.unidad)}</td><td>${escapeHTML(insumo.cantidad_actual)}</td><td>${escapeHTML(insumo.stock_minimo)}</td><td>$ ${escapeHTML(insumo.costo)}</td><td class="acciones-producto"><a class="accion accion-movimientos" href="movimientos.php?tipo=insumo&id=${encodeURIComponent(insumo.id_insumo)}">Movimientos</a><a class="accion accion-editar" href="modificar_insumo.php?id=${encodeURIComponent(insumo.id_insumo)}">Editar</a><button type="button" class="accion accion-desactivar" onclick="eliminarInsumo(${insumo.id_insumo})">Desactivar</button></td>`;
                             tbody.appendChild(fila);
                         });
                     }

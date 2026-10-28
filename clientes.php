@@ -7,11 +7,13 @@ verificar_permiso("clientes");
 <html lang="es">
 
 <head>
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Clientes</title>
     <script src="assets/js/sidebar.js" defer></script>
     <link rel="stylesheet" href="assets/css/clientes.css">
+    <link rel="stylesheet" href="assets/css/modulos-listado.css">
 </head>
 
 <body>
@@ -121,9 +123,9 @@ verificar_permiso("clientes");
                                 <td>${escapeHTML(cliente.apellido)}</td>
                                 <td>${escapeHTML(cliente.telefono)}</td>
                                 <td>${escapeHTML(cliente.direccion)}</td>
-                                <td>
-                                    <a href="modificar_cliente.php?id=${encodeURIComponent(cliente.id_cliente)}">Editar</a>
-                                    <button type="button" class="accion" title="Desactivar" onclick="eliminarCliente(${cliente.id_cliente})">Desactivar</button>
+                                <td class="acciones-producto">
+                                    <a class="accion accion-editar" href="modificar_cliente.php?id=${encodeURIComponent(cliente.id_cliente)}">Editar</a>
+                                    <button type="button" class="accion accion-desactivar" title="Desactivar" onclick="eliminarCliente(${cliente.id_cliente})">Desactivar</button>
                                 </td>`;
                             tbody.appendChild(fila);
                         });

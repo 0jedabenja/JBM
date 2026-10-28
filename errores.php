@@ -29,6 +29,7 @@ if ($rutaBase === "." || $rutaBase === "/") $rutaBase = "";
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $codigoError; ?> · <?php echo htmlspecialchars($tituloError, ENT_QUOTES, "UTF-8"); ?></title>

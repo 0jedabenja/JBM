@@ -25,6 +25,7 @@ $nombre = $fila["nombre"];
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Movimientos de <?php echo htmlspecialchars($nombre, ENT_QUOTES, "UTF-8"); ?></title>
@@ -123,7 +124,7 @@ async function cargarMovimientos() {
                 <td>${formatearCantidad(Number(movimiento.cantidad), tipoEntidad === "insumo")}</td>
                 <td>$ ${formatearImporte(movimiento.costo_unitario)}</td>
                 <td>$ ${formatearImporte(movimiento.total)}</td>
-                <td>${escapar(movimiento.referencia)}</td>
+                <td>${referenciaMovimiento(movimiento)}</td>
                 <td>${escapar(movimiento.responsable)}</td>
             </tr>`).join("") : '<tr><td colspan="7">No hay movimientos para los filtros seleccionados.</td></tr>';
         document.getElementById("paginaActual").textContent = `Página ${pagina}`;
@@ -147,6 +148,13 @@ function formatearCantidad(valor, conSigno) {
 }
 function formatearImporte(valor) {
     return Number(valor).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function referenciaMovimiento(movimiento) {
+    const referencia = escapar(movimiento.referencia);
+    if (tipoEntidad === "insumo" && movimiento.tipo === "compra" && movimiento.referencia_id) {
+        return `${referencia} <a class="boton boton-comprobante" href="apis/comprobante_compra.php?id=${encodeURIComponent(movimiento.referencia_id)}" target="_blank">Ver comprobante</a>`;
+    }
+    return referencia;
 }
 function escapar(valor) {
     return String(valor ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");

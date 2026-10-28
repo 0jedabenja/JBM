@@ -139,6 +139,23 @@ if ($accion === "cerrar") {
     if ($montoFinal === false || $montoFinal < 0) responder_caja(array("error" => "El monto final no es válido."), 400);
     $resultadoPendientes = mysqli_query($conexion, "SELECT p.id_pedido FROM Pedido p INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado WHERE p.id_turno IN (SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL) AND p.cobrado = FALSE AND LOWER(ep.nombre) IN ('en preparación', 'comiendo', 'listo') LIMIT 1");
     if (mysqli_fetch_assoc($resultadoPendientes)) responder_caja(array("error" => "No se puede cerrar la caja mientras haya pedidos en curso o pendientes de cobro."), 409);
+
+    $resultadoTurno = mysqli_query($conexion, "SELECT id_turno, monto_inicial FROM Turno_caja WHERE fecha_hora_cierre IS NULL LIMIT 1");
+    $turnoAbierto = mysqli_fetch_assoc($resultadoTurno);
+    if (!$turnoAbierto) responder_caja(array("error" => "No hay una sesión de caja abierta."), 409);
+    $resumenTurno = obtener_movimientos_turno($conexion, (int) $turnoAbierto["id_turno"]);
+    $efectivoEsperado = (float) $turnoAbierto["monto_inicial"] + (float) $resumenTurno["efectivo_cobrado"];
+    if (abs($montoFinal - $efectivoEsperado) > 200) {
+        $passwordCierre = is_string($entrada["password_cierre"] ?? null) ? $entrada["password_cierre"] : "";
+        $stmtPassword = mysqli_prepare($conexion, "SELECT contraseña FROM Empleado WHERE id_empleado = ? LIMIT 1");
+        mysqli_stmt_bind_param($stmtPassword, "i", $_SESSION["usuario_id"]);
+        mysqli_stmt_execute($stmtPassword);
+        $empleado = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtPassword));
+        mysqli_stmt_close($stmtPassword);
+        if (!$empleado || $passwordCierre === "" || !password_verify($passwordCierre, $empleado["contraseña"])) {
+            responder_caja(array("error" => "La diferencia supera $ 200,00. Confirma con tu contraseña de usuario."), 403);
+        }
+    }
     $stmt = mysqli_prepare($conexion, "UPDATE Turno_caja SET fecha_hora_cierre = NOW(), monto_final = ? WHERE fecha_hora_cierre IS NULL");
     mysqli_stmt_bind_param($stmt, "d", $montoFinal);
     mysqli_stmt_execute($stmt);

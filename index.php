@@ -100,10 +100,13 @@ if ($rolActual === "administrador") {
 <html lang="es">
 
 <head>
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio</title>
     <script src="assets/js/sidebar.js" defer></script>
     <link rel="stylesheet" href="assets/css/index.css">
+</head>
 
 <body>
     <?php include_once 'includes/sidebar.php'; ?>
@@ -118,7 +121,28 @@ if ($rolActual === "administrador") {
         </div>
 
             <main class="inicio-content">
-                <h1>Inicio</h1>
+                <section class="bienvenida-inicio" aria-label="Bienvenida">
+                    <div>
+                        <p id="saludoInicio" class="saludo-inicio"></p>
+                    </div>
+                    <div class="hora-inicio" aria-live="polite">
+                        <strong id="horaActual">00:00:00</strong>
+                        <span id="fechaActual"></span>
+                    </div>
+                </section>
+                <script>
+                const nombreUsuarioInicio = <?php echo json_encode(trim((string)($_SESSION["nombre_usuario"] ?? $_SESSION["usuario"] ?? "Usuario")), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+                function actualizarHoraInicio() {
+                    const ahora = new Date();
+                    document.getElementById("horaActual").textContent = ahora.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+                    document.getElementById("fechaActual").textContent = ahora.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" });
+                    const hora = ahora.getHours();
+                    const saludo = hora < 12 ? "Buenos días" : hora < 19 ? "Buenas tardes" : "Buenas noches";
+                    document.getElementById("saludoInicio").textContent = `${saludo}, ${nombreUsuarioInicio}.`;
+                }
+                actualizarHoraInicio();
+                setInterval(actualizarHoraInicio, 1000);
+                </script>
                 <?php if ($rolActual === "administrador"): ?>
                     <section class="graficos-inicio" aria-label="Indicadores del negocio">
                         <article class="grafico-card">

@@ -52,10 +52,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recuperar Contraseña - Lo de Torres</title>
     <link rel="stylesheet" href="assets/css/recuperacion.css">
+    <link rel="stylesheet" href="assets/css/sin-seleccion.css">
+    <link rel="stylesheet" href="assets/css/theme.css">
+    <script src="assets/js/theme.js" defer></script>
 </head>
 <body>
 

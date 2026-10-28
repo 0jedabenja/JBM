@@ -5,6 +5,7 @@ verificar_permiso("insumos");
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar salida de stock</title>
@@ -75,7 +76,9 @@ function actualizarCantidad() {
     const seleccionado = selectorElemento.selectedOptions[0];
     document.getElementById("disponibleStock").textContent = seleccionado
         ? producto
-            ? `${seleccionado.dataset.receta} insumos asociados a la receta.`
+            ? (Number(seleccionado.dataset.receta) > 0
+                ? `${seleccionado.dataset.receta} insumos asociados a la receta.`
+                : "Este producto no tiene insumos configurados; la salida quedará registrada sin descontar stock.")
             : `Disponible: ${seleccionado.dataset.disponible} ${seleccionado.dataset.unidad}.`
         : "";
 }

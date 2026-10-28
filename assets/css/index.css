@@ -7,6 +7,30 @@
         margin-bottom: 8px;
     }
 
+    .bienvenida-inicio {
+        align-items: center;
+        background: linear-gradient(135deg, #001f47, #174f7c);
+        border-radius: 12px;
+        color: #fff;
+        display: flex;
+        gap: 20px;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        max-width: 1200px;
+        padding: 22px 26px;
+    }
+
+    .bienvenida-inicio h1 { color: #fff; margin-bottom: 0; }
+    .saludo-inicio { font-size: 1.1rem; font-weight: 700; margin: 0 0 4px; }
+    .hora-inicio { align-items: flex-end; display: flex; flex-direction: column; }
+    .hora-inicio strong { font-size: 2.3rem; line-height: 1; }
+    .hora-inicio span { margin-top: 6px; text-transform: capitalize; }
+
+    @media (max-width: 600px) {
+        .bienvenida-inicio { align-items: flex-start; flex-direction: column; }
+        .hora-inicio { align-items: flex-start; }
+    }
+
     .stock-alerta {
         background: #fff8e1;
         border: 1px solid #e0ad35;

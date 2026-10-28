@@ -6,6 +6,7 @@ verificar_permiso("empleados");
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Empleados</title>
@@ -64,7 +65,7 @@ verificar_permiso("empleados");
                     } else {
                         empleados.forEach(empleado => {
                             const fila = document.createElement("tr");
-                            fila.innerHTML = `<td>${escapeHTML(empleado.id_empleado)}</td><td>${escapeHTML(empleado.nombre)}</td><td>${escapeHTML(empleado.apellido)}</td><td>${escapeHTML(empleado.usuario)}</td><td>${escapeHTML(empleado.rol)}</td><td><a href="modificar_empleado.php?id=${encodeURIComponent(empleado.id_empleado)}">Editar</a> <button type="button" class="accion" onclick="eliminarEmpleado(${empleado.id_empleado})">Desactivar</button></td>`;
+                            fila.innerHTML = `<td>${escapeHTML(empleado.id_empleado)}</td><td>${escapeHTML(empleado.nombre)}</td><td>${escapeHTML(empleado.apellido)}</td><td>${escapeHTML(empleado.usuario)}</td><td>${escapeHTML(empleado.rol)}</td><td class="acciones-producto"><a class="accion accion-editar" href="modificar_empleado.php?id=${encodeURIComponent(empleado.id_empleado)}">Editar</a><button type="button" class="accion accion-desactivar" onclick="eliminarEmpleado(${empleado.id_empleado})">Desactivar</button></td>`;
                             tbody.appendChild(fila);
                         });
                     }

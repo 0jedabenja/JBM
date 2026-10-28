@@ -11,7 +11,9 @@ $puedeCocina = in_array($rolActual, array("administrador", "cocina"), true);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pedidos</title>
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <script src="assets/js/sidebar.js" defer></script>
+    <script src="assets/js/notificaciones.js" defer></script>
     <link rel="stylesheet" href="assets/css/pedidos.css">
 </head>
 <body>
@@ -29,13 +31,14 @@ $puedeCocina = in_array($rolActual, array("administrador", "cocina"), true);
             <?php if ($puedeCrear): ?>
             <section id="vista-creacion" class="pedido-view">
                 <h2>Menú rápido</h2><p id="estadoCajaPedido" class="advertencia-caja">Comprobando sesión de caja...</p><p id="mensajeCreacion" class="mensaje"></p><div id="selectorMesa"><h3>Selecciona una mesa libre</h3><div id="mapaPedido" class="mapa-pedido"></div></div><input id="idMesa" type="hidden" required><p id="mesaSeleccionada">Ninguna mesa seleccionada.</p><button id="editarMesa" class="boton-editar-mesa" type="button" hidden>Editar mesa</button>
+                <div class="filtro-productos-pedido"><label for="buscarProductoPedido">Buscar producto</label><input id="buscarProductoPedido" type="search" placeholder="Nombre o categoría" autocomplete="off"></div>
                 <div id="menuProductos"></div>
                 <div class="pedido-panel"><h3>Pedido actual</h3><div id="carrito" class="carrito">No hay productos agregados.</div><form id="formPedido" class="pedido-form"><label>Cliente<div class="cliente-selector"><input id="buscarCliente" type="search" autocomplete="off" placeholder="Buscar por nombre o apellido" aria-controls="resultadosClientes"><input id="idCliente" type="hidden" value="1"><div id="resultadosClientes" class="cliente-resultados" role="listbox" hidden></div></div><small id="clienteElegido" class="cliente-elegido">Cliente genérico (#1)</small></label><label>Detalle del pedido (opcional)<textarea id="descripcionPedido" maxlength="500" placeholder="Indicaciones o detalles del pedido"></textarea></label><button type="submit">Crear pedido</button></form></div>
             </section>
-            <section id="vista-pendientes" class="pedido-view"><h2>Pedidos pendientes</h2><div class="cocina-toolbar"><button id="activarSonidoPendientes" class="boton-sonido" type="button">🔔 Activar sonido</button></div><div id="listaPendientes"></div></section>
+            <section id="vista-pendientes" class="pedido-view"><h2>Pedidos pendientes</h2><div id="listaPendientes"></div></section>
             <section id="vista-limpieza" class="pedido-view"><h2>Mesas para limpiar</h2><p id="mensajeLimpieza" class="mensaje" role="status" aria-live="polite">Cargando mesas...</p><div id="listaMesasLimpieza" class="lista-mesas-limpieza"></div></section>
             <?php endif; ?>
-            <?php if ($puedeCocina): ?><section id="vista-cocina" class="pedido-view"><h2>Cocina</h2><p>Las bebidas se muestran al mozo en pedidos pendientes.</p><div class="cocina-toolbar"><button id="activarSonidoCocina" class="boton-sonido" type="button">🔔 Activar sonido</button></div><p id="mensajeBoleta" class="mensaje" role="status" aria-live="polite"></p><div id="listaCocina"></div></section><?php endif; ?>
+            <?php if ($puedeCocina): ?><section id="vista-cocina" class="pedido-view"><h2>Cocina</h2><p>Las bebidas se muestran al mozo en pedidos pendientes.</p><p id="mensajeBoleta" class="mensaje" role="status" aria-live="polite"></p><div id="listaCocina"></div></section><?php endif; ?>
         </main>
     </div>
     <div id="notificacionPedido" class="notificacion-pedido" role="alert" aria-live="assertive" hidden></div>
@@ -81,10 +84,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (document.visibilityState === "visible") cargarMapaPedido();
         }, 4000);
     }
-    ["activarSonidoCocina", "activarSonidoPendientes"].forEach(id => {
-        const boton = document.getElementById(id);
-        if (boton) boton.addEventListener("click", activarSonido);
-    });
     if (puedeCocina) {
         document.getElementById("listaCocina").addEventListener("click", manejarAccionesCocina);
     }
@@ -143,21 +142,45 @@ async function cargarMenu() {
         const productos = await respuesta.json();
         if (!respuesta.ok || !Array.isArray(productos)) throw new Error("No se pudo cargar el menú.");
         productosDisponibles = productos;
-        const menu = document.getElementById("menuProductos");
-        menu.innerHTML = renderProductosAgrupados(productos, producto => {
-            const cantidad = carrito.find(linea => linea.id_producto === Number(producto.id_producto))?.cantidad || 0;
-            return `<article class="producto-card"><h4>${escapeHTML(producto.nombre)}</h4><p>$ ${escapeHTML(producto.precio)}</p><div class="controles-cantidad"><button type="button" class="boton-producto" data-cambio="-1" data-id="${Number(producto.id_producto)}" aria-label="Quitar ${escapeHTML(producto.nombre)}">−</button><span data-cantidad="${Number(producto.id_producto)}">${cantidad}</span><button type="button" class="boton-producto" data-cambio="1" data-id="${Number(producto.id_producto)}" aria-label="Agregar ${escapeHTML(producto.nombre)}">+</button></div></article>`;
-        });
-        menu.querySelectorAll(".boton-producto").forEach(boton => boton.addEventListener("click", () => {
-            const producto = productosDisponibles.find(p => Number(p.id_producto) === Number(boton.dataset.id));
-            if (producto) cambiarCantidad(producto, Number(boton.dataset.cambio));
-        }));
-        aplicarEstadoBotonesMenu();
+        renderMenuPedido();
     } catch (error) {
         console.error(error);
         document.getElementById("menuProductos").textContent = error.message || "No se pudo cargar el menú.";
     }
 }
+function renderMenuPedido() {
+    const consulta = (document.getElementById("buscarProductoPedido")?.value || "").trim().toLocaleLowerCase();
+    const filtrados = consulta
+        ? productosDisponibles.filter(producto => `${producto.nombre || ""} ${producto.categoria || ""}`.toLocaleLowerCase().includes(consulta))
+        : productosDisponibles;
+    const menu = document.getElementById("menuProductos");
+    menu.innerHTML = filtrados.length
+        ? renderProductosAgrupados(filtrados, producto => {
+            const cantidad = carrito.find(linea => linea.id_producto === Number(producto.id_producto))?.cantidad || 0;
+            const disponible = Number(producto.disponible) !== 0;
+            return `<article class="producto-card ${disponible ? "" : "producto-sin-insumos"}" data-producto="${Number(producto.id_producto)}" role="button" tabindex="${disponible ? "0" : "-1"}" aria-label="Agregar ${escapeHTML(producto.nombre)}"><h4>${escapeHTML(producto.nombre)}</h4><p>$ ${escapeHTML(producto.precio)}${disponible ? "" : " · Insumos insuficientes"}</p><div class="controles-cantidad"><button type="button" class="boton-producto boton-restar" data-cambio="-1" data-id="${Number(producto.id_producto)}" aria-label="Quitar ${escapeHTML(producto.nombre)}" ${cantidad ? "" : "disabled"}>−</button><span data-cantidad="${Number(producto.id_producto)}">${cantidad}</span></div></article>`;
+        })
+        : '<p class="mensaje">No se encontraron productos.</p>';
+    menu.querySelectorAll(".boton-restar").forEach(boton => boton.addEventListener("click", evento => {
+        evento.stopPropagation();
+        const producto = productosDisponibles.find(item => Number(item.id_producto) === Number(boton.dataset.id));
+        if (producto) cambiarCantidad(producto, -1);
+    }));
+    menu.querySelectorAll(".producto-card[data-producto]").forEach(tarjeta => {
+        const agregarDesdeTarjeta = evento => {
+            if (evento.target.closest("button")) return;
+            const producto = productosDisponibles.find(item => Number(item.id_producto) === Number(tarjeta.dataset.producto));
+            if (!producto || Number(producto.disponible) === 0) return;
+            cambiarCantidad(producto, 1);
+        };
+        tarjeta.addEventListener("click", agregarDesdeTarjeta);
+        tarjeta.addEventListener("keydown", evento => {
+            if (evento.key === "Enter" || evento.key === " ") { evento.preventDefault(); agregarDesdeTarjeta(evento); }
+        });
+    });
+    aplicarEstadoBotonesMenu();
+}
+document.addEventListener("DOMContentLoaded", () => document.getElementById("buscarProductoPedido")?.addEventListener("input", renderMenuPedido));
 function renderProductosAgrupados(productos, renderProducto) {
     const ordenCategorias = { bebidas: 0, postres: 1, parrilla: 2, comidas: 2 };
     const categorias = new Map();
@@ -379,15 +402,18 @@ function aplicarEstadoBotonesMenu() {
     document.querySelectorAll("#menuProductos .boton-producto").forEach(boton => {
         const contador = document.querySelector(`#menuProductos [data-cantidad="${boton.dataset.id}"]`);
         const cantidad = Number(contador?.textContent || 0);
-        const bloqueado = !cajaAbierta || (Number(boton.dataset.cambio) < 0 && cantidad === 0);
+        const bloqueado = cantidad === 0;
         boton.disabled = bloqueado;
-        boton.classList.toggle("bloqueado", !cajaAbierta);
+        boton.classList.toggle("bloqueado", bloqueado);
+    });
+    document.querySelectorAll("#menuProductos .producto-card").forEach(tarjeta => {
+        tarjeta.classList.remove("bloqueado");
     });
 }
 function crearPedido(evento) {
     evento.preventDefault(); if (!cajaAbierta) { mostrarMensaje("No se puede crear el pedido: la caja está cerrada.", true); return; } if (!document.getElementById("idMesa").value) { mostrarMensaje("Selecciona una mesa libre antes de crear el pedido.", true); return; } if (!carrito.length) { mostrarMensaje("Agrega al menos un producto.", true); return; } if (!document.getElementById("idCliente").value) { mostrarMensaje("Selecciona un cliente de los resultados.", true); return; }
     const datos = {id_mesa:Number(document.getElementById("idMesa").value),id_cliente:document.getElementById("idCliente").value ? Number(document.getElementById("idCliente").value) : null,descripcion:document.getElementById("descripcionPedido").value.trim(),productos:carrito.map(p => ({id_producto:p.id_producto,cantidad:p.cantidad}))};
-    fetch("apis/api_pedidos.php", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(datos)}).then(r => r.json().then(d => ({ok:r.ok,data:d,status:r.status}))).then(r => { if (!r.ok) throw new Error(r.data.error || `No se pudo crear el pedido (${r.status}).`); carrito=[]; renderCarrito(); document.getElementById("idMesa").value=""; document.getElementById("mesaSeleccionada").textContent="Ninguna mesa seleccionada."; document.getElementById("descripcionPedido").value=""; document.getElementById("selectorMesa").hidden=false; document.getElementById("editarMesa").hidden=true; document.getElementById("idCliente").value="1"; document.getElementById("buscarCliente").value=""; document.getElementById("clienteElegido").textContent="Cliente genérico (#1)"; cargarMapaPedido(); mostrarMensaje(`Pedido #${r.data.id_pedido} enviado a cocina.`, false); }).catch(e => { cargarMapaPedido(); mostrarMensaje(e.message, true); });
+    fetch("apis/api_pedidos.php", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(datos)}).then(r => r.json().then(d => ({ok:r.ok,data:d,status:r.status}))).then(r => { if (!r.ok) throw new Error(r.data.error || `No se pudo crear el pedido (${r.status}).`); carrito=[]; renderCarrito(); document.getElementById("idMesa").value=""; document.getElementById("mesaSeleccionada").textContent="Ninguna mesa seleccionada."; document.getElementById("descripcionPedido").value=""; document.getElementById("selectorMesa").hidden=false; document.getElementById("editarMesa").hidden=true; document.getElementById("idCliente").value="1"; document.getElementById("buscarCliente").value=""; document.getElementById("clienteElegido").textContent="Cliente genérico (#1)";     cargarMapaPedido(); mostrarMensaje(`Pedido #${r.data.id_pedido} enviado a cocina.`, false); window.AlertasJBM?.reproducir("pedido"); window.AlertasJBM?.navegador("Pedido enviado", `El pedido #${r.data.id_pedido} fue enviado a cocina.`); }).catch(e => { cargarMapaPedido(); mostrarMensaje(e.message, true); });
 }
 async function cargarEstadoCajaPedido() {
     try {
@@ -402,7 +428,7 @@ async function cargarEstadoCajaPedido() {
             boton.disabled = !cajaAbierta;
             boton.classList.toggle("bloqueado", !cajaAbierta);
         });
-        if (cajaAbierta && !productosDisponibles.length) await cargarMenu();
+        if (!productosDisponibles.length) await cargarMenu();
         else aplicarEstadoBotonesMenu();
         if (cajaAbierta) cargarMapaPedido();
     } catch (error) {
@@ -429,7 +455,8 @@ function renderPendientes(pedidos) {
             const anterior = estadosPendientesAnteriores.get(Number(pedido.id_pedido));
             if (anterior === "en preparación" && String(pedido.estado).toLowerCase() === "comiendo") {
                 mostrarNotificacion(`Pedido #${pedido.id_pedido} está pronto para el mozo.`);
-                emitirAlerta();
+                emitirAlerta("listo");
+                window.AlertasJBM?.navegador("Pedido listo para levantar", `El pedido #${pedido.id_pedido} está listo.`);
             }
         });
     }
@@ -505,14 +532,16 @@ function renderCocina(pedidos) {
             const idPedido = Number(pedido.id_pedido);
             if (!anterior.has(idPedido)) {
                 mostrarNotificacion(`Nuevo pedido #${idPedido} recibido en cocina.`);
-                emitirAlerta();
+                emitirAlerta("cocina");
+                window.AlertasJBM?.navegador("Nuevo pedido en cocina", `El pedido #${idPedido} llegó a cocina.`);
                 break;
             }
             const cantidadesPrevias = anterior.get(idPedido);
             const agregado = pedido.productos.find(x => Number(x.cantidad) > Number(cantidadesPrevias.get(Number(x.id_producto)) || 0));
             if (agregado) {
                 mostrarNotificacion(`Se agregó ${agregado.nombre} al pedido #${idPedido}.`);
-                emitirAlerta();
+                emitirAlerta("cocina");
+                window.AlertasJBM?.navegador("Pedido actualizado en cocina", `Se agregó ${agregado.nombre} al pedido #${idPedido}.`);
                 break;
             }
         }
@@ -558,8 +587,7 @@ async function marcarPedidoListo(idPedido) {
         });
         const datos = await respuesta.json();
         if (!respuesta.ok) throw new Error(datos.error || "No se pudo marcar el pedido como listo.");
-        mostrarNotificacion(`¡Tin tin! El pedido #${idPedido} está pronto para el mozo.`);
-        emitirAlerta();
+        mostrarNotificacion(`El pedido #${idPedido} está listo para levantar.`);
         cargarPedidos("cocina");
     } catch (error) {
         mostrarNotificacion(error.message, true);
@@ -575,43 +603,14 @@ function mostrarNotificacion(texto, error = false) {
     window.clearTimeout(temporizadorNotificacion);
     temporizadorNotificacion = window.setTimeout(() => { alerta.hidden = true; }, 7000);
 }
-async function activarSonido() {
-    try {
-        const AudioContexto = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContexto) throw new Error("Este navegador no admite alertas de sonido.");
-        contextoAudio ||= new AudioContexto();
-        await contextoAudio.resume();
-        document.querySelectorAll(".boton-sonido").forEach(boton => { boton.textContent = "🔔 Sonido activado"; });
-        emitirAlerta();
-        mostrarNotificacion("Alertas de sonido activadas.");
-    } catch (error) {
-        console.error(error);
-        mostrarNotificacion(error.message, true);
-    }
-}
 function desbloquearSonido() {
     const AudioContexto = window.AudioContext || window.webkitAudioContext;
     if (!AudioContexto) return;
     contextoAudio ||= new AudioContexto();
     contextoAudio.resume().catch(error => console.warn("No se pudo habilitar el sonido de pedidos.", error));
 }
-function emitirAlerta() {
-    if (!contextoAudio || contextoAudio.state !== "running") return;
-    const ahora = contextoAudio.currentTime;
-    [988, 1318].forEach((frecuencia, indice) => {
-        const oscilador = contextoAudio.createOscillator();
-        const ganancia = contextoAudio.createGain();
-        const inicio = ahora + indice * 0.22;
-        oscilador.type = "sine";
-        oscilador.frequency.value = frecuencia;
-        ganancia.gain.setValueAtTime(0.001, inicio);
-        ganancia.gain.exponentialRampToValueAtTime(0.18, inicio + 0.025);
-        ganancia.gain.exponentialRampToValueAtTime(0.001, inicio + 0.28);
-        oscilador.connect(ganancia);
-        ganancia.connect(contextoAudio.destination);
-        oscilador.start(inicio);
-        oscilador.stop(inicio + 0.3);
-    });
+function emitirAlerta(tipo = "pedido") {
+    if (window.AlertasJBM) window.AlertasJBM.reproducir(tipo);
 }
 function escapeJS(valor) { return String(valor).replace(/\\/g,"\\\\").replace(/'/g,"\\'"); }
 function escapeHTML(valor) { if (valor === null || valor === undefined) return ""; return String(valor).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&#039;"); }

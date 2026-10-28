@@ -6,6 +6,7 @@ $tokenCsrf = obtener_token_csrf();
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compras</title>
@@ -98,6 +99,10 @@ $tokenCsrf = obtener_token_csrf();
             cargarHistorialCompras();
         }
     });
+    document.getElementById("historialCompras").addEventListener("click", (evento) => {
+        const boton = evento.target.closest("[data-compra]");
+        if (boton) window.open(`apis/comprobante_compra.php?id=${encodeURIComponent(boton.dataset.compra)}`, "_blank", "width=420,height=700");
+    });
     document.getElementById("comprasSiguiente").addEventListener("click", () => {
         if (document.getElementById("comprasSiguiente").dataset.hayMas === "true") {
             paginaCompras++;
@@ -185,6 +190,7 @@ $tokenCsrf = obtener_token_csrf();
             actualizarTotalesCompra();
             mensajeCompra.textContent = `Compra #${datos.id_compra} registrada por ${formatoMonedaCompra.format(datos.costo_total)}. Se actualizaron el stock y el costo promedio.`;
             paginaCompras = 1;
+            window.open(`apis/comprobante_compra.php?id=${encodeURIComponent(datos.id_compra)}`, "_blank", "width=420,height=700");
             await cargarHistorialCompras();
         } catch (error) {
             mensajeCompra.textContent = error instanceof Error ? error.message : "No se pudo guardar la compra.";
@@ -216,6 +222,7 @@ $tokenCsrf = obtener_token_csrf();
                 <div class="compras-table-wrap"><table class="compras-table"><thead><tr><th>Insumo</th><th>Cantidad</th><th>Costo unitario</th><th>Subtotal</th></tr></thead><tbody>
                     ${compra.items.map((item) => `<tr><td>${escaparCompra(item.nombre)}</td><td>${escaparCompra(item.cantidad)} ${escaparCompra(item.unidad)}</td><td>${formatoMonedaCompra.format(Number(item.costo))}</td><td>${formatoMonedaCompra.format(Number(item.total))}</td></tr>`).join("")}
                 </tbody></table></div>
+                <div class="compra-card-actions"><button type="button" class="compras-button compra-imprimir" data-compra="${Number(compra.id_compra)}">Imprimir comprobante</button></div>
             </article>`).join("")
             : '<p class="compras-empty">Todavía no hay compras registradas.</p>';
         document.getElementById("mensajeHistorial").textContent = `Total: ${datos.total} compras`;

@@ -11,6 +11,22 @@ const languageButton = document.querySelector('.language');
 let currentLanguage = 'es';
 let translations = {};
 
+try {
+	root.dataset.theme = localStorage.getItem('jbm-theme') || 'light';
+} catch (error) {
+	root.dataset.theme = 'light';
+}
+
+function configurarCaptcha() {
+	const captchaWidget = document.querySelector('altcha-widget');
+	if (!captchaWidget) return;
+	const oscuro = root.dataset.theme === 'dark';
+	captchaWidget.style.setProperty('--altcha-color', oscuro ? '#f4f6f8' : '#111827');
+	captchaWidget.style.setProperty('--altcha-background-color', oscuro ? '#252a31' : '#ffffff');
+	captchaWidget.style.setProperty('--altcha-border-color', oscuro ? '#59616d' : '#cbd5e1');
+	captchaWidget.style.setProperty('color-scheme', oscuro ? 'dark' : 'light');
+}
+
 function updateLoginIcons() {
 	const isDark = root.dataset.theme === 'dark';
 	const iconPrefix = isDark ? 'dark' : 'light';
@@ -43,8 +59,16 @@ if (passwordToggle && passwordInput) {
 if (themeToggle) {
 	themeToggle.addEventListener('click', () => {
 		root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+		try { localStorage.setItem('jbm-theme', root.dataset.theme); } catch (error) {}
 		updateLoginIcons();
+		configurarCaptcha();
 	});
+}
+
+configurarCaptcha();
+updateLoginIcons();
+if (window.customElements) {
+	customElements.whenDefined('altcha-widget').then(configurarCaptcha).catch(() => {});
 }
 
 if (openPopupButton && overlay) {

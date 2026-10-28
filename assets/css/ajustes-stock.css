@@ -68,6 +68,45 @@
     opacity: .65;
 }
 
+body[data-theme="dark"] .ajuste-stock h1,
+body[data-theme="dark"] .ajuste-stock label,
+body[data-theme="dark"] .ajuste-stock .disponible {
+    color: #f0f1f3;
+}
+
+body[data-theme="dark"] .ajuste-stock form {
+    background: #1a1c20;
+    border: 1px solid #34373d;
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.35);
+}
+
+body[data-theme="dark"] .ajuste-stock input,
+body[data-theme="dark"] .ajuste-stock select,
+body[data-theme="dark"] .ajuste-stock textarea {
+    background: #25282e;
+    border-color: #50545c;
+    color: #f4f4f5;
+    color-scheme: dark;
+}
+
+body[data-theme="dark"] .ajuste-stock input::placeholder,
+body[data-theme="dark"] .ajuste-stock textarea::placeholder {
+    color: #b8bbc2;
+}
+
+body[data-theme="dark"] .ajuste-stock option {
+    background: #25282e;
+    color: #f4f4f5;
+}
+
+body[data-theme="dark"] .ajuste-stock #mensajeAjuste {
+    color: #79d7a2;
+}
+
+body[data-theme="dark"] .ajuste-stock #mensajeAjuste.error {
+    color: #ff9a8b;
+}
+
 @media (max-width: 600px) {
     .ajuste-stock {
         padding: 16px;

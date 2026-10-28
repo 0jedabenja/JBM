@@ -125,7 +125,8 @@ if ($metodo === "GET") {
                     ORDER BY fecha_hora_apertura DESC
                     LIMIT 1";
         $resultadoCaja = mysqli_query($conexion, $sqlCaja);
-        responder(array("abierta" => mysqli_fetch_assoc($resultadoCaja) ?: null));
+        $turnoCaja = mysqli_fetch_assoc($resultadoCaja);
+        responder(array("abierta" => $turnoCaja ? true : false));
     }
     $limite = max(1, (int) obtener_parametro_get("limite", "20"));
     $pagina = max(1, (int) obtener_parametro_get("pagina", "1"));
