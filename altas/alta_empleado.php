@@ -18,11 +18,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $nombre = trim($_POST["nombre"] ?? "");
     $apellido = trim($_POST["apellido"] ?? "");
     $usuario = trim($_POST["usuario"] ?? "");
+    $correo = strtolower(trim($_POST["correo"] ?? ""));
     $contrasena = $_POST["contrasena"] ?? "";
     $id_rol = filter_var($_POST["id_rol"] ?? null, FILTER_VALIDATE_INT);
 
-    if ($nombre === "" || $apellido === "" || $usuario === "") {
-        $mensaje = "El nombre, el apellido y el usuario son obligatorios.";
+    if ($nombre === "" || $apellido === "" || $usuario === "" || $correo === "") {
+        $mensaje = "El nombre, el apellido, el usuario y el correo son obligatorios.";
+    } elseif (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+        $mensaje = "Ingrese un correo electrónico válido.";
     } elseif (strlen($usuario) > 50) {
         $mensaje = "El usuario no puede superar los 50 caracteres.";
     } elseif (strlen($contrasena) < 8) {
@@ -31,12 +34,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $mensaje = "Debe seleccionar un rol válido.";
     } else {
         $hash = password_hash($contrasena, PASSWORD_DEFAULT);
-        $sql = "INSERT INTO Empleado (nombre, apellido, usuario, contraseña, id_rol)
-                VALUES (?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO Empleado (nombre, apellido, usuario, correo, contraseña, id_rol)
+                VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = mysqli_prepare($conexion, $sql);
 
         if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "ssssi", $nombre, $apellido, $usuario, $hash, $id_rol);
+            mysqli_stmt_bind_param($stmt, "sssssi", $nombre, $apellido, $usuario, $correo, $hash, $id_rol);
             if (mysqli_stmt_execute($stmt)) {
                 $idEmpleadoNuevo = mysqli_insert_id($conexion);
                 mysqli_stmt_close($stmt);
@@ -94,6 +97,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <label for="usuario">Usuario *</label>
         <input type="text" id="usuario" name="usuario" maxlength="50" required
                value="<?php echo htmlspecialchars($_POST["usuario"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
+
+        <label for="correo">Correo electrónico *</label>
+        <input type="email" id="correo" name="correo" maxlength="255" required
+               value="<?php echo htmlspecialchars($_POST["correo"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
 
         <label for="contrasena">Contraseña *</label>
         <input type="password" id="contrasena" name="contrasena" minlength="8" required>

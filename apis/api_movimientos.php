@@ -36,13 +36,25 @@ $fechaInicio = null;
 $fechaFin = null;
 foreach (array("desde" => $desde, "hasta" => $hasta) as $nombre => $valor) {
     if ($valor === "") continue;
-    $fecha = DateTime::createFromFormat("!Y-m-d", $valor);
+    $valorSinZona = str_replace("T", " ", $valor);
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $valor)) {
+        $fecha = DateTime::createFromFormat("!Y-m-d", $valor);
+        $formato = "Y-m-d";
+        $valorEsperado = $valor;
+    } else {
+        $fecha = DateTime::createFromFormat("Y-m-d H:i", $valorSinZona);
+        $formato = "Y-m-d H:i";
+        $valorEsperado = $valorSinZona;
+    }
     $errores = DateTime::getLastErrors();
-    if (!$fecha || ($errores && ($errores["warning_count"] || $errores["error_count"])) || $fecha->format("Y-m-d") !== $valor) {
+    if (!$fecha || ($errores && ($errores["warning_count"] || $errores["error_count"])) || $fecha->format($formato) !== $valorEsperado) {
         responder_movimientos(array("error" => "El rango de fechas no es válido."), 400);
     }
-    if ($nombre === "desde") $fechaInicio = $fecha->format("Y-m-d 00:00:00");
-    else $fechaFin = $fecha->modify("+1 day")->format("Y-m-d 00:00:00");
+    if ($nombre === "desde") {
+        $fechaInicio = str_contains($valorSinZona, " ") ? $fecha->format("Y-m-d H:i:00") : $fecha->format("Y-m-d 00:00:00");
+    } else {
+        $fechaFin = str_contains($valorSinZona, " ") ? $fecha->format("Y-m-d H:i:00") : $fecha->modify("+1 day")->format("Y-m-d 00:00:00");
+    }
 }
 if ($fechaInicio !== null && $fechaFin !== null && $fechaInicio >= $fechaFin) {
     responder_movimientos(array("error" => "La fecha inicial debe ser anterior o igual a la final."), 400);

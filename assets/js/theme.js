@@ -1,13 +1,17 @@
 (() => {
     const storageKey = "jbm-theme";
-    const toggle = document.querySelector("[data-theme-toggle]");
+    function getToggle() {
+        return document.querySelector("[data-theme-toggle]");
+    }
 
     function applyTheme(theme) {
         const isDark = theme === "dark";
-        document.body.dataset.theme = isDark ? "dark" : "light";
-        if (toggle) {
-            toggle.textContent = isDark ? "Tema: oscuro" : "Tema: claro";
-            toggle.setAttribute("aria-pressed", String(isDark));
+        document.documentElement.dataset.theme = isDark ? "dark" : "light";
+        if (document.body) document.body.dataset.theme = isDark ? "dark" : "light";
+        const toggleActual = getToggle();
+        if (toggleActual) {
+            toggleActual.textContent = isDark ? "Tema: oscuro" : "Tema: claro";
+            toggleActual.setAttribute("aria-pressed", String(isDark));
         }
     }
 
@@ -19,9 +23,12 @@
     }
     applyTheme(savedTheme);
 
-    if (toggle) {
+    function inicializarAlternador() {
+        const toggle = getToggle();
+        if (!toggle || toggle.dataset.themeInicializado === "true") return;
+        toggle.dataset.themeInicializado = "true";
         toggle.addEventListener("click", () => {
-            const nextTheme = document.body.dataset.theme === "dark" ? "light" : "dark";
+            const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
             applyTheme(nextTheme);
             try {
                 localStorage.setItem(storageKey, nextTheme);
@@ -29,4 +36,9 @@
             }
         });
     }
+    inicializarAlternador();
+    document.addEventListener("DOMContentLoaded", () => {
+        applyTheme(savedTheme);
+        inicializarAlternador();
+    });
 })();

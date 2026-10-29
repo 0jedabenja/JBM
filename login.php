@@ -116,7 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <img src="assets/img/login/light-eye.svg" class="icon-password">
             </div>
             <altcha-widget challenge="apis/altcha_challenge.php" language="es"></altcha-widget>
-            <a href="" class="forgot-password">¿Olvidaste tu contraseña?</a>
+            <a href="recuperar.php" class="forgot-password">¿Olvidaste tu contraseña?</a>
             <button type="submit" class="btn-login">Iniciar sesión</button>
         </form>
     </div>

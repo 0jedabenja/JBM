@@ -44,10 +44,23 @@ verificar_permiso("conteos");
                         <button id="btnGenerarDiferencias" class="conteo-button secondary" type="button">Imprimir diferencias</button>
                     </div>
                     <p>Los cambios se guardan al salir de cada campo. El stock no se actualiza hasta aplicar el conteo.</p>
+                    <div class="conteo-listado-toolbar">
+                        <label for="filtroInsumosConteo">Buscar insumo
+                            <input id="filtroInsumosConteo" type="search" placeholder="Nombre del insumo">
+                        </label>
+                        <label for="tamanoPaginaConteo">Por página
+                            <select id="tamanoPaginaConteo">
+                                <option value="10">10</option>
+                                <option value="20" selected>20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </label>
+                    </div>
                     <table class="conteo-table">
                         <thead><tr><th>Insumo</th><th>En sistema</th><th>Contado</th></tr></thead>
                         <tbody id="itemsConteo"></tbody>
                     </table>
+                    <div id="paginacionConteo" class="conteo-pagination" aria-label="Paginación del conteo"></div>
                     <div class="conteo-actions">
                         <button class="conteo-button" type="submit">Aplicar conteo y actualizar stock</button>
                         <button id="btnCancelarConteo" class="conteo-button danger" type="button">Cancelar conteo</button>
@@ -85,6 +98,8 @@ verificar_permiso("conteos");
     </div>
     <script>
     let conteoActivo = null;
+    let itemsConteo = [];
+    let paginaConteo = 1;
     const categoriaConteo = document.getElementById("categoriaConteo");
     const panelConteo = document.getElementById("panelConteo");
     const confirmarConteoDialog = document.getElementById("confirmarConteoDialog");
@@ -99,8 +114,18 @@ verificar_permiso("conteos");
     document.getElementById("confirmarConteoForm").addEventListener("submit", confirmarAplicacionConteo);
     document.getElementById("btnCancelarConfirmacion").addEventListener("click", () => confirmarConteoDialog.close());
     document.getElementById("itemsConteo").addEventListener("change", guardarBorrador);
+    document.getElementById("itemsConteo").addEventListener("input", validarCantidadUnidad);
+    document.getElementById("itemsConteo").addEventListener("keydown", bloquearDecimalUnidad);
+    document.getElementById("itemsConteo").addEventListener("paste", filtrarPegadoUnidad);
     document.getElementById("listaPendientes").addEventListener("click", gestionarPendientes);
     document.getElementById("listaHistorial").addEventListener("click", gestionarHistorial);
+    document.getElementById("filtroInsumosConteo").addEventListener("input", () => { paginaConteo = 1; renderizarItemsConteo(); });
+    document.getElementById("tamanoPaginaConteo").addEventListener("change", () => { paginaConteo = 1; renderizarItemsConteo(); });
+    document.getElementById("paginacionConteo").addEventListener("click", cambiarPaginaConteo);
+
+    function esUnidad(unidad) {
+        return String(unidad || "").normalize("NFD").replace(/\u0300-\u036f/g, "").trim().toLowerCase() === "unidad";
+    }
 
     async function solicitar(url, opciones = {}) {
         const respuesta = await fetch(url, opciones);
@@ -152,24 +177,88 @@ verificar_permiso("conteos");
     function mostrarConteo(datos) {
         guardadoBorrador = guardadoBorrador.catch(() => {});
         conteoActivo = Number(datos.conteo.id_conteo);
+        itemsConteo = datos.items.map((item) => ({ ...item }));
+        paginaConteo = 1;
+        document.getElementById("filtroInsumosConteo").value = "";
         document.getElementById("tituloConteoActivo").textContent = `Conteo #${conteoActivo}`;
-        document.getElementById("itemsConteo").innerHTML = datos.items.map((item) => `
+        renderizarItemsConteo();
+        panelConteo.hidden = false;
+        panelConteo.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function obtenerItemsFiltradosConteo() {
+        const filtro = document.getElementById("filtroInsumosConteo").value.trim().toLocaleLowerCase("es");
+        return itemsConteo.filter((item) => `${item.nombre} ${item.unidad_medida || ""}`.toLocaleLowerCase("es").includes(filtro));
+    }
+
+    function renderizarItemsConteo() {
+        const filtrados = obtenerItemsFiltradosConteo();
+        const porPagina = Number(document.getElementById("tamanoPaginaConteo").value);
+        const totalPaginas = Math.max(1, Math.ceil(filtrados.length / porPagina));
+        paginaConteo = Math.min(paginaConteo, totalPaginas);
+        const inicio = (paginaConteo - 1) * porPagina;
+        document.getElementById("itemsConteo").innerHTML = filtrados.slice(inicio, inicio + porPagina).map((item) => `
             <tr>
                 <td>${escapar(item.nombre)} <small>${escapar(item.unidad)}</small></td>
                 <td>${escapar(item.cantidad_sistema)}</td>
-                <td><input type="number" min="0" max="99999999.99" step="0.01" required data-insumo="${Number(item.id_insumo)}" data-costo="${Number(item.costo)}" value="${item.cantidad_contada === null ? "" : escapar(item.cantidad_contada)}" aria-label="Cantidad contada de ${escapar(item.nombre)}"></td>
+                <td><input type="number" min="0" max="99999999.99" step="${esUnidad(item.unidad_medida) ? "1" : "0.01"}" ${esUnidad(item.unidad_medida) ? 'pattern="[0-9]*" inputmode="numeric"' : 'inputmode="decimal"'} required data-insumo="${Number(item.id_insumo)}" data-costo="${Number(item.costo)}" data-unidad="${escapar(item.unidad_medida || "")}" value="${item.cantidad_contada === null ? "" : escapar(item.cantidad_contada)}" aria-label="Cantidad contada de ${escapar(item.nombre)}"></td>
             </tr>
-        `).join("");
-        panelConteo.hidden = false;
-        panelConteo.scrollIntoView({ behavior: "smooth", block: "start" });
+        `).join("") || '<tr><td colspan="3" class="conteo-empty">No hay insumos que coincidan.</td></tr>';
+
+        const paginacion = document.getElementById("paginacionConteo");
+        if (filtrados.length === 0) {
+            paginacion.innerHTML = "";
+        } else {
+            paginacion.innerHTML = `<button type="button" data-pagina="${paginaConteo - 1}" ${paginaConteo === 1 ? "disabled" : ""}>Anterior</button><span>Página ${paginaConteo} de ${totalPaginas} · ${filtrados.length} insumos</span><button type="button" data-pagina="${paginaConteo + 1}" ${paginaConteo === totalPaginas ? "disabled" : ""}>Siguiente</button>`;
+        }
+    }
+
+    function cambiarPaginaConteo(evento) {
+        const boton = evento.target.closest("[data-pagina]");
+        if (!boton || boton.disabled) return;
+        paginaConteo = Number(boton.dataset.pagina);
+        renderizarItemsConteo();
+    }
+
+    function bloquearDecimalUnidad(evento) {
+        const input = evento.target.closest("input[data-insumo]");
+        if (!input || !esUnidad(input.dataset.unidad)) return;
+        if ([",", ".", "e", "E", "+", "-"].includes(evento.key)) {
+            evento.preventDefault();
+            mostrarMensaje("Los insumos medidos en unidades solo admiten números enteros.", true);
+        }
+    }
+
+    function filtrarPegadoUnidad(evento) {
+        const input = evento.target.closest("input[data-insumo]");
+        if (!input || !esUnidad(input.dataset.unidad)) return;
+        const pegado = evento.clipboardData.getData("text");
+        if (!/^\d+$/.test(pegado)) {
+            evento.preventDefault();
+            mostrarMensaje("Los insumos medidos en unidades solo admiten números enteros.", true);
+        }
+    }
+
+    function validarCantidadUnidad(evento) {
+        const input = evento.target.closest("input[data-insumo]");
+        if (!input) return;
+        if (esUnidad(input.dataset.unidad) && input.value !== "") {
+            const entero = input.value.replace(/[^0-9]/g, "");
+            if (input.value !== entero) {
+                input.value = entero;
+                mostrarMensaje("Los insumos medidos en unidades solo admiten números enteros.", true);
+            }
+        }
+        const item = itemsConteo.find((registro) => Number(registro.id_insumo) === Number(input.dataset.insumo));
+        if (item) item.cantidad_contada = input.value.trim() === "" ? null : Number(input.value);
     }
 
     async function guardarAvance() {
         if (!conteoActivo) return;
         const idConteoGuardado = conteoActivo;
-        const cantidades = Array.from(document.querySelectorAll("#itemsConteo input[data-insumo]"), (input) => ({
-            id_insumo: Number(input.dataset.insumo),
-            cantidad: input.value.trim() === "" ? null : Number(input.value)
+        const cantidades = itemsConteo.map((item) => ({
+            id_insumo: Number(item.id_insumo),
+            cantidad: item.cantidad_contada === null || item.cantidad_contada === undefined ? null : Number(item.cantidad_contada)
         }));
         await encolarGuardado(idConteoGuardado, cantidades, "Avance guardado. Podés salir y continuar el conteo más tarde.");
     }
@@ -255,8 +344,7 @@ verificar_permiso("conteos");
 
     function abrirConfirmacionConteo(evento) {
         evento.preventDefault();
-        const inputs = Array.from(document.querySelectorAll("#itemsConteo input[data-insumo]"));
-        if (inputs.some((input) => input.value.trim() === "")) {
+        if (itemsConteo.some((item) => item.cantidad_contada === null || item.cantidad_contada === undefined || item.cantidad_contada === "")) {
             mostrarMensaje("Completá la cantidad de cada insumo.", true);
             return;
         }
@@ -264,15 +352,14 @@ verificar_permiso("conteos");
         let cantidadFaltantes = 0;
         let cantidadSobrantes = 0;
         let diferenciaValorizada = 0;
-        inputs.forEach((input) => {
-            const fila = input.closest("tr");
-            const diferencia = Math.round((Number(input.value) - Number(fila.cells[1].textContent)) * 100) / 100;
+        itemsConteo.forEach((item) => {
+            const diferencia = Math.round((Number(item.cantidad_contada) - Number(item.cantidad_sistema)) * 100) / 100;
             if (diferencia < 0) {
                 cantidadFaltantes++;
             } else if (diferencia > 0) {
                 cantidadSobrantes++;
             }
-            diferenciaValorizada += Math.round(diferencia * Number(input.dataset.costo || 0) * 100) / 100;
+            diferenciaValorizada += Math.round(diferencia * Number(item.costo || 0) * 100) / 100;
         });
         document.getElementById("resumenFaltantes").textContent = `Insumos con faltantes: ${cantidadFaltantes}`;
         document.getElementById("resumenSobrantes").textContent = `Insumos con sobrantes: ${cantidadSobrantes}`;
@@ -299,9 +386,9 @@ verificar_permiso("conteos");
                     accion: "finalizar",
                     id_conteo: conteoActivo,
                     contrasena_administrador: contrasena,
-                    cantidades: Array.from(document.querySelectorAll("#itemsConteo input[data-insumo]"), (input) => ({
-                        id_insumo: Number(input.dataset.insumo),
-                        cantidad: Number(input.value)
+                    cantidades: itemsConteo.map((item) => ({
+                        id_insumo: Number(item.id_insumo),
+                        cantidad: Number(item.cantidad_contada)
                     }))
                 })
             });

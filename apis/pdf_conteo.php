@@ -82,7 +82,6 @@ class PDFConteoInsumos extends FPDF {
 
     function FilaDiferencia($item) {
         $diferencia = (float)$item["cantidad_contada"] - (float)$item["cantidad_sistema"];
-        if ($diferencia === 0.0) return;
         $diferenciaValorizada = round($diferencia * (float)$item["costo"], 2);
         $unidad = $item["unidad"] === "-" ? "" : " " . $item["unidad"];
         $this->EscribirFila(
@@ -231,7 +230,7 @@ $stmt = mysqli_prepare(
 )
 SELECT * 
 FROM ConsultaBase
-ORDER BY (diferencia * costo) DESC;"
+ORDER BY diferencia * costo DESC, id_insumo ASC;"
 );
 if (!$stmt) {
     responder_error_pdf("No se pudo consultar el detalle del conteo.", 500, mysqli_error($conexion));
@@ -253,7 +252,7 @@ if (!$items) {
 }
 if ($tipo === "diferencias") {
     $items = array_values(array_filter($items, function ($item) {
-        return $item["diferencia"] !== null && (float)$item["diferencia"] !== 0.0;
+        return $item["cantidad_contada"] !== null;
     }));
     if (!$items) {
         responder_error_pdf("Todavía no hay diferencias contadas para imprimir.", 422);
@@ -262,7 +261,7 @@ if ($tipo === "diferencias") {
         $valorizadaA = round((float)$a["diferencia"] * (float)$a["costo"], 2);
         $valorizadaB = round((float)$b["diferencia"] * (float)$b["costo"], 2);
         return $valorizadaB <=> $valorizadaA
-            ?: strcasecmp($a["nombre"], $b["nombre"]);
+            ?: (int)$a["id_insumo"] <=> (int)$b["id_insumo"];
     });
 }
 

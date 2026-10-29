@@ -19,3 +19,55 @@
         .caja-field select{width:100%}
         .caja-table td select[data-metodo-pago]{max-width:200px;padding:7px 32px 7px 9px}
         .caja-field select:focus,.caja-table td select[data-metodo-pago]:focus{border-color:#16723b;outline:2px solid #16723b33}
+
+        body[data-theme="dark"] dialog.caja-dialog,
+        body[data-theme="dark"] .caja-dialog-inner {
+            background: #18262d;
+            color: #e5edf0;
+        }
+
+        body[data-theme="dark"] .caja-dialog-head {
+            border-color: #3a4d55;
+        }
+
+        body[data-theme="dark"] .caja-dialog-head h2,
+        body[data-theme="dark"] .caja-field label,
+        body[data-theme="dark"] .caja-current-state strong {
+            color: #f3f7f8;
+        }
+
+        body[data-theme="dark"] .caja-dialog-head p,
+        body[data-theme="dark"] .caja-current-state p,
+        body[data-theme="dark"] .caja-dialog-close {
+            color: #b8c6cb;
+        }
+
+        body[data-theme="dark"] .caja-field input,
+        body[data-theme="dark"] .caja-field select {
+            background: #263740;
+            border-color: #4b6069;
+            color: #f3f7f8;
+        }
+
+        body[data-theme="dark"] .caja-field input::placeholder {
+            color: #93a6ad;
+        }
+
+        body[data-theme="dark"] .caja-current-state {
+            background: #263740;
+            border-left-color: #58b777;
+        }
+
+        body[data-theme="dark"] .caja-button.secondary {
+            background: #263740;
+            border-color: #4b6069;
+            color: #f3f7f8;
+        }
+
+        body[data-theme="dark"] .caja-button.secondary:hover {
+            background: #334852;
+        }
+
+        body[data-theme="dark"] dialog.caja-dialog::backdrop {
+            background: rgba(0, 8, 14, .78);
+        }

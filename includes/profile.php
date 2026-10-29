@@ -1,6 +1,6 @@
 <div class="menu">
     <div class="profile">
-        <img src="./assets/img/usuario.png">
+        <img src="<?php echo htmlspecialchars(($rutaBase ?? "") . "assets/img/usuario.png", ENT_QUOTES, "UTF-8"); ?>" alt="Usuario">
     </div>
 
     <div class="dropdown">
@@ -9,6 +9,9 @@
         <ul>
             <li>
                 <button class="theme-toggle" type="button" data-theme-toggle aria-label="Cambiar tema" aria-pressed="false">Tema: claro</button>
+            </li>
+            <li>
+                <a href="<?php echo $rutaBase ?? ""; ?>mi_cuenta.php">Mis datos</a>
             </li>
             <li>
                 <a href="<?php echo $rutaBase ?? ""; ?>close.php">Cerrar sesión</a>

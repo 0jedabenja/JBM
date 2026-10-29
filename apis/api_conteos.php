@@ -11,6 +11,11 @@ function responder_conteo($datos, $codigo = 200) {
     exit();
 }
 
+function es_medida_unidad($unidad) {
+    $unidad = strtolower(trim((string)$unidad));
+    return $unidad === "unidad" || $unidad === "unidades" || $unidad === "u";
+}
+
 function leer_conteo() {
     $datos = json_decode(file_get_contents("php://input"), true);
     return is_array($datos) ? $datos : array();
@@ -29,6 +34,7 @@ function obtener_detalle_conteo($conexion, $idConteo) {
 
     $sql = "SELECT d.id_insumo, i.nombre, i.costo,
                    COALESCE(m.simbolo, m.unidad, '-') AS unidad,
+                   m.unidad AS unidad_medida,
                    d.cantidad_sistema, d.cantidad_contada
             FROM Detalle_Conteo_Insumo d
             INNER JOIN Insumo i ON i.id_insumo = d.id_insumo
@@ -216,12 +222,16 @@ if ($accion === "guardar_borrador") {
         responder_conteo(array("error" => "El conteo ya no está disponible."), 409);
     }
 
-    $stmt = mysqli_prepare($conexion, "SELECT id_insumo FROM Detalle_Conteo_Insumo WHERE id_conteo = ? FOR UPDATE");
+    $stmt = mysqli_prepare($conexion, "SELECT d.id_insumo, m.unidad
+                                     FROM Detalle_Conteo_Insumo d
+                                     INNER JOIN Insumo i ON i.id_insumo = d.id_insumo
+                                     LEFT JOIN Medida m ON m.id_medida = i.id_medida
+                                     WHERE d.id_conteo = ? FOR UPDATE");
     mysqli_stmt_bind_param($stmt, "i", $idConteo);
     mysqli_stmt_execute($stmt);
     $resultado = mysqli_stmt_get_result($stmt);
     $esperados = array();
-    while ($fila = mysqli_fetch_assoc($resultado)) $esperados[(int)$fila["id_insumo"]] = true;
+    while ($fila = mysqli_fetch_assoc($resultado)) $esperados[(int)$fila["id_insumo"]] = $fila["unidad"] ?? "";
     mysqli_stmt_close($stmt);
 
     $stmt = mysqli_prepare($conexion, "UPDATE Detalle_Conteo_Insumo SET cantidad_contada = ? WHERE id_conteo = ? AND id_insumo = ?");
@@ -236,7 +246,7 @@ if ($accion === "guardar_borrador") {
         $idInsumo = filter_var($item["id_insumo"] ?? null, FILTER_VALIDATE_INT);
         $valor = $item["cantidad"] ?? null;
         $cantidad = $valor === null ? null : (is_numeric($valor) && is_finite((float)$valor) ? (float)$valor : false);
-        if ($idInsumo === false || !isset($esperados[$idInsumo]) || array_key_exists($idInsumo, $guardados) || $cantidad === false || ($cantidad !== null && ($cantidad < 0 || $cantidad > 99999999.99))) {
+        if ($idInsumo === false || !array_key_exists($idInsumo, $esperados) || array_key_exists($idInsumo, $guardados) || $cantidad === false || ($cantidad !== null && ($cantidad < 0 || $cantidad > 99999999.99)) || ($cantidad !== null && es_medida_unidad($esperados[$idInsumo]) && floor($cantidad) !== $cantidad)) {
             mysqli_stmt_close($stmt);
             mysqli_rollback($conexion);
             responder_conteo(array("error" => "Revisá las cantidades ingresadas."), 400);
@@ -306,10 +316,11 @@ if ($accion === "finalizar") {
 
     $stmt = mysqli_prepare(
         $conexion,
-        "SELECT d.id_insumo, d.cantidad_sistema, i.costo
+        "        SELECT d.id_insumo, d.cantidad_sistema, i.costo, m.unidad
          FROM Detalle_Conteo_Insumo d
          INNER JOIN Insumo i ON i.id_insumo = d.id_insumo
-         WHERE d.id_conteo = ?
+        LEFT JOIN Medida m ON m.id_medida = i.id_medida
+        WHERE d.id_conteo = ?
          FOR UPDATE"
     );
     mysqli_stmt_bind_param($stmt, "i", $idConteo);
@@ -319,7 +330,8 @@ if ($accion === "finalizar") {
     while ($item = mysqli_fetch_assoc($resultado)) {
         $esperados[(int)$item["id_insumo"]] = array(
             "cantidad" => (float)$item["cantidad_sistema"],
-            "costo" => (float)$item["costo"]
+            "costo" => (float)$item["costo"],
+            "unidad" => $item["unidad"] ?? ""
         );
     }
     mysqli_stmt_close($stmt);
@@ -334,7 +346,7 @@ if ($accion === "finalizar") {
         }
         $idInsumo = filter_var($item["id_insumo"] ?? null, FILTER_VALIDATE_INT);
         $cantidad = $item["cantidad"] ?? null;
-        if ($idInsumo === false || !array_key_exists($idInsumo, $esperados) || !is_numeric($cantidad) || !is_finite((float)$cantidad) || (float)$cantidad < 0 || (float)$cantidad > 99999999.99 || isset($ingresados[$idInsumo])) {
+        if ($idInsumo === false || !array_key_exists($idInsumo, $esperados) || !is_numeric($cantidad) || !is_finite((float)$cantidad) || (float)$cantidad < 0 || (float)$cantidad > 99999999.99 || isset($ingresados[$idInsumo]) || (es_medida_unidad($esperados[$idInsumo]["unidad"] ?? "") && floor((float)$cantidad) !== (float)$cantidad)) {
             mysqli_rollback($conexion);
             responder_conteo(array("error" => "Revisá las cantidades ingresadas."), 400);
         }

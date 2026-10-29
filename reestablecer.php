@@ -91,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <?php if (!$exito): ?>
-            <form action="restablecer.php" method="POST">
+            <form action="reestablecer.php" method="POST">
                 <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
                 
                 <div class="form-group">

@@ -73,7 +73,7 @@ function usuario_tiene_permiso($permiso) {
     $permisos = array(
         "administrador" => array("inicio", "pedidos", "crear_pedido", "cocina", "mapa", "caja", "clientes", "insumos", "productos", "empleados", "conteos", "auditoria", "compras"),
         "cajero" => array("inicio", "pedidos", "crear_pedido", "mapa", "caja", "compras"),
-        "mozo" => array("inicio", "pedidos", "crear_pedido", "mapa"),
+        "mozo" => array("inicio", "pedidos", "crear_pedido", "mapa", "clientes"),
         "cocina" => array("inicio", "pedidos", "cocina")
     );
 

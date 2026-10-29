@@ -115,6 +115,56 @@
             width: 100%;
         }
 
+        .conteo-listado-toolbar {
+            align-items: end;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .conteo-listado-toolbar label {
+            display: grid;
+            font-weight: 700;
+            gap: 5px;
+        }
+
+        .conteo-listado-toolbar input,
+        .conteo-listado-toolbar select {
+            border: 1px solid #b9c5c8;
+            border-radius: 5px;
+            font: inherit;
+            min-width: 240px;
+            padding: 9px;
+        }
+
+        .conteo-listado-toolbar select {
+            min-width: 90px;
+        }
+
+        .conteo-pagination {
+            align-items: center;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin: 8px 0 18px;
+        }
+
+        .conteo-pagination button {
+            background: #fff;
+            border: 1px solid #c9d3d5;
+            border-radius: 5px;
+            color: #001f47;
+            cursor: pointer;
+            font: inherit;
+            padding: 7px 10px;
+        }
+
+        .conteo-pagination button:disabled {
+            cursor: default;
+            opacity: .45;
+        }
+
         .conteo-actions {
             display: flex;
             flex-wrap: wrap;

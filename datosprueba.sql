@@ -1,11 +1,11 @@
 USE lodetorres;
 
 -- Empleados (Con el hash bcrypt para '12345678')
-INSERT INTO Empleado (nombre, apellido, activo, usuario, contraseña, id_rol) VALUES
-('Administrador', 'Sistema', TRUE, 'Administrador', '$2y$10$FK0MwH70h6MNOP03tIdqRuTrGCTbtepzpB24tuhvqGAR3dzLhG7ca', 1),
-('Cajero', 'Caja', TRUE, 'Cajero', '$2y$10$FK0MwH70h6MNOP03tIdqRuTrGCTbtepzpB24tuhvqGAR3dzLhG7ca', 2),
-('Cocina', 'Cocina', TRUE, 'Cocina', '$2y$10$FK0MwH70h6MNOP03tIdqRuTrGCTbtepzpB24tuhvqGAR3dzLhG7ca', 3),
-('Mozo', 'Salón', TRUE, 'Mozo', '$2y$10$FK0MwH70h6MNOP03tIdqRuTrGCTbtepzpB24tuhvqGAR3dzLhG7ca', 4);
+INSERT INTO Empleado (nombre, apellido, activo, usuario, correo, contraseña, id_rol) VALUES
+('Administrador', 'Sistema', TRUE, 'Administrador', 'administrador@lodetorres.local', '$2y$10$FK0MwH70h6MNOP03tIdqRuTrGCTbtepzpB24tuhvqGAR3dzLhG7ca', 1),
+('Cajero', 'Caja', TRUE, 'Cajero', 'cajero@lodetorres.local', '$2y$10$FK0MwH70h6MNOP03tIdqRuTrGCTbtepzpB24tuhvqGAR3dzLhG7ca', 2),
+('Cocina', 'Cocina', TRUE, 'Cocina', 'cocina@lodetorres.local', '$2y$10$FK0MwH70h6MNOP03tIdqRuTrGCTbtepzpB24tuhvqGAR3dzLhG7ca', 3),
+('Mozo', 'Salón', TRUE, 'Mozo', 'mozo@lodetorres.local', '$2y$10$FK0MwH70h6MNOP03tIdqRuTrGCTbtepzpB24tuhvqGAR3dzLhG7ca', 4);
 
 INSERT INTO Insumo (nombre, activo, cantidad_actual, stock_minimo, costo, id_medida, id_categoria) VALUES
 ('Medallón de Carne 150g', TRUE, 150.00, 30.00, 45.00, 1, 1),
