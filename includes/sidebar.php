@@ -37,8 +37,12 @@ $iconosFavicon = array(
     "auditoria" => "light-audit.svg",
     "compras" => "light-purchase.svg"
 );
-$faviconSeccion = isset($iconosFavicon[$seccionActual]) ? $iconosFavicon[$seccionActual] : "favicon.svg";
-$rutaFavicon = $faviconSeccion === "favicon.svg" ? $rutaBase . "assets/img/favicon.svg" : $rutaBase . "assets/img/sidebar/" . $faviconSeccion;
+$faviconSeccion = $seccionActual === "inicio"
+    ? "favicon-sistema.svg"
+    : ($iconosFavicon[$seccionActual] ?? "favicon.svg");
+$rutaFavicon = in_array($faviconSeccion, array("favicon.svg", "favicon-sistema.svg"), true)
+    ? $rutaBase . "assets/img/" . $faviconSeccion
+    : $rutaBase . "assets/img/sidebar/" . $faviconSeccion;
 ?>
 <link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/css/sidebar.css">
 <link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/css/theme.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/theme.css'); ?>">

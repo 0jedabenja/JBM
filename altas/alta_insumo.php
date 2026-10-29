@@ -1,6 +1,6 @@
 <?php
-include_once("../includes/conexionBD.php");
-include_once("../includes/funciones.php");
+include_once __DIR__ . "/../includes/conexionBD.php";
+include_once __DIR__ . "/../includes/funciones.php";
 verificar_sesion();
 verificar_permiso("insumos");
 $mensaje = "";
@@ -8,7 +8,7 @@ $tipoMensaje = "";
 $rutaBase = "../";
 
 $medidas = array();
-$consultaMedidas = mysqli_query($conexion, "SELECT id_medida, unidad FROM medida ORDER BY unidad ASC");
+$consultaMedidas = mysqli_query($conexion, "SELECT id_medida, unidad FROM Medida ORDER BY unidad ASC");
 if ($consultaMedidas) {
     while ($row = mysqli_fetch_assoc($consultaMedidas)) {
         $medidas[] = $row;
