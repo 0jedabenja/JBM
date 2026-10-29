@@ -7,8 +7,21 @@ const esMovil = window.matchMedia("(max-width: 768px)");
 
 function guardarEstadoSidebar(colapsado) {
     const valor = String(colapsado);
-    try { localStorage.setItem(claveSidebar, valor); } catch (error) {}
-    try { sessionStorage.setItem(claveSidebar, valor); } catch (error) {}
+    try {
+        localStorage.setItem(claveSidebar, valor);
+    } catch (error) {
+        console.warn("No se pudo guardar la preferencia del menú lateral en localStorage.", error);
+    }
+    try {
+        document.cookie = `${claveSidebar}=${valor}; Path=/; Max-Age=31536000; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
+    } catch (error) {
+        console.warn("No se pudo guardar la preferencia del menú lateral en una cookie.", error);
+    }
+    try {
+        sessionStorage.setItem(claveSidebar, valor);
+    } catch (error) {
+        console.warn("No se pudo guardar la preferencia del menú lateral en sessionStorage.", error);
+    }
 }
 
 function aplicarEstadoSidebar(colapsado) {
@@ -21,12 +34,22 @@ function obtenerEstadoSidebar() {
     try {
         const valorLocal = localStorage.getItem(claveSidebar);
         if (valorLocal === "true" || valorLocal === "false") return valorLocal === "true";
-    } catch (error) {}
+    } catch (error) {
+        console.warn("No se pudo leer la preferencia del menú lateral de localStorage.", error);
+    }
+
+    const cookie = document.cookie
+        .split("; ")
+        .find(parte => parte.startsWith(`${claveSidebar}=`))
+        ?.split("=")[1];
+    if (cookie === "true" || cookie === "false") return cookie === "true";
 
     try {
         const valorSesion = sessionStorage.getItem(claveSidebar);
         if (valorSesion === "true" || valorSesion === "false") return valorSesion === "true";
-    } catch (error) {}
+    } catch (error) {
+        console.warn("No se pudo leer la preferencia del menú lateral de sessionStorage.", error);
+    }
 
     return false;
 }
