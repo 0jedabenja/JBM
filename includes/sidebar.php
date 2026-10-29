@@ -41,7 +41,7 @@ $faviconSeccion = isset($iconosFavicon[$seccionActual]) ? $iconosFavicon[$seccio
 $rutaFavicon = $faviconSeccion === "favicon.svg" ? $rutaBase . "assets/img/favicon.svg" : $rutaBase . "assets/img/sidebar/" . $faviconSeccion;
 ?>
 <link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/css/sidebar.css">
-<link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/css/theme.css">
+<link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/css/theme.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/theme.css'); ?>">
 <link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/css/sin-seleccion.css">
 <script src="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/js/theme.js"></script>
 <script>

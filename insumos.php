@@ -39,7 +39,7 @@ verificar_permiso("insumos");
             <table class="modulo-table"><thead><tr><th>ID</th><th>Nombre</th><th>Unidad de Medida</th><th>Cant. Actual</th><th>Stock Mínimo</th><th>Costo</th><th>Acciones</th></tr></thead>
                 <tbody id="tablaInsumos"><tr><td colspan="7" class="texto-centrado">No se encontraron insumos.</td></tr></tbody>
             </table>
-            <div class="paginacion"><button type="button" id="btnAnterior">Anterior</button><span id="infoPagina">Página 1</span><button type="button" id="btnSiguiente">Siguiente</button></div>
+            <nav class="pagination" aria-label="Paginación de insumos"><button class="button button--secondary" type="button" id="btnAnterior">Anterior</button><span id="infoPagina">Página 1</span><button class="button button--secondary" type="button" id="btnSiguiente">Siguiente</button></nav>
         </main>
     </div>
     <script>
@@ -66,7 +66,13 @@ verificar_permiso("insumos");
                     } else {
                         insumos.forEach(insumo => {
                             const fila = document.createElement("tr");
-                            fila.innerHTML = `<td>${escapeHTML(insumo.id_insumo)}</td><td>${escapeHTML(insumo.nombre)}</td><td>${escapeHTML(insumo.unidad)}</td><td>${escapeHTML(insumo.cantidad_actual)}</td><td>${escapeHTML(insumo.stock_minimo)}</td><td>$ ${escapeHTML(insumo.costo)}</td><td class="acciones-producto"><a class="accion accion-movimientos" href="movimientos.php?tipo=insumo&id=${encodeURIComponent(insumo.id_insumo)}">Movimientos</a><a class="accion accion-editar" href="modificar_insumo.php?id=${encodeURIComponent(insumo.id_insumo)}">Editar</a><button type="button" class="accion accion-desactivar" onclick="eliminarInsumo(${insumo.id_insumo})">Desactivar</button></td>`;
+                            const cantidadActual = Number(insumo.cantidad_actual);
+                            const tieneStockNegativo = Number.isFinite(cantidadActual) && cantidadActual < 0;
+                            const distintivoStockNegativo = tieneStockNegativo
+                                ? '<strong>Stock negativo</strong>'
+                                : "";
+                            if (tieneStockNegativo) fila.classList.add("producto-sin-stock");
+                            fila.innerHTML = `<td>${escapeHTML(insumo.id_insumo)}</td><td>${escapeHTML(insumo.nombre)}</td><td>${escapeHTML(insumo.unidad)}</td><td>${escapeHTML(insumo.cantidad_actual)} ${distintivoStockNegativo}</td><td>${escapeHTML(insumo.stock_minimo)}</td><td>$ ${escapeHTML(insumo.costo)}</td><td class="acciones-producto"><a class="accion accion-movimientos" href="movimientos.php?tipo=insumo&id=${encodeURIComponent(insumo.id_insumo)}">Movimientos</a><a class="accion accion-editar" href="modificar_insumo.php?id=${encodeURIComponent(insumo.id_insumo)}">Editar</a><button type="button" class="accion accion-desactivar" onclick="eliminarInsumo(${insumo.id_insumo})">Desactivar</button></td>`;
                             tbody.appendChild(fila);
                         });
                     }

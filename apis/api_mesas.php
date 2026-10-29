@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/../includes/api_json.php";
 include_once("../includes/conexionBD.php");
 include_once("../includes/funciones.php");
 verificar_sesion_api();

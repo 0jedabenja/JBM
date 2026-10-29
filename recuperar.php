@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Recuperar Contraseña - Lo de Torres</title>
     <link rel="stylesheet" href="assets/css/recuperacion.css">
     <link rel="stylesheet" href="assets/css/sin-seleccion.css">
-    <link rel="stylesheet" href="assets/css/theme.css">
+    <link rel="stylesheet" href="assets/css/theme.css?v=<?php echo filemtime(__DIR__ . "/assets/css/theme.css"); ?>">
     <script src="assets/js/theme.js" defer></script>
 </head>
 <body>

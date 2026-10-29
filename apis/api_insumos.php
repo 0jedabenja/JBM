@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/../includes/api_json.php";
 include_once("../includes/conexionBD.php");
 include_once("../includes/funciones.php");
 verificar_sesion_api();
@@ -11,10 +12,5 @@ $pagina = max(1, (int)obtener_parametro_get("pagina", "1"));
 $desdequeelemento = ($pagina - 1) * $limite;
 $campo = obtener_parametro_get("campo", "todos");
 $filtro = obtener_parametro_get("filtro");
-$stmt = mysqli_prepare($conexion, "CALL sp_listar_insumos(?, ?, ?, ?)");
-mysqli_stmt_bind_param($stmt, "ssii", $filtro, $campo, $limite, $desdequeelemento);
-mysqli_stmt_execute($stmt);
-$resultado = mysqli_stmt_get_result($stmt);
-$insumos = $resultado ? mysqli_fetch_all($resultado, MYSQLI_ASSOC) : array();
-mysqli_stmt_close($stmt);
+$insumos = obtener_listado_api($conexion, "insumos", $filtro, $campo, $limite, $desdequeelemento);
 echo json_encode($insumos, JSON_UNESCAPED_UNICODE);

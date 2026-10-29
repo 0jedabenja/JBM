@@ -52,7 +52,7 @@ verificar_permiso("productos");
                     </tr>
                 </tbody>
             </table>
-            <div class="paginacion"><button type="button" id="btnAnterior">Anterior</button><span id="infoPagina">Página 1</span><button type="button" id="btnSiguiente">Siguiente</button></div>
+            <nav class="pagination" aria-label="Paginación de productos"><button class="button button--secondary" type="button" id="btnAnterior">Anterior</button><span id="infoPagina">Página 1</span><button class="button button--secondary" type="button" id="btnSiguiente">Siguiente</button></nav>
         </main>
     </div>
     <script>

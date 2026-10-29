@@ -25,6 +25,31 @@ INSERT INTO Insumo (nombre, activo, cantidad_actual, stock_minimo, costo, id_med
 ('Brownie de Chocolate (Porción)', TRUE, 30.00, 8.00, 75.00, 1, 3),
 ('Salsa de Chocolate', TRUE, 5.00, 1.00, 250.00, 4, 3);
 
+INSERT INTO Movimiento_Insumo (id_insumo, id_empleado, tipo, cantidad, costo_unitario, observacion)
+SELECT i.id_insumo, e.id_empleado, 'saldo_inicial', i.cantidad_actual, i.costo,
+       'Saldo inicial cargado con datos de prueba'
+FROM Insumo i
+CROSS JOIN Empleado e
+WHERE e.usuario = 'Administrador'
+  AND i.nombre IN (
+      'Medallón de Carne 150g',
+      'Pan de Hamburguesa Artesanal',
+      'Queso Cheddar (Láminas)',
+      'Bacon ahumado (Fetas)',
+      'Lechuga capuchina',
+      'Tomate redondo',
+      'Papa Frita Bastón (Congelada)',
+      'Pan de Lomo / Baguette',
+      'Jamón cocido en fetas',
+      'Huevo',
+      'Cerveza Rubia Tirada',
+      'Gaseosa Línea Coca-Cola (Lata 354ml)',
+      'Agua Sin Gas (600ml)',
+      'Helado Artesanal Dulce de Leche',
+      'Brownie de Chocolate (Porción)',
+      'Salsa de Chocolate'
+  );
+
 INSERT INTO Producto (nombre, activo, precio, id_categoria) VALUES
 ('Hamburguesa Completa con Papas', TRUE, 390.00, 1),
 ('Hamburguesa Doble Bacon Cheddar', TRUE, 480.00, 1),

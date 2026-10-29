@@ -41,7 +41,7 @@ $nombre = $fila["nombre"];
         </div>
         <main class="modulo-content">
             <h2>Movimientos: <?php echo htmlspecialchars($nombre, ENT_QUOTES, "UTF-8"); ?></h2>
-            <p class="descripcion"><?php echo $tipo === "insumo" ? "Los ajustes se muestran con signo: negativo resta y positivo suma." : "Se muestran las unidades vendidas en pedidos."; ?></p>
+            <p class="descripcion"><?php echo $tipo === "insumo" ? "Los movimientos se muestran con signo: negativo resta y positivo suma." : "Se muestran las unidades vendidas en pedidos."; ?></p>
             <form id="filtrosMovimientos" class="filtros-movimientos">
                 <label for="filtroTipo">Tipo de movimiento
                     <select id="filtroTipo">
@@ -50,6 +50,7 @@ $nombre = $fila["nombre"];
                             <option value="saldo_inicial">Saldo inicial</option>
                             <option value="inventario">Ajuste de inventario</option>
                             <option value="compra">Compra</option>
+                            <option value="pedido">Consumo por pedido</option>
                             <option value="perdida">Pérdida</option>
                             <option value="averia">Insumo dañado</option>
                             <option value="consumo_personal">Consumo del personal</option>
@@ -58,9 +59,8 @@ $nombre = $fila["nombre"];
                         <?php endif; ?>
                     </select>
                 </label>
-                <label for="fechaDesde">Desde<input type="datetime-local" id="fechaDesde"></label>
-                <label for="fechaHasta">Hasta<input type="datetime-local" id="fechaHasta"></label>
-                <button type="submit">Filtrar</button>
+                <label for="fechaDesde">Desde<input type="date" id="fechaDesde"></label>
+                <label for="fechaHasta">Hasta<input type="date" id="fechaHasta"></label>
                 <a class="boton" href="<?php echo $tipo === "insumo" ? "insumos.php" : "productos.php"; ?>">Volver</a>
             </form>
             <p id="mensajeMovimientos" role="status"></p>
@@ -70,11 +70,11 @@ $nombre = $fila["nombre"];
                     <tbody id="filasMovimientos"><tr><td colspan="7" class="texto-centrado">Cargando movimientos...</td></tr></tbody>
                 </table>
             </div>
-            <div class="paginacion">
-                <button class="boton" id="paginaAnterior" type="button">Anterior</button>
+            <nav class="pagination" aria-label="Paginación de movimientos">
+                <button class="button button--secondary" id="paginaAnterior" type="button">Anterior</button>
                 <span id="paginaActual">Página 1</span>
-                <button class="boton" id="paginaSiguiente" type="button">Siguiente</button>
-            </div>
+                <button class="button button--secondary" id="paginaSiguiente" type="button">Siguiente</button>
+            </nav>
         </main>
     </div>
 <script>
@@ -82,6 +82,7 @@ const tipoEntidad = <?php echo json_encode($tipo); ?>;
 const idEntidad = <?php echo (int)$id; ?>;
 let pagina = 1;
 let cargando = false;
+let solicitudMovimientos = 0;
 
 function establecerFechasPredeterminadas() {
     const ahora = new Date();
@@ -91,7 +92,7 @@ function establecerFechasPredeterminadas() {
     desde.setMonth(desde.getMonth() - 1);
     const ultimoDiaMesAnterior = new Date(desde.getFullYear(), desde.getMonth() + 1, 0).getDate();
     desde.setDate(Math.min(diaOriginal, ultimoDiaMesAnterior));
-    const formatoLocal = fecha => `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}-${String(fecha.getDate()).padStart(2, "0")}T${String(fecha.getHours()).padStart(2, "0")}:${String(fecha.getMinutes()).padStart(2, "0")}`;
+    const formatoLocal = fecha => `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}-${String(fecha.getDate()).padStart(2, "0")}`;
     document.getElementById("fechaDesde").value = formatoLocal(desde);
     document.getElementById("fechaHasta").value = formatoLocal(ahora);
 }
@@ -99,9 +100,16 @@ establecerFechasPredeterminadas();
 
 document.getElementById("filtrosMovimientos").addEventListener("submit", (evento) => {
     evento.preventDefault();
-    pagina = 1;
-    cargarMovimientos();
+    aplicarFiltrosMovimientos();
 });
+["filtroTipo", "fechaDesde", "fechaHasta"].forEach((id) => {
+    document.getElementById(id).addEventListener("change", aplicarFiltrosMovimientos);
+});
+
+function aplicarFiltrosMovimientos() {
+    pagina = 1;
+    cargarMovimientos(true);
+}
 document.getElementById("paginaAnterior").addEventListener("click", () => {
     if (pagina > 1 && !cargando) { pagina--; cargarMovimientos(); }
 });
@@ -109,16 +117,18 @@ document.getElementById("paginaSiguiente").addEventListener("click", () => {
     if (!cargando && document.getElementById("paginaSiguiente").dataset.hayMas === "true") { pagina++; cargarMovimientos(); }
 });
 
-async function cargarMovimientos() {
-    if (cargando) return;
+async function cargarMovimientos(reemplazarSolicitud = false) {
+    if (cargando && !reemplazarSolicitud) return;
     cargando = true;
+    const solicitud = ++solicitudMovimientos;
+    const paginaSolicitada = pagina;
     const params = new URLSearchParams({
         tipo: tipoEntidad,
         id: String(idEntidad),
         movimiento: document.getElementById("filtroTipo").value,
         desde: document.getElementById("fechaDesde").value,
         hasta: document.getElementById("fechaHasta").value,
-        pagina: String(pagina)
+        pagina: String(paginaSolicitada)
     });
     try {
         const respuesta = await fetch(`apis/api_movimientos.php?${params.toString()}`, { cache: "no-store" });
@@ -130,6 +140,7 @@ async function cargarMovimientos() {
             throw new Error("El servidor devolvió una respuesta inválida. Verificá la conexión y la estructura de la base de datos.");
         }
         if (!respuesta.ok) throw new Error(datos.error || "No se pudieron cargar los movimientos.");
+        if (solicitud !== solicitudMovimientos) return;
         const cuerpo = document.getElementById("filasMovimientos");
         cuerpo.innerHTML = datos.movimientos.length ? datos.movimientos.map((movimiento) => `
             <tr>
@@ -141,20 +152,22 @@ async function cargarMovimientos() {
                 <td>${referenciaMovimiento(movimiento)}</td>
                 <td>${escapar(movimiento.responsable)}</td>
             </tr>`).join("") : '<tr><td colspan="7">No hay movimientos para los filtros seleccionados.</td></tr>';
-        document.getElementById("paginaActual").textContent = `Página ${pagina}`;
-        document.getElementById("paginaAnterior").disabled = pagina <= 1;
+        document.getElementById("paginaActual").textContent = `Página ${paginaSolicitada}`;
+        document.getElementById("paginaAnterior").disabled = paginaSolicitada <= 1;
         document.getElementById("paginaSiguiente").dataset.hayMas = datos.hay_mas ? "true" : "false";
         document.getElementById("paginaSiguiente").disabled = !datos.hay_mas;
         document.getElementById("mensajeMovimientos").textContent = "";
     } catch (error) {
-        document.getElementById("mensajeMovimientos").textContent = error.message;
+        if (solicitud === solicitudMovimientos) {
+            document.getElementById("mensajeMovimientos").textContent = error.message;
+        }
     } finally {
-        cargando = false;
+        if (solicitud === solicitudMovimientos) cargando = false;
     }
 }
 
 function etiquetaTipo(tipo) {
-    return ({ saldo_inicial: "Saldo inicial", inventario: "Ajuste de inventario", compra: "Compra", perdida: "Pérdida", averia: "Producto dañado", consumo_personal: "Consumo del personal", venta: "Venta / pedido" })[tipo] || tipo;
+    return ({ saldo_inicial: "Saldo inicial", inventario: "Ajuste de inventario", compra: "Compra", pedido: "Consumo por pedido", perdida: "Pérdida", averia: "Producto dañado", consumo_personal: "Consumo del personal", venta: "Venta / pedido" })[tipo] || tipo;
 }
 function formatearCantidad(valor, conSigno) {
     const formato = Number(valor).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -166,7 +179,7 @@ function formatearImporte(valor) {
 function referenciaMovimiento(movimiento) {
     const referencia = escapar(movimiento.referencia);
     if (tipoEntidad === "insumo" && movimiento.tipo === "compra" && movimiento.referencia_id) {
-        return `${referencia} <a class="boton boton-comprobante" href="apis/comprobante_compra.php?id=${encodeURIComponent(movimiento.referencia_id)}" target="_blank">Ver comprobante</a>`;
+        return `${referencia} <a class="boton boton-comprobante" href="apis/boleta_pedido.php?tipo=compra&id_compra=${encodeURIComponent(movimiento.referencia_id)}" target="comprobanteJBM">Ver comprobante</a>`;
     }
     return referencia;
 }

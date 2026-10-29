@@ -11,6 +11,9 @@
     --input-border: rgba(0, 0, 0, 0.2);
     --input-text: #000000;
     --text-color: #000000;
+    --card-shadow: 0 24px 70px rgba(15, 23, 42, 0.14), 0 4px 14px rgba(15, 23, 42, 0.06);
+    --captcha-bg: #f7f9fc;
+    --accent: #2457d6;
 }
 
 :root[data-theme="dark"] {
@@ -21,6 +24,9 @@
     --input-border: rgba(255, 255, 255, 0.2);
     --input-text: #FFFFFF;
     --text-color: #FFFFFF;
+    --card-shadow: 0 24px 70px rgba(0, 0, 0, 0.42), 0 4px 14px rgba(0, 0, 0, 0.2);
+    --captcha-bg: #1d2229;
+    --accent: #7098ff;
 }
 
 * {
@@ -34,7 +40,7 @@ body {
     display: grid;
     grid-template-rows: 1fr auto;
     min-height: 100dvh;
-    background-color: var(--bg-color);
+    background: radial-gradient(ellipse at top, rgba(75, 110, 190, 0.1), transparent 55%), var(--bg-color);
     color: var(--text-main);
     transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -52,12 +58,17 @@ form {
     justify-content: center;
     width: 28rem;
     height: auto;
-    min-height: 32rem;
+    min-height: 35rem;
     padding: 2rem 3rem;
     background-color: var(--form-bg);
     border-radius: 2rem;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
-    transition: background-color 0.3s ease;
+    border: 1px solid rgba(127, 145, 170, 0.16);
+    box-shadow: var(--card-shadow);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+form:hover {
+    transform: translateY(-2px);
 }
 
 .form-title {
@@ -101,7 +112,12 @@ form {
     border: 1px solid var(--input-border);
     border-radius: 5px;
     outline: none;
-    transition: border-color 0.3s ease, color 0.3s ease;
+    transition: border-color 0.2s ease, color 0.3s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.input-container input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .input-container img.icon-user, .input-container img.icon-lock {
@@ -131,7 +147,7 @@ form {
 .forgot-password {
     align-self: flex-start;
     margin-bottom: 1.5rem;
-    color: blue;
+    color: var(--accent);
     font-size: 0.85rem;
     text-decoration: none;
     opacity: 1;
@@ -150,15 +166,17 @@ form {
     color: white;
     font-size: 1rem;
     font-weight: 600;
-    background-color: blue;
+    background: linear-gradient(135deg, var(--accent), #3155bd);
     border: none;
     border-radius: 8px;
+    box-shadow: 0 8px 18px rgba(36, 87, 214, 0.24);
     cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.2s ease;
+    transition: filter 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn-login:hover {
-    background-color: #0000cc;
+    filter: brightness(1.08);
+    box-shadow: 0 10px 24px rgba(36, 87, 214, 0.3);
 }
 
 .btn-login:active {
@@ -295,24 +313,48 @@ footer {
     font-size: 0.75rem;
 }
 
-altcha-widget {
+.captcha-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 6.5rem;
+    align-items: center;
+    gap: 0.75rem;
     width: 100%;
     margin-bottom: 1rem;
-    color-scheme: light;
-    --altcha-color: var(--text-main);
-    --altcha-background-color: var(--form-bg);
-    --altcha-border-color: var(--input-border);
-    --altcha-border-radius: 6px;
+    padding: 0.8rem 0.9rem;
+    background-color: var(--captcha-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 10px;
 }
 
-:root[data-theme="dark"] altcha-widget {
-    color-scheme: dark;
+.captcha-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    color: var(--text-muted);
+    font-size: 0.74rem;
 }
 
-altcha-widget::part(checkbox),
-altcha-widget::part(label),
-altcha-widget::part(text) {
+.captcha-label strong {
     color: var(--text-main);
+    font-size: 0.95rem;
+    letter-spacing: 0.04em;
+}
+
+.captcha-container input {
+    width: 100%;
+    min-width: 0;
+    height: 2.6rem;
+    padding: 0 0.6rem;
+    color: var(--input-text);
+    background-color: var(--form-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 7px;
+    outline: none;
+}
+
+.captcha-container input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 @media (max-width: 600px) {
@@ -329,5 +371,51 @@ altcha-widget::part(text) {
 
     .footer-right {
         gap: 1rem;
+    }
+}
+
+@media (max-width: 720px) {
+    .form-container {
+        padding: 24px 16px;
+    }
+
+    form {
+        width: min(100%, 28rem);
+        min-height: 0;
+        padding: 2rem clamp(1.25rem, 7vw, 3rem);
+    }
+
+    footer {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+        width: calc(100% - 32px);
+        padding-bottom: 8px;
+    }
+
+    .footer-right {
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+
+    .popup-box {
+        width: min(100%, 500px);
+        max-height: 88dvh;
+        overflow-y: auto;
+        padding: 1.5rem 1rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .form-container {
+        padding: 16px 10px;
+    }
+
+    form {
+        padding: 1.5rem 1rem;
+    }
+
+    .form-description {
+        margin-bottom: 1.5rem;
     }
 }

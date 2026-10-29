@@ -11,3 +11,18 @@
 .filtro-productos-pedido{align-items:end;background:#fff;border:1px solid #ddd;border-radius:8px;display:flex;flex-direction:column;gap:7px;margin:20px 0;padding:14px}.filtro-productos-pedido label{color:#001f47;font-weight:700}.filtro-productos-pedido input{border:1px solid #bbb;border-radius:6px;font:inherit;padding:10px;width:100%}
 @media(max-width:768px){.mesa-pedido{width:9%!important;height:38px!important;min-height:38px!important;border-width:2px;border-radius:10px}.mesa-pedido strong{font-size:10px}.mesa-pedido small{font-size:9px}.mapa-pedido{min-height:280px}}
 .pedido-productos{display:grid;gap:8px;list-style:none;padding:0}.pedido-bebida{align-items:center;display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}.boton-bebida-pickeada{font-size:.85rem;padding:7px 10px}.estado-bebida{color:#765400;font-size:.9rem}.aviso-bebidas{color:#765400;font-size:.9rem}
+
+.pedido-forzar-stock{align-items:flex-start;background:#fff3cd;border:2px solid #d9a441;border-radius:8px;color:#664b00!important;display:flex;gap:10px;grid-column:1/-1;padding:12px}
+.pedido-forzar-stock input{accent-color:#a66b00;flex:0 0 auto;margin:3px 0 0;padding:0}
+.pedido-forzar-stock small{display:block;font-weight:400;margin-top:4px}
+.pedidos-content #mensajeCreacion{border-radius:8px;font-weight:600;line-height:1.55;margin:14px 0;padding:16px;white-space:pre-line}
+.pedidos-content #mensajeCreacion.error{background:#fff0ee;border:2px solid #c7372f;border-left-width:8px;color:#8f1914;font-size:1rem}
+.pedidos-content #mensajeCreacion.exito{background:#e9f8ed;border:1px solid #4b9b69;color:#155c31}
+.pedido-panel .pedido-form button[type=submit]:disabled{cursor:not-allowed;opacity:.55}
+body[data-theme="dark"] .main .pedido-forzar-stock{background:#49351c;border-color:#a87931;color:#ffe1a3!important}
+body[data-theme="dark"] .main #mensajeCreacion.error{background:#402427;border-color:#bd565d;color:#ffd1d4}
+body[data-theme="dark"] .main #mensajeCreacion.exito{background:#1f3a28;border-color:#477c56;color:#d5f7df}
+.notificacion-pedido{border-width:2px;border-left-width:8px;font-size:1rem;padding:18px}
+.notificacion-pedido.error{box-shadow:0 10px 30px #a3292940}
+body[data-theme="dark"] .notificacion-pedido{background:#1f3a28;border-color:#477c56;color:#d5f7df}
+body[data-theme="dark"] .notificacion-pedido.error{background:#402427;border-color:#bd565d;color:#ffd1d4}

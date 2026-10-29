@@ -1,7 +1,7 @@
 <?php
 include_once __DIR__ . "/../includes/conexionBD.php";
 include_once __DIR__ . "/../includes/funciones.php";
-require_once __DIR__ . "/../lib/fpdf19/fpdf.php";
+require_once __DIR__ . "/../librerias/fpdf19/fpdf.php";
 verificar_permiso("conteos");
 
 function responder_error_pdf($mensaje, $codigo, $detalle = "") {

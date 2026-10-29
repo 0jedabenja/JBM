@@ -38,11 +38,11 @@ verificar_permiso("auditoria");
                 </tbody>
             </table>
             <p id="mensajeAuditoria" class="auditoria-status" role="status" aria-live="polite"></p>
-            <div class="auditoria-pagination">
-                <button id="auditoriaAnterior" class="auditoria-button" type="button" disabled>Anterior</button>
+            <nav class="pagination" aria-label="Paginación de auditoría">
+                <button id="auditoriaAnterior" class="button button--secondary" type="button" disabled>Anterior</button>
                 <span id="paginaAuditoria">Página 1</span>
-                <button id="auditoriaSiguiente" class="auditoria-button" type="button" disabled>Siguiente</button>
-            </div>
+                <button id="auditoriaSiguiente" class="button button--secondary" type="button" disabled>Siguiente</button>
+            </nav>
         </main>
     </div>
     <script>

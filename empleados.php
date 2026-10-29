@@ -38,7 +38,7 @@ verificar_permiso("empleados");
             <table class="modulo-table"><thead><tr><th>ID</th><th>Nombre</th><th>Apellido</th><th>Usuario</th><th>Rol</th><th>Acciones</th></tr></thead>
                 <tbody id="tablaEmpleados"><tr><td colspan="6" class="texto-centrado">No se encontraron empleados.</td></tr></tbody>
             </table>
-            <div class="paginacion"><button type="button" id="btnAnterior">Anterior</button><span id="infoPagina">Página 1</span><button type="button" id="btnSiguiente">Siguiente</button></div>
+            <nav class="pagination" aria-label="Paginación de empleados"><button class="button button--secondary" type="button" id="btnAnterior">Anterior</button><span id="infoPagina">Página 1</span><button class="button button--secondary" type="button" id="btnSiguiente">Siguiente</button></nav>
         </main>
     </div>
     <script>

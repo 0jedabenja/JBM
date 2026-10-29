@@ -122,6 +122,124 @@ function obtener_parametro_get($nombre, $predeterminado = "") {
     return trim((string)$_GET[$nombre]);
 }
 
+function obtener_listado_api($conexion, $entidad, $filtro, $campo, $limite, $offset) {
+    $definiciones = array(
+        "clientes" => array(
+            "select" => "SELECT c.id_cliente, c.nombre, c.apellido, c.telefono, c.direccion FROM Cliente c",
+            "where" => "c.activo = TRUE",
+            "order" => "c.apellido, c.nombre",
+            "campos" => array(
+                "id_cliente" => "CAST(c.id_cliente AS CHAR)",
+                "nombre" => "c.nombre",
+                "apellido" => "c.apellido",
+                "telefono" => "c.telefono",
+                "direccion" => "c.direccion",
+                "nombre_apellido" => "CONCAT(c.nombre, ' ', c.apellido)"
+            ),
+            "todos" => array("CAST(c.id_cliente AS CHAR)", "c.nombre", "c.apellido", "c.telefono", "c.direccion")
+        ),
+        "productos" => array(
+            "select" => "SELECT p.id_producto, p.nombre, p.precio, p.id_categoria, cat.titulo AS categoria,
+                                CASE WHEN EXISTS (
+                                    SELECT 1 FROM Compone co
+                                    LEFT JOIN Insumo i ON i.id_insumo = co.id_insumo
+                                    WHERE co.id_producto = p.id_producto
+                                      AND (i.id_insumo IS NULL OR i.activo <> TRUE OR co.cantidad <= 0 OR i.cantidad_actual < co.cantidad)
+                                ) THEN 0 ELSE 1 END AS disponible
+                         FROM Producto p LEFT JOIN Categoria cat ON cat.id_categoria = p.id_categoria",
+            "where" => "p.activo = TRUE",
+            "order" => "p.nombre",
+            "campos" => array(
+                "id_producto" => "CAST(p.id_producto AS CHAR)",
+                "nombre" => "p.nombre",
+                "precio" => "CAST(p.precio AS CHAR)",
+                "categoria" => "cat.titulo"
+            ),
+            "todos" => array("CAST(p.id_producto AS CHAR)", "p.nombre", "CAST(p.precio AS CHAR)", "cat.titulo")
+        ),
+        "insumos" => array(
+            "select" => "SELECT i.id_insumo, i.nombre, i.cantidad_actual, i.stock_minimo, i.costo, i.id_medida, m.unidad
+                         FROM Insumo i LEFT JOIN Medida m ON m.id_medida = i.id_medida",
+            "where" => "i.activo = TRUE",
+            "order" => "i.nombre",
+            "campos" => array(
+                "id_insumo" => "CAST(i.id_insumo AS CHAR)",
+                "nombre" => "i.nombre",
+                "unidad" => "m.unidad",
+                "cantidad_actual" => "CAST(i.cantidad_actual AS CHAR)",
+                "stock_minimo" => "CAST(i.stock_minimo AS CHAR)",
+                "costo" => "CAST(i.costo AS CHAR)"
+            ),
+            "todos" => array("CAST(i.id_insumo AS CHAR)", "i.nombre", "m.unidad", "CAST(i.cantidad_actual AS CHAR)", "CAST(i.stock_minimo AS CHAR)", "CAST(i.costo AS CHAR)")
+        ),
+        "empleados" => array(
+            "select" => "SELECT e.id_empleado, e.nombre, e.apellido, e.usuario, e.correo, e.id_rol, r.nombre AS rol
+                         FROM Empleado e INNER JOIN Rol r ON r.id_rol = e.id_rol",
+            "where" => "e.activo = TRUE",
+            "order" => "e.apellido, e.nombre",
+            "campos" => array(
+                "id_empleado" => "CAST(e.id_empleado AS CHAR)",
+                "nombre" => "e.nombre",
+                "apellido" => "e.apellido",
+                "usuario" => "e.usuario",
+                "correo" => "e.correo",
+                "rol" => "r.nombre"
+            ),
+            "todos" => array("CAST(e.id_empleado AS CHAR)", "e.nombre", "e.apellido", "e.usuario", "e.correo", "r.nombre")
+        )
+    );
+
+    if (!isset($definiciones[$entidad])) {
+        throw new InvalidArgumentException("Tipo de listado no válido.");
+    }
+
+    $definicion = $definiciones[$entidad];
+    $sql = $definicion["select"] . " WHERE " . $definicion["where"];
+    $valores = array();
+    if ($filtro !== "") {
+        $expresiones = isset($definicion["campos"][$campo])
+            ? array($definicion["campos"][$campo])
+            : $definicion["todos"];
+        $condiciones = array();
+        foreach ($expresiones as $expresion) {
+            $condiciones[] = $expresion . " LIKE ?";
+            $valores[] = "%" . $filtro . "%";
+        }
+        $sql .= " AND (" . implode(" OR ", $condiciones) . ")";
+    }
+
+    $sql .= " ORDER BY " . $definicion["order"] . " LIMIT ? OFFSET ?";
+    $valores[] = (int)$limite;
+    $valores[] = (int)$offset;
+    $tipos = str_repeat("s", count($valores) - 2) . "ii";
+    $stmt = mysqli_prepare($conexion, $sql);
+    if (!$stmt) {
+        throw new RuntimeException("No se pudo preparar la consulta del listado: " . mysqli_error($conexion));
+    }
+
+    $argumentos = array($stmt, $tipos);
+    foreach ($valores as &$valor) {
+        $argumentos[] = &$valor;
+    }
+    unset($valor);
+    call_user_func_array("mysqli_stmt_bind_param", $argumentos);
+    if (!mysqli_stmt_execute($stmt)) {
+        $error = mysqli_stmt_error($stmt);
+        mysqli_stmt_close($stmt);
+        throw new RuntimeException("No se pudo consultar el listado: " . $error);
+    }
+
+    $resultado = mysqli_stmt_get_result($stmt);
+    if (!$resultado) {
+        $error = mysqli_stmt_error($stmt);
+        mysqli_stmt_close($stmt);
+        throw new RuntimeException("No se pudo leer el listado: " . $error);
+    }
+    $filas = mysqli_fetch_all($resultado, MYSQLI_ASSOC);
+    mysqli_stmt_close($stmt);
+    return $filas;
+}
+
 function obtener_token_csrf() {
     iniciar_sesion_segura();
     if (empty($_SESSION["csrf_token"])) {

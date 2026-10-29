@@ -30,10 +30,10 @@ $puedeCocina = in_array($rolActual, array("administrador", "cocina"), true);
             </nav>
             <?php if ($puedeCrear): ?>
             <section id="vista-creacion" class="pedido-view">
-                <h2>Menú rápido</h2><p id="estadoCajaPedido" class="advertencia-caja">Comprobando sesión de caja...</p><p id="mensajeCreacion" class="mensaje"></p><div id="selectorMesa"><h3>Selecciona una mesa libre</h3><div id="mapaPedido" class="mapa-pedido"></div></div><input id="idMesa" type="hidden" required><p id="mesaSeleccionada">Ninguna mesa seleccionada.</p><button id="editarMesa" class="boton-editar-mesa" type="button" hidden>Editar mesa</button>
+                <h2>Menú rápido</h2><p id="estadoCajaPedido" class="advertencia-caja">Comprobando sesión de caja...</p><div id="mensajeCreacion" class="mensaje" role="status" aria-live="polite" hidden></div><div id="selectorMesa"><h3>Selecciona una mesa libre</h3><div id="mapaPedido" class="mapa-pedido"></div></div><input id="idMesa" type="hidden" required><p id="mesaSeleccionada">Ninguna mesa seleccionada.</p><button id="editarMesa" class="boton-editar-mesa" type="button" hidden>Editar mesa</button>
                 <div class="filtro-productos-pedido"><label for="buscarProductoPedido">Buscar producto</label><input id="buscarProductoPedido" type="search" placeholder="Nombre o categoría" autocomplete="off"></div>
                 <div id="menuProductos"></div>
-                <div class="pedido-panel"><h3>Pedido actual</h3><div id="carrito" class="carrito">No hay productos agregados.</div><form id="formPedido" class="pedido-form"><label>Cliente<div class="cliente-selector"><input id="buscarCliente" type="search" autocomplete="off" placeholder="Buscar por nombre o apellido" aria-controls="resultadosClientes"><input id="idCliente" type="hidden" value="1"><div id="resultadosClientes" class="cliente-resultados" role="listbox" hidden></div></div><small id="clienteElegido" class="cliente-elegido">Cliente genérico (#1)</small></label><label>Detalle del pedido (opcional)<textarea id="descripcionPedido" maxlength="500" placeholder="Indicaciones o detalles del pedido"></textarea></label><button type="submit">Crear pedido</button></form></div>
+                <div class="pedido-panel"><h3>Pedido actual</h3><div id="carrito" class="carrito">No hay productos agregados.</div><form id="formPedido" class="pedido-form"><label>Cliente<div class="cliente-selector"><input id="buscarCliente" type="search" autocomplete="off" placeholder="Buscar por nombre o apellido" aria-controls="resultadosClientes"><input id="idCliente" type="hidden" value="1"><div id="resultadosClientes" class="cliente-resultados" role="listbox" hidden></div></div><small id="clienteElegido" class="cliente-elegido">Cliente genérico (#1)</small></label><label>Detalle del pedido (opcional)<textarea id="descripcionPedido" maxlength="500" placeholder="Indicaciones o detalles del pedido"></textarea></label><label class="pedido-forzar-stock"><input id="forzarStockPedido" type="checkbox"><span>Forzar pedido aunque falte stock<small>El stock se descontará al completar cada producto o pickear cada bebida; puede quedar negativo.</small></span></label><button type="submit">Crear pedido</button></form></div>
             </section>
             <section id="vista-pendientes" class="pedido-view"><h2>Pedidos pendientes</h2><div id="listaPendientes"></div></section>
             <section id="vista-limpieza" class="pedido-view"><h2>Mesas para limpiar</h2><p id="mensajeLimpieza" class="mensaje" role="status" aria-live="polite">Cargando mesas...</p><div id="listaMesasLimpieza" class="lista-mesas-limpieza"></div></section>
@@ -78,6 +78,15 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("resultadosClientes").addEventListener("click", seleccionarCliente);
         document.getElementById("buscarExtra").addEventListener("input", renderMenuExtras);
         document.getElementById("menuExtras").addEventListener("click", cambiarCantidadExtra);
+        document.getElementById("menuExtras").addEventListener("keydown", evento => {
+            if (
+                (evento.key === "Enter" || evento.key === " ")
+                && evento.target.matches(".producto-extra[data-extra-producto]")
+            ) {
+                evento.preventDefault();
+                cambiarCantidadExtra(evento);
+            }
+        });
         document.getElementById("cerrarExtras").addEventListener("click", () => document.getElementById("dialogoExtras").close());
         document.getElementById("guardarExtras").addEventListener("click", guardarProductosExtras);
         setInterval(() => {
@@ -269,14 +278,24 @@ function renderMenuExtras() {
     menu.innerHTML = productos.length ? renderProductosAgrupados(productos, producto => {
         const id = Number(producto.id_producto);
         const cantidad = Number(cantidadesExtras[id] || 0);
-        return `<article class="producto-extra"><span>${escapeHTML(producto.nombre)} · $ ${escapeHTML(producto.precio)}</span><div class="controles-cantidad"><button type="button" data-extra-cambio="-1" data-id="${id}" aria-label="Quitar ${escapeHTML(producto.nombre)}">−</button><span>${cantidad}</span><button type="button" data-extra-cambio="1" data-id="${id}" aria-label="Agregar ${escapeHTML(producto.nombre)}">+</button></div></article>`;
+        const botonRestar = cantidad > 0
+            ? `<button type="button" data-extra-restar="${id}" aria-label="Quitar ${escapeHTML(producto.nombre)}">−</button>`
+            : "";
+        return `<article class="producto-extra" data-extra-producto="${id}" role="button" tabindex="0" aria-label="Agregar ${escapeHTML(producto.nombre)}"><span>${escapeHTML(producto.nombre)} · $ ${escapeHTML(producto.precio)}</span><div class="controles-cantidad">${botonRestar}<span>${cantidad}</span></div></article>`;
     }) : "<p>No se encontraron productos.</p>";
 }
 function cambiarCantidadExtra(evento) {
-    const boton = evento.target.closest("button[data-extra-cambio]");
-    if (!boton) return;
-    const id = Number(boton.dataset.id);
-    cantidadesExtras[id] = Math.max(0, Number(cantidadesExtras[id] || 0) + Number(boton.dataset.extraCambio));
+    const botonRestar = evento.target.closest("button[data-extra-restar]");
+    const tarjeta = evento.target.closest(".producto-extra[data-extra-producto]");
+    if (botonRestar) {
+        const id = Number(botonRestar.dataset.extraRestar);
+        cantidadesExtras[id] = Math.max(0, Number(cantidadesExtras[id] || 0) - 1);
+    } else if (tarjeta) {
+        const id = Number(tarjeta.dataset.extraProducto);
+        cantidadesExtras[id] = Number(cantidadesExtras[id] || 0) + 1;
+    } else {
+        return;
+    }
     renderMenuExtras();
 }
 async function guardarProductosExtras() {
@@ -410,10 +429,61 @@ function aplicarEstadoBotonesMenu() {
         tarjeta.classList.remove("bloqueado");
     });
 }
-function crearPedido(evento) {
-    evento.preventDefault(); if (!cajaAbierta) { mostrarMensaje("No se puede crear el pedido: la caja está cerrada.", true); return; } if (!document.getElementById("idMesa").value) { mostrarMensaje("Selecciona una mesa libre antes de crear el pedido.", true); return; } if (!carrito.length) { mostrarMensaje("Agrega al menos un producto.", true); return; } if (!document.getElementById("idCliente").value) { mostrarMensaje("Selecciona un cliente de los resultados.", true); return; }
-    const datos = {id_mesa:Number(document.getElementById("idMesa").value),id_cliente:document.getElementById("idCliente").value ? Number(document.getElementById("idCliente").value) : null,descripcion:document.getElementById("descripcionPedido").value.trim(),productos:carrito.map(p => ({id_producto:p.id_producto,cantidad:p.cantidad}))};
-    fetch("apis/api_pedidos.php", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(datos)}).then(r => r.json().then(d => ({ok:r.ok,data:d,status:r.status}))).then(r => { if (!r.ok) throw new Error(r.data.error || `No se pudo crear el pedido (${r.status}).`); carrito=[]; renderCarrito(); document.getElementById("idMesa").value=""; document.getElementById("mesaSeleccionada").textContent="Ninguna mesa seleccionada."; document.getElementById("descripcionPedido").value=""; document.getElementById("selectorMesa").hidden=false; document.getElementById("editarMesa").hidden=true; document.getElementById("idCliente").value="1"; document.getElementById("buscarCliente").value=""; document.getElementById("clienteElegido").textContent="Cliente genérico (#1)";     cargarMapaPedido(); mostrarMensaje(`Pedido #${r.data.id_pedido} enviado a cocina.`, false); window.AlertasJBM?.reproducir("pedido"); window.AlertasJBM?.navegador("Pedido enviado", `El pedido #${r.data.id_pedido} fue enviado a cocina.`); }).catch(e => { cargarMapaPedido(); mostrarMensaje(e.message, true); });
+async function crearPedido(evento) {
+    evento.preventDefault();
+    if (!cajaAbierta) { mostrarMensaje("No se puede crear el pedido: la caja está cerrada.", true); return; }
+    if (!document.getElementById("idMesa").value) { mostrarMensaje("Selecciona una mesa libre antes de crear el pedido.", true); return; }
+    if (!carrito.length) { mostrarMensaje("Agrega al menos un producto.", true); return; }
+    if (!document.getElementById("idCliente").value) { mostrarMensaje("Selecciona un cliente de los resultados.", true); return; }
+
+    const formulario = document.getElementById("formPedido");
+    const boton = formulario.querySelector('button[type="submit"]');
+    const datos = {
+        id_mesa: Number(document.getElementById("idMesa").value),
+        id_cliente: document.getElementById("idCliente").value ? Number(document.getElementById("idCliente").value) : null,
+        descripcion: document.getElementById("descripcionPedido").value.trim(),
+        productos: carrito.map(producto => ({ id_producto: producto.id_producto, cantidad: producto.cantidad })),
+        forzar_stock: document.getElementById("forzarStockPedido").checked
+    };
+
+    boton.disabled = true;
+    mostrarMensaje("", false);
+    try {
+        const respuesta = await fetch("apis/api_pedidos.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(datos)
+        });
+        const resultado = await respuesta.json();
+        if (!respuesta.ok) {
+            if (respuesta.status === 409 && Array.isArray(resultado.faltantes) && resultado.faltantes.length) {
+                mostrarFaltantesStock(resultado.error, resultado.faltantes);
+                return;
+            }
+            throw new Error(resultado.error || `No se pudo crear el pedido (${respuesta.status}).`);
+        }
+
+        carrito = [];
+        renderCarrito();
+        document.getElementById("idMesa").value = "";
+        document.getElementById("mesaSeleccionada").textContent = "Ninguna mesa seleccionada.";
+        document.getElementById("descripcionPedido").value = "";
+        document.getElementById("forzarStockPedido").checked = false;
+        document.getElementById("selectorMesa").hidden = false;
+        document.getElementById("editarMesa").hidden = true;
+        document.getElementById("idCliente").value = "1";
+        document.getElementById("buscarCliente").value = "";
+        document.getElementById("clienteElegido").textContent = "Cliente genérico (#1)";
+        cargarMapaPedido();
+        mostrarMensaje(`Pedido #${resultado.id_pedido} enviado a cocina.`, false);
+        window.AlertasJBM?.reproducir("pedido");
+        window.AlertasJBM?.navegador("Pedido enviado", `El pedido #${resultado.id_pedido} fue enviado a cocina.`);
+    } catch (error) {
+        cargarMapaPedido();
+        mostrarMensaje(error.message, true);
+    } finally {
+        boton.disabled = !cajaAbierta;
+    }
 }
 async function cargarEstadoCajaPedido() {
     try {
@@ -435,7 +505,22 @@ async function cargarEstadoCajaPedido() {
         mostrarMensaje(error.message, true);
     }
 }
-function mostrarMensaje(texto, error) { const elemento=document.getElementById("mensajeCreacion"); elemento.textContent=texto; elemento.className=`mensaje ${error ? "error" : "exito"}`; }
+function mostrarMensaje(texto, error) {
+    const elemento = document.getElementById("mensajeCreacion");
+    elemento.textContent = texto;
+    elemento.className = `mensaje ${error ? "error" : "exito"}`;
+    elemento.setAttribute("role", error ? "alert" : "status");
+    elemento.setAttribute("aria-live", error ? "assertive" : "polite");
+    elemento.hidden = !texto;
+}
+function mostrarFaltantesStock(mensaje, faltantes) {
+    const detalle = faltantes.map(insumo => {
+        const disponible = Number(insumo.disponible).toLocaleString("es-UY");
+        const requerido = Number(insumo.requerido).toLocaleString("es-UY");
+        return `• ${insumo.nombre}: disponible ${disponible} ${insumo.unidad || ""}; se necesitan ${requerido} ${insumo.unidad || ""}.`;
+    });
+    mostrarMensaje(`${mensaje}\n${detalle.join("\n")}\nActiva «Forzar pedido aunque falte stock» y vuelve a intentarlo si autorizas continuar.`, true);
+}
 function cargarPedidos(vista) {
     return fetch(`apis/api_pedidos.php?vista=${vista}&limite=100`).then(async respuesta => {
         const pedidos = await respuesta.json();

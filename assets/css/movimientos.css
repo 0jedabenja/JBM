@@ -93,19 +93,6 @@
     white-space: nowrap;
 }
 
-.paginacion {
-    align-items: center;
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    margin-top: 20px;
-}
-
-.paginacion button:disabled {
-    cursor: not-allowed;
-    opacity: .5;
-}
-
 #mensajeMovimientos {
     color: #a01818;
 }
