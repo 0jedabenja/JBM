@@ -1,15 +1,5 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? "", ENT_QUOTES, "UTF-8"); ?>assets/css/sidebar.css">
-    <link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? "", ENT_QUOTES, "UTF-8"); ?>assets/css/theme.css">
-    <link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? "", ENT_QUOTES, "UTF-8"); ?>assets/css/sin-seleccion.css">
-    <script src="<?php echo htmlspecialchars($rutaBase ?? "", ENT_QUOTES, "UTF-8"); ?>assets/js/theme.js" defer></script>
-</head>
 <?php
+$rutaBase = isset($rutaBase) ? $rutaBase : "";
 $archivoActual = strtolower(basename($_SERVER["SCRIPT_NAME"] ?? ""));
 $seccionesSidebar = array(
     "index.php" => "inicio",
@@ -34,9 +24,39 @@ $seccionesSidebar = array(
     "compras.php" => "compras"
 );
 $seccionActual = $seccionesSidebar[$archivoActual] ?? "";
+$iconosFavicon = array(
+    "inicio" => "light-home.svg",
+    "pedidos" => "light-restaurant.svg",
+    "mapa" => "light-map.svg",
+    "caja" => "light-payments.svg",
+    "clientes" => "light-person.svg",
+    "insumos" => "light-box.svg",
+    "productos" => "light-shopping.svg",
+    "empleados" => "light-team.svg",
+    "conteos" => "light-box.svg",
+    "auditoria" => "light-audit.svg",
+    "compras" => "light-purchase.svg"
+);
+$faviconSeccion = isset($iconosFavicon[$seccionActual]) ? $iconosFavicon[$seccionActual] : "favicon.svg";
+$rutaFavicon = $faviconSeccion === "favicon.svg" ? $rutaBase . "assets/img/favicon.svg" : $rutaBase . "assets/img/sidebar/" . $faviconSeccion;
 ?>
-<body>
-    <div class="container">
+<link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/css/sidebar.css">
+<link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/css/theme.css">
+<link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/css/sin-seleccion.css">
+<script src="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/js/theme.js"></script>
+<script>
+(function () {
+    var favicon = document.querySelector('link[rel="icon"]');
+    if (!favicon) {
+        favicon = document.createElement('link');
+        favicon.rel = 'icon';
+        favicon.type = 'image/svg+xml';
+        document.head.appendChild(favicon);
+    }
+    favicon.href = <?php echo json_encode($rutaFavicon, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+})();
+</script>
+<div class="container">
         <div class="navigation">
             <ul>
                 <?php if (usuario_tiene_permiso("inicio")): ?>
@@ -130,5 +150,3 @@ $seccionActual = $seccionesSidebar[$archivoActual] ?? "";
             </ul>
         </div>
     </div>
-</body>
-</html>

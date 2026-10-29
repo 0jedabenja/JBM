@@ -64,6 +64,12 @@
     color: #2e6b38;
 }
 
+body[data-theme="dark"] .alta-success {
+    background: #17351f;
+    border-color: #65a875;
+    color: #c6eccd;
+}
+
 .alta-actions {
     display: flex;
     gap: 12px;

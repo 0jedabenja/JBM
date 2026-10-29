@@ -27,6 +27,7 @@ CREATE TABLE Empleado (
     apellido VARCHAR(100) NOT NULL,
     activo BOOLEAN NOT NULL DEFAULT TRUE,
     usuario VARCHAR(50) NOT NULL UNIQUE,
+    correo VARCHAR(255) NOT NULL UNIQUE,
     contraseña VARCHAR(255) NOT NULL,
     token_recuperacion VARCHAR(64) DEFAULT NULL,
     token_expiracion DATETIME DEFAULT NULL,
@@ -240,3 +241,5 @@ CREATE TABLE Movimiento_Insumo (
     FOREIGN KEY (id_insumo) REFERENCES Insumo(id_insumo) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (id_empleado) REFERENCES Empleado(id_empleado) ON DELETE SET NULL ON UPDATE CASCADE
 );
+
+SOURCE objetos_base_datos.sql;

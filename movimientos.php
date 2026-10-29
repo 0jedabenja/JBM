@@ -58,8 +58,8 @@ $nombre = $fila["nombre"];
                         <?php endif; ?>
                     </select>
                 </label>
-                <label for="fechaDesde">Desde<input type="date" id="fechaDesde"></label>
-                <label for="fechaHasta">Hasta<input type="date" id="fechaHasta"></label>
+                <label for="fechaDesde">Desde<input type="datetime-local" id="fechaDesde"></label>
+                <label for="fechaHasta">Hasta<input type="datetime-local" id="fechaHasta"></label>
                 <button type="submit">Filtrar</button>
                 <a class="boton" href="<?php echo $tipo === "insumo" ? "insumos.php" : "productos.php"; ?>">Volver</a>
             </form>
@@ -82,6 +82,20 @@ const tipoEntidad = <?php echo json_encode($tipo); ?>;
 const idEntidad = <?php echo (int)$id; ?>;
 let pagina = 1;
 let cargando = false;
+
+function establecerFechasPredeterminadas() {
+    const ahora = new Date();
+    const desde = new Date(ahora);
+    const diaOriginal = desde.getDate();
+    desde.setDate(1);
+    desde.setMonth(desde.getMonth() - 1);
+    const ultimoDiaMesAnterior = new Date(desde.getFullYear(), desde.getMonth() + 1, 0).getDate();
+    desde.setDate(Math.min(diaOriginal, ultimoDiaMesAnterior));
+    const formatoLocal = fecha => `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}-${String(fecha.getDate()).padStart(2, "0")}T${String(fecha.getHours()).padStart(2, "0")}:${String(fecha.getMinutes()).padStart(2, "0")}`;
+    document.getElementById("fechaDesde").value = formatoLocal(desde);
+    document.getElementById("fechaHasta").value = formatoLocal(ahora);
+}
+establecerFechasPredeterminadas();
 
 document.getElementById("filtrosMovimientos").addEventListener("submit", (evento) => {
     evento.preventDefault();

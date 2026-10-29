@@ -31,15 +31,14 @@ if (!is_array($entrada)) $entrada = $_POST;
 
     verificar_permiso($entidades[$tipo]["permiso"], true);
     $entidad = $entidades[$tipo];
-    $sql = "UPDATE {$entidad["tabla"]} SET activo = FALSE WHERE {$entidad["columna"]} = ?";
-    $stmt = mysqli_prepare($conexion, $sql);
+    $stmt = mysqli_prepare($conexion, "CALL sp_desactivar(?, ?)");
     if (!$stmt) {
         http_response_code(500);
         echo json_encode(array("error" => "No se pudo preparar la operación."), JSON_UNESCAPED_UNICODE);
         exit();
     }
 
-    mysqli_stmt_bind_param($stmt, "i", $id);
+    mysqli_stmt_bind_param($stmt, "si", $tipo, $id);
     if (!mysqli_stmt_execute($stmt)) {
         mysqli_stmt_close($stmt);
         http_response_code(500);

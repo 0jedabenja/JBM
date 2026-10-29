@@ -1,0 +1,61 @@
+.mi-cuenta-panel {
+    width: calc(100% - 32px);
+}
+
+.mi-cuenta-descripcion {
+    margin-bottom: 20px !important;
+}
+
+.mi-cuenta-form {
+    gap: 7px;
+}
+
+.mi-cuenta-form label {
+    margin-top: 12px;
+}
+
+.mi-cuenta-form input {
+    width: 100%;
+}
+
+#mensajeCuenta:empty {
+    display: none;
+}
+
+.alta-button-secondary {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+}
+
+@media (max-width: 700px) {
+    .mi-cuenta-panel {
+        width: 100%;
+    }
+}
+
+body[data-theme="dark"] .alta-panel.mi-cuenta-panel {
+    background: #18262d;
+    border-color: #3a4d55;
+}
+
+body[data-theme="dark"] .mi-cuenta-panel h1,
+body[data-theme="dark"] .mi-cuenta-form label {
+    color: #f3f7f8;
+}
+
+body[data-theme="dark"] .mi-cuenta-panel > p {
+    color: #b8c6cb;
+}
+
+body[data-theme="dark"] .mi-cuenta-form input {
+    background: #263740;
+    border-color: #4b6069;
+    color: #f3f7f8;
+}
+
+body[data-theme="dark"] .alta-actions .alta-button-secondary {
+    background: #263740;
+    border-color: #4b6069;
+    color: #f3f7f8;
+}

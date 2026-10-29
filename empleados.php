@@ -65,7 +65,8 @@ verificar_permiso("empleados");
                     } else {
                         empleados.forEach(empleado => {
                             const fila = document.createElement("tr");
-                            fila.innerHTML = `<td>${escapeHTML(empleado.id_empleado)}</td><td>${escapeHTML(empleado.nombre)}</td><td>${escapeHTML(empleado.apellido)}</td><td>${escapeHTML(empleado.usuario)}</td><td>${escapeHTML(empleado.rol)}</td><td class="acciones-producto"><a class="accion accion-editar" href="modificar_empleado.php?id=${encodeURIComponent(empleado.id_empleado)}">Editar</a><button type="button" class="accion accion-desactivar" onclick="eliminarEmpleado(${empleado.id_empleado})">Desactivar</button></td>`;
+                            const reset = <?php echo $_SESSION["rol"] === "administrador" ? "true" : "false"; ?>;
+                            fila.innerHTML = `<td>${escapeHTML(empleado.id_empleado)}</td><td>${escapeHTML(empleado.nombre)}</td><td>${escapeHTML(empleado.apellido)}</td><td>${escapeHTML(empleado.usuario)}</td><td>${escapeHTML(empleado.rol)}</td><td class="acciones-producto"><a class="accion accion-editar" href="modificar_empleado.php?id=${encodeURIComponent(empleado.id_empleado)}">Editar</a>${reset ? `<button type="button" class="accion" onclick="restablecerEmpleado(${empleado.id_empleado})">Restablecer contraseña</button>` : ""}<button type="button" class="accion accion-desactivar" onclick="eliminarEmpleado(${empleado.id_empleado})">Desactivar</button></td>`;
                             tbody.appendChild(fila);
                         });
                     }
@@ -77,6 +78,17 @@ verificar_permiso("empleados");
         function cambiarPagina(delta) { paginaActual = Math.max(1, paginaActual + delta); cargarEmpleados(); }
         function buscarEmpleados() { clearTimeout(timeoutBusqueda); timeoutBusqueda = setTimeout(() => { paginaActual = 1; cargarEmpleados(); }, 300); }
         function eliminarEmpleado(id) { if (!confirm("¿Está seguro de que desea desactivar este empleado?")) return; fetch("apis/eliminar.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "empleado", id: Number(id) }) }).then(response => { if (!response.ok) throw new Error(); return response.json(); }).then(cargarEmpleados).catch(() => alert("No se pudo desactivar el empleado.")); }
+        function restablecerEmpleado(id) {
+            const nueva = prompt("Nueva contraseña (mínimo 8 caracteres):");
+            if (!nueva || nueva.length < 8) return;
+            const confirmar = prompt("Repetir nueva contraseña:");
+            if (nueva !== confirmar) { alert("Las contraseñas no coinciden."); return; }
+            const admin = prompt("Contraseña del administrador para confirmar:");
+            if (!admin) return;
+            fetch("apis/api_reestablecer_usuario.php", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({id_empleado:id,nueva_password:nueva,admin_password:admin})})
+                .then(async r => {const d=await r.json(); if(!r.ok) throw new Error(d.error||"No se pudo restablecer."); return d;})
+                .then(()=>alert("Contraseña restablecida.")).catch(e=>alert(e.message));
+        }
         function escapeHTML(valor) { if (valor === null || valor === undefined) return ""; return String(valor).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;"); }
     </script>
 </body>

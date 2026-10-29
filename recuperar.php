@@ -5,26 +5,40 @@ $tipo_alerta = '';
 $script_consola = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $usr = filter_var(trim($_POST['usuario'] ?? ''), FILTER_SANITIZE_SPECIAL_CHARS);
+    $correo = strtolower(trim($_POST['correo'] ?? ''));
 
-    if (!empty($usr)) {
+    if (filter_var($correo, FILTER_VALIDATE_EMAIL)) {
         $token = bin2hex(random_bytes(32));
         $expiracion = date('Y-m-d H:i:s', strtotime('+1 hour'));
 
         $sql = "UPDATE Empleado 
                 SET token_recuperacion = ?, token_expiracion = ? 
-                WHERE usuario = ?";
-                
+                WHERE correo = ? AND activo = TRUE";
+
         $stmt = mysqli_prepare($conexion, $sql);
-        
+
         if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "sss", $token, $expiracion, $usr);
+            mysqli_stmt_bind_param($stmt, "sss", $token, $expiracion, $correo);
             mysqli_stmt_execute($stmt);
-            
+
             if (mysqli_stmt_affected_rows($stmt) > 0) {
-                $protocolo = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
-                $host_actual = $_SERVER['HTTP_HOST'];
-                $url_base = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
+                $consultaUsuario = mysqli_prepare($conexion, "SELECT usuario FROM Empleado WHERE correo = ? AND activo = TRUE LIMIT 1");
+                $usr = $correo;
+                if ($consultaUsuario) {
+                    mysqli_stmt_bind_param($consultaUsuario, "s", $correo);
+                    mysqli_stmt_execute($consultaUsuario);
+                    $resultadoUsuario = mysqli_stmt_get_result($consultaUsuario);
+                    $empleado = $resultadoUsuario ? mysqli_fetch_assoc($resultadoUsuario) : null;
+                    if ($empleado && isset($empleado['usuario'])) $usr = $empleado['usuario'];
+                    mysqli_stmt_close($consultaUsuario);
+                }
+
+                $protocolo = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off') ? 'https' : 'http';
+                $host_actual = preg_replace('/[^a-zA-Z0-9.\-:\[\]]/', '', $_SERVER['HTTP_HOST'] ?? 'localhost');
+                if ($host_actual === '') $host_actual = 'localhost';
+                $ruta_script = $_SERVER['PHP_SELF'] ?? '/recuperar.php';
+                $url_base = rtrim(dirname($ruta_script), '/\\');
+                if ($url_base === '.') $url_base = '';
                 $enlace_recuperacion = "{$protocolo}://{$host_actual}{$url_base}/restablecer.php?token=" . urlencode($token);
 
                 $cuerpo_mail = "=== SISTEMA LO DE TORRES ===\\n";
@@ -44,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $tipo_alerta = "error";
         }
     } else {
-        $mensaje = "Por favor, ingresá tu nombre de usuario.";
+        $mensaje = "Por favor, ingresá un correo electrónico válido.";
         $tipo_alerta = "error";
     }
 }
@@ -75,8 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form action="recuperar.php" method="POST">
             <div class="form-group">
-                <label for="usuario">Nombre de Usuario</label>
-                <input type="text" name="usuario" id="usuario" required autocomplete="off" placeholder="Ingresá tu usuario">
+                <label for="correo">Correo electrónico</label>
+                                <input type="email" name="correo" id="correo" required autocomplete="email" placeholder="Ingresá tu correo">
             </div>
             <button type="submit" class="btn">Enviar Instrucciones</button>
         </form>
