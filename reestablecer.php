@@ -1,13 +1,13 @@
 <?php
-require_once 'includes/conexionBD.php';
-require_once 'includes/funciones.php';
+require_once __DIR__ . '/includes/conexionBD.php';
+require_once __DIR__ . '/includes/funciones.php';
 
-$token = filter_var(trim($_GET['token'] ?? $_POST['token'] ?? ''), FILTER_SANITIZE_SPECIAL_CHARS);
+$token = trim($_GET['token'] ?? $_POST['token'] ?? '');
 $mensaje = '';
 $tipo_alerta = '';
 $exito = false;
 
-if (empty($token)) {
+if (!preg_match('/\A[a-f0-9]{64}\z/i', $token)) {
     mostrar_pagina_error(400);
 }
 
@@ -22,42 +22,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $mensaje = "Las contraseñas no coinciden.";
         $tipo_alerta = "error";
     } else {
-        $sql_validar = "SELECT id_empleado FROM Empleado 
-                        WHERE token_recuperacion = ? 
-                        AND token_expiracion > NOW()";
-                        
+        $token_valido = false;
+        $token_hash = hash('sha256', $token);
+        $sql_validar = "SELECT id_empleado FROM Empleado
+                        WHERE token_recuperacion = ?
+                        AND token_expiracion > NOW()
+                        AND activo = TRUE
+                        LIMIT 1";
         $stmt = mysqli_prepare($conexion, $sql_validar);
-        
-        if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "s", $token);
-            mysqli_stmt_execute($stmt);
-            $resultado = mysqli_stmt_get_result($stmt);
-            $empleado = mysqli_fetch_assoc($resultado);
+
+        if (!$stmt) {
+            error_log('Restablecimiento de contraseña: no se pudo preparar la validación del token.');
+            $mensaje = "Ocurrió un error interno al validar el enlace.";
+            $tipo_alerta = "error";
+        } else {
+            mysqli_stmt_bind_param($stmt, 's', $token_hash);
+            if (!mysqli_stmt_execute($stmt)) {
+                error_log('Restablecimiento de contraseña: no se pudo validar el token.');
+                $mensaje = "Ocurrió un error interno al validar el enlace.";
+                $tipo_alerta = "error";
+            } else {
+                mysqli_stmt_bind_result($stmt, $id_emp);
+                $token_valido = mysqli_stmt_fetch($stmt);
+                if ($token_valido === false && mysqli_stmt_errno($stmt) !== 0) {
+                    error_log('Restablecimiento de contraseña: no se pudo leer el resultado de la validación.');
+                    $mensaje = "Ocurrió un error interno al validar el enlace.";
+                    $tipo_alerta = "error";
+                }
+            }
             mysqli_stmt_close($stmt);
 
-            if ($empleado) {
-                $password_hash = password_hash($nueva_password, PASSWORD_BCRYPT);
-                $id_emp = $empleado['id_empleado'];
-
+            if (!empty($token_valido)) {
+                $password_hash = password_hash($nueva_password, PASSWORD_DEFAULT);
                 $sql_update = "UPDATE Empleado 
-                               SET contraseña = ?, token_recuperacion = NULL, token_expiracion = NULL 
-                               WHERE id_empleado = ?";
-                               
+                               SET contraseña = ?, token_recuperacion = NULL, token_expiracion = NULL
+                               WHERE id_empleado = ? AND token_recuperacion = ? AND token_expiracion > NOW() AND activo = TRUE";
                 $stmt_up = mysqli_prepare($conexion, $sql_update);
-                
-                if ($stmt_up) {
-                    mysqli_stmt_bind_param($stmt_up, "si", $password_hash, $id_emp);
-                    if (mysqli_stmt_execute($stmt_up)) {
+
+                if (!$stmt_up) {
+                    error_log('Restablecimiento de contraseña: no se pudo preparar la actualización.');
+                    $mensaje = "Ocurrió un error al intentar actualizar la clave.";
+                    $tipo_alerta = "error";
+                } else {
+                    mysqli_stmt_bind_param($stmt_up, 'sis', $password_hash, $id_emp, $token_hash);
+                    if (mysqli_stmt_execute($stmt_up) && mysqli_stmt_affected_rows($stmt_up) > 0) {
                         $mensaje = "¡Contraseña actualizada con éxito!";
                         $tipo_alerta = "exito";
                         $exito = true;
                     } else {
-                        $mensaje = "Ocurrió un error al intentar actualizar la clave.";
-                        $tipo_alerta = "error";
+                        if (mysqli_stmt_error($stmt_up) !== '') {
+                            error_log('Restablecimiento de contraseña: no se pudo actualizar la clave.');
+                            $mensaje = "Ocurrió un error al intentar actualizar la clave.";
+                            $tipo_alerta = "error";
+                        } else {
+                            $mensaje = "El enlace es inválido o su tiempo de validez expiró.";
+                            $tipo_alerta = "error";
+                        }
                     }
                     mysqli_stmt_close($stmt_up);
                 }
-            } else {
+            } elseif ($token_valido !== false && $mensaje === '') {
                 $mensaje = "El enlace es inválido o su tiempo de validez expiró.";
                 $tipo_alerta = "error";
             }
@@ -92,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <?php if (!$exito): ?>
             <form action="reestablecer.php" method="POST">
-                <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
+                <input type="hidden" name="token" value="<?= htmlspecialchars($token, ENT_QUOTES, 'UTF-8') ?>">
                 
                 <div class="form-group">
                     <label for="nueva_password">Nueva Contraseña</label>

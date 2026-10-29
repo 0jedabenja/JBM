@@ -1,6 +1,6 @@
 <div class="menu">
     <div class="profile">
-        <img src="<?php echo htmlspecialchars(($rutaBase ?? "") . "assets/img/usuario.png", ENT_QUOTES, "UTF-8"); ?>" alt="Usuario">
+        <img src="<?php echo htmlspecialchars(($rutaBase ?? "") . "assets/img/avatar-sistema.svg", ENT_QUOTES, "UTF-8"); ?>" alt="Perfil de usuario">
     </div>
 
     <div class="dropdown">
