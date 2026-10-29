@@ -1,6 +1,8 @@
 <?php
 // En hosting, definir DB_HOST, DB_USER, DB_PASSWORD y DB_NAME; estos valores conservan el entorno local de XAMPP.
 date_default_timezone_set('America/Montevideo');
+// Mantiene el manejo existente de errores MySQL mediante valores de retorno en PHP 8.1+.
+mysqli_report(MYSQLI_REPORT_OFF);
 
 $host = getenv('DB_HOST') ?: 'localhost';
 $usuario = getenv('DB_USER') ?: 'root';

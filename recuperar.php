@@ -1,46 +1,43 @@
 <?php
-require_once __DIR__ . '/includes/conexionBD.php';
+
 $mensaje = '';
 $tipo_alerta = '';
+$error_recuperacion = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $correo = strtolower(trim($_POST['correo'] ?? ''));
 
     if (filter_var($correo, FILTER_VALIDATE_EMAIL)) {
-        $correo_remitente = trim((string) (getenv('MAIL_FROM') ?: 'contacto@lodetorres.shop'));
-        $url_base = rtrim(trim((string) (getenv('APP_BASE_URL') ?: 'https://lodetorres.shop/')), '/');
-        $partes_url = $url_base !== '' ? parse_url($url_base) : false;
-        $esquema_url = is_array($partes_url) ? strtolower($partes_url['scheme'] ?? '') : '';
-        $configuracion_valida = filter_var($correo_remitente, FILTER_VALIDATE_EMAIL)
-            && filter_var($url_base, FILTER_VALIDATE_URL)
-            && is_array($partes_url)
-            && isset($partes_url['host'])
-            && in_array($esquema_url, array('http', 'https'), true)
-            && !isset($partes_url['user'])
-            && !isset($partes_url['pass'])
-            && !isset($partes_url['query'])
-            && !isset($partes_url['fragment']);
+        require_once __DIR__ . '/librerias/PHPMailer/src/Exception.php';
+        require_once __DIR__ . '/librerias/PHPMailer/src/PHPMailer.php';
+        require_once __DIR__ . '/includes/conexionBD.php';
 
-        if (!$configuracion_valida || !function_exists('mail')) {
-            error_log('Recuperación de contraseña: configure MAIL_FROM, APP_BASE_URL y el envío de correo PHP.');
+        $correo_remitente = 'contacto@lodetorres.shop';
+        $url_base = 'https://lodetorres.shop';
+
+        if (mysqli_connect_errno()) {
+            $error_recuperacion = true;
         } else {
             $sql = "SELECT id_empleado FROM Empleado WHERE correo = ? AND activo = TRUE LIMIT 1";
             $stmt = mysqli_prepare($conexion, $sql);
 
             if (!$stmt) {
-                error_log('Recuperación de contraseña: no se pudo preparar la búsqueda del empleado.');
+                error_log('Recuperación de contraseña: no se pudo preparar la búsqueda del empleado: ' . mysqli_error($conexion));
+                $error_recuperacion = true;
             } else {
                 mysqli_stmt_bind_param($stmt, 's', $correo);
                 if (!mysqli_stmt_execute($stmt)) {
-                    error_log('Recuperación de contraseña: no se pudo buscar el empleado.');
+                    error_log('Recuperación de contraseña: no se pudo buscar el empleado: ' . mysqli_stmt_error($stmt));
+                    $error_recuperacion = true;
                 } else {
                     mysqli_stmt_bind_result($stmt, $empleado_id);
                     $empleado_encontrado = mysqli_stmt_fetch($stmt);
                     if ($empleado_encontrado === false && mysqli_stmt_errno($stmt) !== 0) {
-                        error_log('Recuperación de contraseña: no se pudo leer el resultado de la búsqueda.');
+                        error_log('Recuperación de contraseña: no se pudo leer el resultado de la búsqueda: ' . mysqli_stmt_error($stmt));
+                        $error_recuperacion = true;
                     }
 
-                    if ($empleado_encontrado) {
+                    if ($empleado_encontrado === true) {
                         $token = bin2hex(random_bytes(32));
                         $token_hash = hash('sha256', $token);
                         $expiracion = date('Y-m-d H:i:s', strtotime('+1 hour'));
@@ -50,11 +47,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         );
 
                         if (!$actualizar) {
-                            error_log('Recuperación de contraseña: no se pudo preparar la actualización del token.');
+                            error_log('Recuperación de contraseña: no se pudo preparar la actualización del token: ' . mysqli_error($conexion));
+                            $error_recuperacion = true;
                         } else {
                             mysqli_stmt_bind_param($actualizar, 'ssi', $token_hash, $expiracion, $empleado_id);
                             if (!mysqli_stmt_execute($actualizar)) {
-                                error_log('Recuperación de contraseña: no se pudo guardar el token.');
+                                error_log('Recuperación de contraseña: no se pudo guardar el token: ' . mysqli_stmt_error($actualizar));
+                                $error_recuperacion = true;
                             } elseif (mysqli_stmt_affected_rows($actualizar) > 0) {
                                 $enlace_recuperacion = $url_base . '/reestablecer.php?token=' . urlencode($token);
                                 $enlace_html = htmlspecialchars($enlace_recuperacion, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -78,23 +77,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $cuerpo_html .= '<p style="margin:28px 0 0;">Atentamente,<br><strong>El equipo de Lo de Torres</strong></p></td></tr>';
                                 $cuerpo_html .= '<tr><td style="padding:18px 36px;background-color:#f7f9fb;color:#7a8798;font-size:12px;line-height:1.5;">Este es un mensaje automático relacionado con la seguridad de tu cuenta. Por favor, no respondas a este correo.</td></tr></table></body></html>';
 
-                                $limite_mime = 'jbm_' . bin2hex(random_bytes(16));
-                                $asunto = '=?UTF-8?B?' . base64_encode('Restablecimiento de contraseña - Lo de Torres') . '?=';
-                                $cabeceras = "From: {$correo_remitente}\r\n";
-                                $cabeceras .= "MIME-Version: 1.0\r\n";
-                                $cabeceras .= "Content-Type: multipart/alternative; boundary=\"{$limite_mime}\"\r\n";
-                                $cuerpo_mail = "--{$limite_mime}\r\n";
-                                $cuerpo_mail .= "Content-Type: text/plain; charset=UTF-8\r\n";
-                                $cuerpo_mail .= "Content-Transfer-Encoding: 8bit\r\n\r\n";
-                                $cuerpo_mail .= $cuerpo_texto . "\r\n\r\n";
-                                $cuerpo_mail .= "--{$limite_mime}\r\n";
-                                $cuerpo_mail .= "Content-Type: text/html; charset=UTF-8\r\n";
-                                $cuerpo_mail .= "Content-Transfer-Encoding: 8bit\r\n\r\n";
-                                $cuerpo_mail .= $cuerpo_html . "\r\n";
-                                $cuerpo_mail .= "--{$limite_mime}--";
-
-                                if (!mail($correo, $asunto, $cuerpo_mail, $cabeceras)) {
-                                    error_log('Recuperación de contraseña: el servidor rechazó el envío del correo.');
+                                try {
+                                    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+                                    $mail->isMail();
+                                    $mail->CharSet = \PHPMailer\PHPMailer\PHPMailer::CHARSET_UTF8;
+                                    $mail->setFrom($correo_remitente, 'Lo de Torres');
+                                    $mail->addAddress($correo);
+                                    $mail->isHTML(true);
+                                    $mail->Subject = 'Restablecimiento de contraseña - Lo de Torres';
+                                    $mail->Body = $cuerpo_html;
+                                    $mail->AltBody = $cuerpo_texto;
+                                    $mail->send();
+                                } catch (\PHPMailer\PHPMailer\Exception $error) {
+                                    error_log('Recuperación de contraseña: PHPMailer no pudo enviar el mensaje: ' . $error->getMessage());
+                                    $error_recuperacion = true;
                                     $invalidar = mysqli_prepare(
                                         $conexion,
                                         "UPDATE Empleado SET token_recuperacion = NULL, token_expiracion = NULL WHERE id_empleado = ? AND token_recuperacion = ?"
@@ -102,13 +98,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     if ($invalidar) {
                                         mysqli_stmt_bind_param($invalidar, 'is', $empleado_id, $token_hash);
                                         if (!mysqli_stmt_execute($invalidar)) {
-                                            error_log('Recuperación de contraseña: no se pudo invalidar el token tras fallar el envío.');
+                                            error_log('Recuperación de contraseña: no se pudo invalidar el token tras fallar el envío: ' . mysqli_stmt_error($invalidar));
+                                            $error_recuperacion = true;
                                         }
                                         mysqli_stmt_close($invalidar);
                                     } else {
-                                        error_log('Recuperación de contraseña: no se pudo preparar la invalidación del token.');
+                                        error_log('Recuperación de contraseña: no se pudo preparar la invalidación del token: ' . mysqli_error($conexion));
+                                        $error_recuperacion = true;
                                     }
                                 }
+                            } else {
+                                error_log('Recuperación de contraseña: no se actualizó ningún empleado activo.');
+                                $error_recuperacion = true;
                             }
                             mysqli_stmt_close($actualizar);
                         }
@@ -118,8 +119,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        $mensaje = "Si el correo está registrado y el servicio de envío está configurado, recibirás las instrucciones de recuperación.";
-        $tipo_alerta = 'exito';
+        if ($error_recuperacion) {
+            http_response_code(503);
+            $mensaje = "No se pudo procesar la solicitud en este momento. Intentalo más tarde o contactá al administrador del sistema.";
+            $tipo_alerta = 'error';
+        } else {
+            $mensaje = "Si el correo está registrado, recibirás las instrucciones de recuperación.";
+            $tipo_alerta = 'exito';
+        }
     } else {
         $mensaje = "Por favor, ingresá un correo electrónico válido.";
         $tipo_alerta = "error";

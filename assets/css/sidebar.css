@@ -155,35 +155,36 @@ body {
     pointer-events: none;
 }
 
-.navigation ul li:nth-child(1):hover a .icon img {
+.navigation ul li[data-menu="inicio"]:hover a .icon img {
     content: url('../img/sidebar/theme-home.svg');
 }
 
-.navigation ul li:nth-child(2):hover a .icon img {
+.navigation ul li[data-menu="pedidos"]:hover a .icon img {
     content: url('../img/sidebar/theme-restaurant.svg');
 }
 
-.navigation ul li:nth-child(3):hover a .icon img {
+.navigation ul li[data-menu="mapa"]:hover a .icon img {
     content: url('../img/sidebar/theme-map.svg');
 }
 
-.navigation ul li:nth-child(4):hover a .icon img {
+.navigation ul li[data-menu="caja"]:hover a .icon img {
     content: url('../img/sidebar/theme-payments.svg');
 }
 
-.navigation ul li:nth-child(5):hover a .icon img {
+.navigation ul li[data-menu="clientes"]:hover a .icon img {
     content: url('../img/sidebar/theme-person.svg');
 }
 
-.navigation ul li:nth-child(6):hover a .icon img {
+.navigation ul li[data-menu="insumos"]:hover a .icon img,
+.navigation ul li[data-menu="conteos"]:hover a .icon img {
     content: url('../img/sidebar/theme-box.svg');
 }
 
-.navigation ul li:nth-child(7):hover a .icon img {
+.navigation ul li[data-menu="productos"]:hover a .icon img {
     content: url('../img/sidebar/theme-shopping.svg');
 }
 
-.navigation ul li:nth-child(8):hover a .icon img {
+.navigation ul li[data-menu="empleados"]:hover a .icon img {
     content: url('../img/sidebar/theme-team.svg');
 }
 
