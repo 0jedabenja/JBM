@@ -60,7 +60,7 @@ verificar_permiso("conteos");
                         <thead><tr><th>Insumo</th><th>En sistema</th><th>Contado</th></tr></thead>
                         <tbody id="itemsConteo"></tbody>
                     </table>
-                    <div id="paginacionConteo" class="conteo-pagination" aria-label="Paginación del conteo"></div>
+                    <nav id="paginacionConteo" class="pagination" aria-label="Paginación del conteo"></nav>
                     <div class="conteo-actions">
                         <button class="conteo-button" type="submit">Aplicar conteo y actualizar stock</button>
                         <button id="btnCancelarConteo" class="conteo-button danger" type="button">Cancelar conteo</button>
@@ -209,7 +209,7 @@ verificar_permiso("conteos");
         if (filtrados.length === 0) {
             paginacion.innerHTML = "";
         } else {
-            paginacion.innerHTML = `<button type="button" data-pagina="${paginaConteo - 1}" ${paginaConteo === 1 ? "disabled" : ""}>Anterior</button><span>Página ${paginaConteo} de ${totalPaginas} · ${filtrados.length} insumos</span><button type="button" data-pagina="${paginaConteo + 1}" ${paginaConteo === totalPaginas ? "disabled" : ""}>Siguiente</button>`;
+            paginacion.innerHTML = `<button class="button button--secondary" type="button" data-pagina="${paginaConteo - 1}" ${paginaConteo === 1 ? "disabled" : ""}>Anterior</button><span>Página ${paginaConteo} de ${totalPaginas} · ${filtrados.length} insumos</span><button class="button button--secondary" type="button" data-pagina="${paginaConteo + 1}" ${paginaConteo === totalPaginas ? "disabled" : ""}>Siguiente</button>`;
         }
     }
 

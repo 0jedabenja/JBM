@@ -1,44 +1,31 @@
 <?php
-require_once __DIR__ . "/vendor/autoload.php";
-
-use AltchaOrg\Altcha\Algorithm\Pbkdf2;
-use AltchaOrg\Altcha\Altcha;
-use AltchaOrg\Altcha\VerifySolutionOptions;
-
 include_once "includes/conexionBD.php";
 include_once "includes/funciones.php";
 
 iniciar_sesion_segura();
 $mensaje = "";
-$captchaSecret = $_SESSION["altcha_secret"] ??= bin2hex(random_bytes(32));
+
+function generar_reto_login() {
+    $_SESSION["login_captcha_a"] = random_int(2, 9);
+    $_SESSION["login_captcha_b"] = random_int(1, 9);
+    $_SESSION["login_captcha_respuesta"] = $_SESSION["login_captcha_a"] + $_SESSION["login_captcha_b"];
+}
+
+if (!isset($_SESSION["login_captcha_a"]) || !isset($_SESSION["login_captcha_b"]) || !isset($_SESSION["login_captcha_respuesta"])) {
+    generar_reto_login();
+}
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $usuario = trim($_POST["username"] ?? "");
     $contrasena = $_POST["password"] ?? "";
     $token_csrf = $_POST["csrf_token"] ?? "";
-    $captchaValido = false;
-
-    if (validar_token_csrf($token_csrf)) {
-        $payloadCaptcha = $_POST["altcha"] ?? "";
-        if (is_string($payloadCaptcha) && $payloadCaptcha !== "") {
-            try {
-                $altcha = new Altcha(hmacSignatureSecret: $captchaSecret);
-                $resultadoCaptcha = $altcha->verifySolution(new VerifySolutionOptions(
-                    payload: $payloadCaptcha,
-                    algorithm: new Pbkdf2()
-                ));
-                $captchaValido = $resultadoCaptcha->verified;
-            } catch (InvalidArgumentException $error) {
-                $captchaValido = false;
-            }
-        }
-    }
-    $_SESSION["altcha_secret"] = bin2hex(random_bytes(32));
+    $captchaRespuesta = $_POST["captcha_respuesta"] ?? "";
+    $captchaValido = is_string($captchaRespuesta)&& ctype_digit(trim($captchaRespuesta))&& hash_equals((string) $_SESSION["login_captcha_respuesta"],trim($captchaRespuesta));
 
     if (!validar_token_csrf($token_csrf)) {
         $mensaje = "La solicitud no es válida. Intente nuevamente.";
     } elseif (!$captchaValido) {
-        $mensaje = "Complete la verificación anti-robots e intente nuevamente.";
+        $mensaje = "La respuesta de verificación no es correcta. Intente nuevamente.";
     } elseif ($usuario === "" || $contrasena === "") {
         $mensaje = "Ingrese su usuario y contraseña.";
     } elseif (strlen($usuario) > 50) {
@@ -77,7 +64,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $mensaje = "No se pudo procesar el inicio de sesión.";
         }
     }
+    generar_reto_login();
 }
+
+$captchaNumeroA = (int) $_SESSION["login_captcha_a"];
+$captchaNumeroB = (int) $_SESSION["login_captcha_b"];
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -87,12 +78,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title></title>
-    <link rel="stylesheet" href="assets/css/login.css">
+    <link rel="stylesheet" href="assets/css/login.css?v=<?php echo filemtime(__DIR__ . "/assets/css/login.css"); ?>">
     <link rel="stylesheet" href="assets/css/sin-seleccion.css">
-    <link rel="stylesheet" href="assets/css/theme.css">
+    <link rel="stylesheet" href="assets/css/theme.css?v=<?php echo filemtime(__DIR__ . "/assets/css/theme.css"); ?>">
     <script src="assets/js/theme.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/gh/altcha-org/altcha/dist/main/altcha.min.js" type="module"></script>
-    <script src="assets/js/login.js" defer></script>
+    <script src="assets/js/login.js?v=<?php echo filemtime(__DIR__ . "/assets/js/login.js"); ?>" defer></script>
 </head>
 
 <body>
@@ -115,7 +105,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <img src="assets/img/login/light-lock.svg" class="icon-lock">
                 <img src="assets/img/login/light-eye.svg" class="icon-password">
             </div>
-            <altcha-widget challenge="apis/altcha_challenge.php" language="es"></altcha-widget>
+            <div class="captcha-container">
+                <label for="captcha-respuesta" class="captcha-label">
+                    <span>Verificación anti-robots</span>
+                    <strong><?php echo $captchaNumeroA; ?> + <?php echo $captchaNumeroB; ?> = ?</strong>
+                </label>
+                <input
+                    type="number"
+                    id="captcha-respuesta"
+                    name="captcha_respuesta"
+                    min="3"
+                    max="18"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    placeholder="Resultado"
+                    required
+                >
+            </div>
             <a href="recuperar.php" class="forgot-password">¿Olvidaste tu contraseña?</a>
             <button type="submit" class="btn-login">Iniciar sesión</button>
         </form>

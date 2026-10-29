@@ -75,11 +75,11 @@ verificar_permiso("clientes");
                 </tbody>
             </table>
 
-            <div class="paginacion">
-                <button type="button" id="btnAnterior">Anterior</button>
+            <nav class="pagination" aria-label="Paginación de clientes">
+                <button class="button button--secondary" type="button" id="btnAnterior">Anterior</button>
                 <span id="infoPagina">Página 1</span>
-                <button type="button" id="btnSiguiente">Siguiente</button>
-            </div>
+                <button class="button button--secondary" type="button" id="btnSiguiente">Siguiente</button>
+            </nav>
         </main>
     </div>
 

@@ -29,13 +29,6 @@
             color: #001f47;
         }
 
-        .auditoria-pagination {
-            align-items: center;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
         .auditoria-button {
             background: #001f47;
             border: 0;

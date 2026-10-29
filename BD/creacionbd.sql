@@ -241,5 +241,51 @@ CREATE TABLE Movimiento_Insumo (
     FOREIGN KEY (id_insumo) REFERENCES Insumo(id_insumo) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (id_empleado) REFERENCES Empleado(id_empleado) ON DELETE SET NULL ON UPDATE CASCADE
 );
+INSERT INTO Rol (nombre) VALUES
+('Administrador'),
+('Cajero'),
+('Cocina'),
+('Mozo');
 
-SOURCE objetos_base_datos.sql;
+INSERT INTO Medida (unidad, simbolo) VALUES
+('Unidad', 'u'),
+('Kilogramo', 'kg'),
+('Gramo', 'g'),
+('Litro', 'l'),
+('Mililitro', 'ml');
+
+INSERT INTO Categoria (titulo, descripcion) VALUES
+('Comidas', 'Platos y comidas principales.'),
+('Bebidas', 'Bebidas con y sin alcohol.'),
+('Postres', 'Postres y opciones dulces.');
+
+INSERT INTO Cliente (id_cliente, nombre, apellido, activo) VALUES
+(1, 'Consumidor', 'Final', TRUE);
+
+INSERT INTO Estado_Mesa (nombre) VALUES
+('Libre'),
+('Ocupada'),
+('Para limpiar');
+
+INSERT INTO Estado_Pedido (nombre) VALUES
+('Pendiente'),
+('En preparación'),
+('Comiendo'),
+('Listo'),
+('Entregado'),
+('Cancelado');
+
+INSERT INTO Descuento (tipo, valor) VALUES
+('porcentaje', 0.00),
+('porcentaje', 10.00),
+('porcentaje', 20.00),
+('porcentaje', 100.00);
+
+INSERT INTO Metodo_pago (descripcion) VALUES
+('Efectivo'),
+('Tarjeta de débito'),
+('Tarjeta de crédito'),
+('Transferencia bancaria');
+
+INSERT INTO Empleado (nombre, apellido, activo, usuario, contraseña, id_rol) VALUES
+('Luis', 'Torres', TRUE, 'Luistorres', '$2y$10$ygA54RXXYRe0oHhRJaxGPOkYN3JHXPsrySdJ7ztzY155nTHUiQhDS', 1)

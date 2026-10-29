@@ -43,7 +43,7 @@ $tokenCsrf = obtener_token_csrf();
             </div>
         </section>
         <section class="caja-section" aria-labelledby="tituloSesionesPropias"><div class="caja-section-heading"><div><h2 id="tituloSesionesPropias">Mis últimas sesiones</h2><p class="caja-subtitle">Tus cinco turnos cerrados más recientes.</p></div></div><div class="caja-table-wrap"><table class="caja-table"><thead><tr><th>Sesión</th><th>Apertura</th><th>Cierre</th><th>Monto inicial</th><th>Monto final</th><th></th></tr></thead><tbody id="sesionesPropias"></tbody></table></div></section>
-        <section id="seccionAdmin" class="caja-section" aria-labelledby="tituloHistorialAdmin" hidden><div class="caja-section-heading"><div><h2 id="tituloHistorialAdmin">Historial de todas las cajas</h2><p class="caja-subtitle">Sesiones de todos los empleados, ordenadas por apertura reciente.</p></div></div><div class="caja-table-wrap"><table class="caja-table"><thead><tr><th>Sesión</th><th>Responsable</th><th>Apertura</th><th>Cierre / estado</th><th>Monto inicial</th><th>Monto final</th><th></th></tr></thead><tbody id="historialAdmin"></tbody></table></div><nav class="caja-pagination" aria-label="Paginación del historial"><button id="paginaAnterior" class="caja-button secondary" type="button">Anterior</button><span id="paginaInfo"></span><button id="paginaSiguiente" class="caja-button secondary" type="button">Siguiente</button></nav></section>
+        <section id="seccionAdmin" class="caja-section" aria-labelledby="tituloHistorialAdmin" hidden><div class="caja-section-heading"><div><h2 id="tituloHistorialAdmin">Historial de todas las cajas</h2><p class="caja-subtitle">Sesiones de todos los empleados, ordenadas por apertura reciente.</p></div></div><div class="caja-table-wrap"><table class="caja-table"><thead><tr><th>Sesión</th><th>Responsable</th><th>Apertura</th><th>Cierre / estado</th><th>Monto inicial</th><th>Monto final</th><th></th></tr></thead><tbody id="historialAdmin"></tbody></table></div><nav class="pagination" aria-label="Paginación del historial"><button id="paginaAnterior" class="button button--secondary" type="button">Anterior</button><span id="paginaInfo"></span><button id="paginaSiguiente" class="button button--secondary" type="button">Siguiente</button></nav></section>
     </main>
 </div>
 
@@ -138,7 +138,7 @@ function renderizarMovimientos(movimientos, idContenedor, permitirCobro) {
         const accion = permitirCobro && listo && !cobrado
             ? `<select aria-label="Medio de pago del pedido ${Number(movimiento.id_pedido)}" data-metodo-pago><option value="">Medio de pago...</option>${opcionesPago}</select> <button class="caja-button secondary" type="button" data-cobrar="${Number(movimiento.id_pedido)}" data-total="${Number(movimiento.monto_total)}" data-cliente="${Number(movimiento.id_cliente || 0)}" data-mesa="${escapeHTML(movimiento.numero_mesa ?? "")}">Cobrar</button>`
             : permitirCobro && cobrado
-                ? `<a class="caja-button secondary" href="apis/boleta_pedido.php?id_pedido=${Number(movimiento.id_pedido)}${datosEfectivo}" target="_blank" rel="noopener">Imprimir comprobante</a>`
+                ? `<a class="caja-button secondary" href="apis/boleta_pedido.php?id_pedido=${Number(movimiento.id_pedido)}${datosEfectivo}" target="comprobanteJBM">Imprimir comprobante</a>`
                 : "-";
         return `<tr><td>#${escapeHTML(movimiento.id_pedido)}</td><td>${escapeHTML(formatearFecha(movimiento.fecha_hora_creacion))}</td><td>${moneda(movimiento.monto_total)}</td><td>${escapeHTML(movimiento.metodo_pago)}</td><td><span class="caja-movement-state ${estadoClass}">${estado}</span></td>${permitirCobro ? `<td>${accion}</td>` : ""}</tr>`;
     }).join("");
@@ -283,6 +283,11 @@ async function confirmarCobroEfectivo(evento) {
     }
     const boton = document.getElementById("confirmarCobroEfectivo");
     boton.disabled = true;
+    const idPedidoCobrado = cobroEfectivoActual.idPedido;
+    const efectivoComprobante = esEfectivo ? Math.round(efectivoRecibido * 100) / 100 : null;
+    const ventanaComprobante = window.open("about:blank", "comprobanteJBM");
+    if (ventanaComprobante) ventanaComprobante.opener = null;
+    let cobroConfirmado = false;
     try {
         const respuesta = await fetch("apis/api_caja.php", {
             method: "POST",
@@ -299,7 +304,15 @@ async function confirmarCobroEfectivo(evento) {
         });
         const resultado = await respuesta.json();
         if (!respuesta.ok) throw new Error(resultado.error || "No se pudo registrar el cobro.");
-        if (esEfectivo) pagosEfectivoTemporales.set(cobroEfectivoActual.idPedido, Math.round(efectivoRecibido * 100) / 100);
+        cobroConfirmado = true;
+        if (esEfectivo) pagosEfectivoTemporales.set(idPedidoCobrado, efectivoComprobante);
+        if (ventanaComprobante) {
+            const parametrosComprobante = new URLSearchParams({ id_pedido: String(idPedidoCobrado) });
+            if (efectivoComprobante !== null) {
+                parametrosComprobante.set("efectivo_recibido", efectivoComprobante.toFixed(2));
+            }
+            ventanaComprobante.location.replace(`apis/boleta_pedido.php?${parametrosComprobante.toString()}`);
+        }
         cerrarDialogo("dialogCobroEfectivo");
         mostrarMensaje(esEfectivo ? `Pedido cobrado. Vuelto: ${moneda(resultado.vuelto)}.` : "Pedido cobrado.", false);
         window.AlertasJBM?.reproducir("cobrado");
@@ -307,6 +320,9 @@ async function confirmarCobroEfectivo(evento) {
         cobroEfectivoActual = null;
         await cargarCaja();
     } catch (error) {
+        if (!cobroConfirmado && ventanaComprobante && !ventanaComprobante.closed) {
+            ventanaComprobante.close();
+        }
         document.getElementById("errorCobroEfectivo").textContent = error.message;
     } finally {
         boton.disabled = false;

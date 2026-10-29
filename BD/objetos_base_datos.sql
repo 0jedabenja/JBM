@@ -1,5 +1,5 @@
 -- Objetos reutilizados por las APIs del sistema.
--- Ejecutar una vez despues de creacionbd.sql.
+-- Importar despues de creacionbd.sql; los listados de clientes, productos e insumos dependen de estas vistas y rutinas.
 USE lodetorres;
 
 DELIMITER $$

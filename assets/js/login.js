@@ -17,16 +17,6 @@ try {
 	root.dataset.theme = 'light';
 }
 
-function configurarCaptcha() {
-	const captchaWidget = document.querySelector('altcha-widget');
-	if (!captchaWidget) return;
-	const oscuro = root.dataset.theme === 'dark';
-	captchaWidget.style.setProperty('--altcha-color', oscuro ? '#f4f6f8' : '#111827');
-	captchaWidget.style.setProperty('--altcha-background-color', oscuro ? '#252a31' : '#ffffff');
-	captchaWidget.style.setProperty('--altcha-border-color', oscuro ? '#59616d' : '#cbd5e1');
-	captchaWidget.style.setProperty('color-scheme', oscuro ? 'dark' : 'light');
-}
-
 function updateLoginIcons() {
 	const isDark = root.dataset.theme === 'dark';
 	const iconPrefix = isDark ? 'dark' : 'light';
@@ -49,6 +39,11 @@ function updateLoginIcons() {
 	}
 }
 
+function syncLoginTheme() {
+	document.body.dataset.theme = root.dataset.theme === 'dark' ? 'dark' : 'light';
+	updateLoginIcons();
+}
+
 if (passwordToggle && passwordInput) {
 	passwordToggle.addEventListener('click', () => {
 		passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
@@ -60,16 +55,11 @@ if (themeToggle) {
 	themeToggle.addEventListener('click', () => {
 		root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
 		try { localStorage.setItem('jbm-theme', root.dataset.theme); } catch (error) {}
-		updateLoginIcons();
-		configurarCaptcha();
+		syncLoginTheme();
 	});
 }
 
-configurarCaptcha();
-updateLoginIcons();
-if (window.customElements) {
-	customElements.whenDefined('altcha-widget').then(configurarCaptcha).catch(() => {});
-}
+syncLoginTheme();
 
 if (openPopupButton && overlay) {
 	openPopupButton.addEventListener('click', () => {
@@ -97,10 +87,8 @@ function applyLanguage(language) {
 	document.querySelector('.form-description').innerHTML = translation.description;
 	document.querySelector('input[name="username"]').placeholder = translation.username;
 	document.querySelector('input[name="password"]').placeholder = translation.password;
-	const captchaWidget = document.querySelector('altcha-widget');
-	if (captchaWidget) {
-		captchaWidget.setAttribute('language', language);
-	}
+	document.querySelector('.captcha-label span').textContent = translation.captcha;
+	document.querySelector('#captcha-respuesta').placeholder = translation.captchaPlaceholder;
 	document.querySelector('.forgot-password').textContent = translation.help;
 	document.querySelector('.btn-login').textContent = translation.button;
 	document.querySelector('.about-us').textContent = translation['about-us'];
@@ -119,7 +107,7 @@ if (languageButton) {
 
 updateLoginIcons();
 
-fetch('assets/lang/lang.json')
+fetch('assets/lang/lang.json?v=2')
 	.then((response) => response.json())
 	.then((data) => {
 		translations = data;

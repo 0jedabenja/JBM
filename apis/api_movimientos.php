@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/../includes/api_json.php";
 include_once __DIR__ . "/../includes/conexionBD.php";
 include_once __DIR__ . "/../includes/funciones.php";
 verificar_sesion_api();
@@ -24,7 +25,7 @@ verificar_permiso($tipoEntidad === "insumo" ? "insumos" : "productos", true);
 
 $filtroTipo = obtener_parametro_get("movimiento", "todos");
 $tiposPermitidos = $tipoEntidad === "insumo"
-    ? array("todos", "saldo_inicial", "inventario", "compra", "perdida", "averia", "consumo_personal")
+    ? array("todos", "saldo_inicial", "inventario", "compra", "pedido", "perdida", "averia", "consumo_personal")
     : array("todos", "venta");
 if (!in_array($filtroTipo, $tiposPermitidos, true)) {
     responder_movimientos(array("error" => "El tipo de movimiento no es válido."), 400);
@@ -78,6 +79,7 @@ if ($tipoEntidad === "producto") {
                        m.referencia_id,
                        CASE
                            WHEN m.tipo = 'compra' THEN CONCAT('Compra #', m.referencia_id)
+                           WHEN m.tipo = 'pedido' THEN CONCAT('Pedido #', m.referencia_id, ' - ', COALESCE(m.observacion, 'Consumo'))
                            WHEN m.tipo = 'inventario' THEN CONCAT('Conteo #', m.referencia_id)
                            WHEN m.observacion IS NOT NULL THEN m.observacion
                            ELSE '-'

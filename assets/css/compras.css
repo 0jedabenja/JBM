@@ -78,8 +78,7 @@
     color: #001f47;
 }
 
-.compras-actions,
-.compras-pagination {
+.compras-actions {
     align-items: center;
     display: flex;
     flex-wrap: wrap;

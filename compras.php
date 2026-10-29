@@ -53,11 +53,11 @@ $tokenCsrf = obtener_token_csrf();
                 <h2 id="tituloHistorialCompras">Historial de compras</h2>
                 <p id="mensajeHistorial" class="compras-message" role="status" aria-live="polite"></p>
                 <div id="historialCompras"></div>
-                <div class="compras-pagination">
-                    <button id="comprasAnterior" class="compras-button secondary" type="button" disabled>Anterior</button>
+                <nav class="pagination" aria-label="Paginación de compras">
+                    <button id="comprasAnterior" class="button button--secondary" type="button" disabled>Anterior</button>
                     <span id="paginaCompras">Página 1</span>
-                    <button id="comprasSiguiente" class="compras-button secondary" type="button" disabled>Siguiente</button>
-                </div>
+                    <button id="comprasSiguiente" class="button button--secondary" type="button" disabled>Siguiente</button>
+                </nav>
             </section>
         </main>
     </div>
@@ -101,7 +101,7 @@ $tokenCsrf = obtener_token_csrf();
     });
     document.getElementById("historialCompras").addEventListener("click", (evento) => {
         const boton = evento.target.closest("[data-compra]");
-        if (boton) window.open(`apis/comprobante_compra.php?id=${encodeURIComponent(boton.dataset.compra)}`, "_blank", "width=420,height=700");
+        if (boton) window.open(`apis/boleta_pedido.php?tipo=compra&id_compra=${encodeURIComponent(boton.dataset.compra)}`, "comprobanteJBM", "width=420,height=700");
     });
     document.getElementById("comprasSiguiente").addEventListener("click", () => {
         if (document.getElementById("comprasSiguiente").dataset.hayMas === "true") {
@@ -190,7 +190,7 @@ $tokenCsrf = obtener_token_csrf();
             actualizarTotalesCompra();
             mensajeCompra.textContent = `Compra #${datos.id_compra} registrada por ${formatoMonedaCompra.format(datos.costo_total)}. Se actualizaron el stock y el costo promedio.`;
             paginaCompras = 1;
-            window.open(`apis/comprobante_compra.php?id=${encodeURIComponent(datos.id_compra)}`, "_blank", "width=420,height=700");
+            window.open(`apis/boleta_pedido.php?tipo=compra&id_compra=${encodeURIComponent(datos.id_compra)}`, "comprobanteJBM", "width=420,height=700");
             await cargarHistorialCompras();
         } catch (error) {
             mensajeCompra.textContent = error instanceof Error ? error.message : "No se pudo guardar la compra.";

@@ -71,3 +71,15 @@
         body[data-theme="dark"] dialog.caja-dialog::backdrop {
             background: rgba(0, 8, 14, .78);
         }
+
+        .caja-table tbody tr:not(:last-child) td{border-bottom:1px solid #e3e8e7}
+        .caja-table tbody tr:hover td{background:#f7faf9}
+        .caja-message:not(:empty){border-left:4px solid currentColor;border-radius:4px;padding:10px 12px}
+        .caja-message.error:not(:empty){background:#fff1f0}
+        .caja-message:not(.error):not(:empty){background:#edf8f0}
+        .caja-warning{border-radius:0 4px 4px 0;line-height:1.45}
+        .caja-status{border:1px solid transparent}
+        .caja-status.abierta{border-color:#b9dfc7}
+        .caja-status.cerrada{border-color:#e8d3aa}
+        .caja-button:focus-visible,.caja-field select:focus-visible,.caja-table td select[data-metodo-pago]:focus-visible{outline:3px solid #4382c3;outline-offset:2px}
+        .caja-table td select[data-metodo-pago]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%2341565e' stroke-width='1.5' d='m1 1 5 5 5-5'/%3E%3C/svg%3E")}

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/../includes/api_json.php";
 include_once("../includes/conexionBD.php");
 include_once("../includes/funciones.php");
 verificar_sesion_api();
@@ -31,14 +32,14 @@ if (!is_array($entrada)) $entrada = $_POST;
 
     verificar_permiso($entidades[$tipo]["permiso"], true);
     $entidad = $entidades[$tipo];
-    $stmt = mysqli_prepare($conexion, "CALL sp_desactivar(?, ?)");
+    $stmt = mysqli_prepare($conexion, "UPDATE " . $entidad["tabla"] . " SET activo = FALSE WHERE " . $entidad["columna"] . " = ? AND activo = TRUE");
     if (!$stmt) {
         http_response_code(500);
         echo json_encode(array("error" => "No se pudo preparar la operación."), JSON_UNESCAPED_UNICODE);
         exit();
     }
 
-    mysqli_stmt_bind_param($stmt, "si", $tipo, $id);
+    mysqli_stmt_bind_param($stmt, "i", $id);
     if (!mysqli_stmt_execute($stmt)) {
         mysqli_stmt_close($stmt);
         http_response_code(500);

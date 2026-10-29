@@ -79,26 +79,3 @@
 .acciones-producto .accion-movimientos { background: #e8eef7; border: 1px solid #e8eef7; color: #001f47; }
 .acciones-producto .accion-editar { background: #001f47; border: 1px solid #001f47; color: #fff; }
 .acciones-producto .accion-desactivar { background: #fff; border: 1px solid #b42318; color: #b42318; }
-
-
-.paginacion {
-    align-items: center;
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    margin-top: 20px;
-}
-
-.paginacion button {
-    background: #001f47;
-    border: 0;
-    border-radius: 4px;
-    color: #fff;
-    cursor: pointer;
-    padding: 8px 14px;
-}
-
-.paginacion button:disabled {
-    cursor: not-allowed;
-    opacity: .5;
-}

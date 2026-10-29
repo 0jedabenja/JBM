@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . "/../includes/api_json.php";
 include_once("../includes/conexionBD.php");
 include_once("../includes/funciones.php");
 verificar_sesion_api();
@@ -96,6 +97,178 @@ function obtenerFaltantesStock($conexion, $productos)
     return array_values(array_filter($requeridoPorInsumo, function ($insumo) {
         return $insumo["requerido"] > $insumo["disponible"];
     }));
+}
+
+function consumirInsumosProductoPedido($conexion, $idPedido, $idProducto, $nombreProducto, $cantidadProductos)
+{
+    $stmtReceta = mysqli_prepare(
+        $conexion,
+        "SELECT i.id_insumo, i.nombre, i.costo, c.cantidad AS cantidad_receta
+         FROM Compone c
+         INNER JOIN Insumo i ON i.id_insumo = c.id_insumo
+         WHERE c.id_producto = ?
+         ORDER BY i.id_insumo
+         FOR UPDATE"
+    );
+    if (!$stmtReceta) {
+        throw new RuntimeException("No se pudo consultar la receta del producto.");
+    }
+    mysqli_stmt_bind_param($stmtReceta, "i", $idProducto);
+    if (!mysqli_stmt_execute($stmtReceta)) {
+        mysqli_stmt_close($stmtReceta);
+        throw new RuntimeException("No se pudo consultar la receta del producto.");
+    }
+    $resultadoReceta = mysqli_stmt_get_result($stmtReceta);
+    $receta = array();
+    while ($insumo = mysqli_fetch_assoc($resultadoReceta)) {
+        $cantidad = round((float)$insumo["cantidad_receta"] * $cantidadProductos, 2);
+        if ($cantidad <= 0) {
+            mysqli_stmt_close($stmtReceta);
+            throw new RuntimeException("La receta contiene una cantidad de insumo no válida.");
+        }
+        $receta[] = array(
+            "id_insumo" => (int)$insumo["id_insumo"],
+            "nombre" => $insumo["nombre"],
+            "costo" => (float)$insumo["costo"],
+            "cantidad" => $cantidad
+        );
+    }
+    mysqli_stmt_close($stmtReceta);
+
+    $stmtDescontar = mysqli_prepare(
+        $conexion,
+        "UPDATE Insumo
+         SET cantidad_actual = cantidad_actual - ?
+         WHERE id_insumo = ?"
+    );
+    if (!$stmtDescontar) {
+        throw new RuntimeException("No se pudo preparar el descuento de inventario.");
+    }
+    foreach ($receta as $insumo) {
+        $cantidad = $insumo["cantidad"];
+        $idInsumo = $insumo["id_insumo"];
+        if (!mysqli_stmt_bind_param($stmtDescontar, "di", $cantidad, $idInsumo)
+            || !mysqli_stmt_execute($stmtDescontar)
+            || mysqli_stmt_affected_rows($stmtDescontar) !== 1
+        ) {
+            mysqli_stmt_close($stmtDescontar);
+            throw new RuntimeException("No se pudo actualizar el saldo de " . $insumo["nombre"] . ".");
+        }
+        if (!registrar_movimiento_insumo(
+            $conexion,
+            $idInsumo,
+            "pedido",
+            -$cantidad,
+            $insumo["costo"],
+            $idPedido,
+            "Consumo de {$nombreProducto} x {$cantidadProductos}"
+        )) {
+            mysqli_stmt_close($stmtDescontar);
+            throw new RuntimeException("No se pudo registrar el movimiento de inventario.");
+        }
+    }
+    mysqli_stmt_close($stmtDescontar);
+}
+
+function marcarProductoPedidoProcesado($conexion, $idPedido, $idProducto, $tipoEsperado)
+{
+    $stmtLinea = mysqli_prepare(
+        $conexion,
+        "SELECT c.cantidad, c.completado, p.cobrado, LOWER(ep.nombre) AS estado,
+                LOWER(COALESCE(cat.titulo, '')) AS categoria, pr.nombre AS producto
+         FROM Pedido p
+         INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado
+         INNER JOIN Contiene c ON c.id_pedido = p.id_pedido
+         INNER JOIN Producto pr ON pr.id_producto = c.id_producto
+         LEFT JOIN Categoria cat ON cat.id_categoria = pr.id_categoria
+         WHERE p.id_pedido = ? AND c.id_producto = ?
+         FOR UPDATE"
+    );
+    if (!$stmtLinea) {
+        throw new RuntimeException("No se pudo consultar el producto del pedido.");
+    }
+    mysqli_stmt_bind_param($stmtLinea, "ii", $idPedido, $idProducto);
+    if (!mysqli_stmt_execute($stmtLinea)) {
+        mysqli_stmt_close($stmtLinea);
+        throw new RuntimeException("No se pudo consultar el producto del pedido.");
+    }
+    $linea = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtLinea));
+    mysqli_stmt_close($stmtLinea);
+
+    $esBebida = $linea && $linea["categoria"] === "bebidas";
+    $tipoCorrecto = $tipoEsperado === "bebida" ? $esBebida : !$esBebida;
+    $estadosPermitidos = $tipoEsperado === "bebida"
+        ? array("en preparación", "comiendo")
+        : array("en preparación");
+    if (
+        !$linea
+        || !$tipoCorrecto
+        || (bool)$linea["completado"]
+        || (bool)$linea["cobrado"]
+        || !in_array($linea["estado"], $estadosPermitidos, true)
+    ) {
+        throw new DomainException(
+            $tipoEsperado === "bebida"
+                ? "La bebida no pertenece a un pedido activo o ya fue pickeada."
+                : "El producto ya está completo, es una bebida o el pedido ya no está en preparación."
+        );
+    }
+
+    $cantidadTotal = (int)$linea["cantidad"];
+    $stmtConsumoAnterior = mysqli_prepare(
+        $conexion,
+        "SELECT COALESCE(
+                    SUM(CAST(JSON_UNQUOTE(JSON_EXTRACT(detalle, '$.cantidad_consumida')) AS UNSIGNED)),
+                    0
+                ) AS cantidad_consumida
+         FROM Auditoria
+         WHERE entidad = 'pedido'
+           AND id_entidad = ?
+           AND accion IN ('completar_producto_pedido', 'marcar_bebida_pickeada')
+           AND CAST(JSON_UNQUOTE(JSON_EXTRACT(detalle, '$.id_producto')) AS UNSIGNED) = ?"
+    );
+    if (!$stmtConsumoAnterior) {
+        throw new RuntimeException("No se pudo consultar el historial de consumo del pedido.");
+    }
+    mysqli_stmt_bind_param($stmtConsumoAnterior, "ii", $idPedido, $idProducto);
+    if (!mysqli_stmt_execute($stmtConsumoAnterior)) {
+        mysqli_stmt_close($stmtConsumoAnterior);
+        throw new RuntimeException("No se pudo consultar el historial de consumo del pedido.");
+    }
+    $consumoAnterior = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtConsumoAnterior));
+    mysqli_stmt_close($stmtConsumoAnterior);
+    $cantidadDescontada = (int)($consumoAnterior["cantidad_consumida"] ?? 0);
+    if ($cantidadDescontada < 0 || $cantidadDescontada > $cantidadTotal) {
+        throw new RuntimeException("La cantidad de stock ya descontada no es válida.");
+    }
+    $cantidadPendiente = $cantidadTotal - $cantidadDescontada;
+    if ($cantidadPendiente > 0) {
+        consumirInsumosProductoPedido(
+            $conexion,
+            $idPedido,
+            $idProducto,
+            $linea["producto"],
+            $cantidadPendiente
+        );
+    }
+
+    $stmtActualizar = mysqli_prepare(
+        $conexion,
+        "UPDATE Contiene
+         SET completado = TRUE
+         WHERE id_pedido = ? AND id_producto = ? AND completado = FALSE"
+    );
+    if (!$stmtActualizar) {
+        throw new RuntimeException("No se pudo actualizar el estado del producto.");
+    }
+    mysqli_stmt_bind_param($stmtActualizar, "ii", $idPedido, $idProducto);
+    $correcto = mysqli_stmt_execute($stmtActualizar)
+        && mysqli_stmt_affected_rows($stmtActualizar) === 1;
+    mysqli_stmt_close($stmtActualizar);
+    if (!$correcto) {
+        throw new RuntimeException("No se pudo actualizar el estado del producto.");
+    }
+    return array("producto" => $linea["producto"], "cantidad" => $cantidadPendiente);
 }
 
 $metodo = $_SERVER["REQUEST_METHOD"];
@@ -362,31 +535,26 @@ if ($metodo === "POST") {
         ) {
             responder(array("error" => "Datos del producto no válidos."), 400);
         }
-        $sql = "UPDATE Contiene c
-                INNER JOIN Pedido p ON p.id_pedido = c.id_pedido
-                INNER JOIN Producto px ON px.id_producto = c.id_producto
-                LEFT JOIN Categoria cx ON cx.id_categoria = px.id_categoria
-                SET c.completado = TRUE
-                WHERE c.id_pedido = ?
-                  AND c.id_producto = ?
-                  AND LOWER(COALESCE(cx.titulo, '')) <> 'bebidas'
-                  AND p.id_estado = (
-                      SELECT id_estado
-                      FROM Estado_Pedido
-                      WHERE LOWER(nombre) = 'en preparación'
-                      LIMIT 1
-                  )";
-        $stmt = mysqli_prepare($conexion, $sql);
-        mysqli_stmt_bind_param($stmt, "ii", $idPedido, $idProducto);
-        mysqli_stmt_execute($stmt);
-        $actualizado = mysqli_stmt_affected_rows($stmt) > 0;
-        mysqli_stmt_close($stmt);
-        if (!$actualizado) {
-            responder(array("error" => "El producto ya está completo, es una bebida o el pedido ya no está en preparación."), 409);
+        mysqli_begin_transaction($conexion);
+        try {
+            $productoProcesado = marcarProductoPedidoProcesado($conexion, $idPedido, $idProducto, "cocina");
+            if (!registrar_auditoria($conexion, "completar_producto_pedido", "pedido", $idPedido, array(
+                "id_producto" => $idProducto,
+                "cantidad_consumida" => $productoProcesado["cantidad"]
+            ))) {
+                throw new RuntimeException("No se pudo registrar la auditoría del pedido.");
+            }
+            if (!mysqli_commit($conexion)) {
+                throw new RuntimeException("No se pudo confirmar el consumo de inventario.");
+            }
+        } catch (DomainException $error) {
+            mysqli_rollback($conexion);
+            responder(array("error" => $error->getMessage()), 409);
+        } catch (Throwable $error) {
+            mysqli_rollback($conexion);
+            error_log("No se pudo completar el producto del pedido #{$idPedido}: " . $error->getMessage());
+            responder(array("error" => "No se pudo completar el producto ni actualizar el inventario."), 500);
         }
-        registrar_auditoria($conexion, "completar_producto_pedido", "pedido", $idPedido, array(
-            "id_producto" => $idProducto
-        ));
         responder(array("ok" => true));
     }
 
@@ -397,37 +565,26 @@ if ($metodo === "POST") {
         if ($idPedido === false || $idPedido <= 0 || $idProducto === false || $idProducto <= 0) {
             responder(array("error" => "Datos de la bebida no válidos."), 400);
         }
-        $sql = "UPDATE Contiene c
-                INNER JOIN Pedido p ON p.id_pedido = c.id_pedido
-                INNER JOIN Producto px ON px.id_producto = c.id_producto
-                INNER JOIN Categoria cx ON cx.id_categoria = px.id_categoria
-                SET c.completado = TRUE
-                WHERE c.id_pedido = ?
-                  AND c.id_producto = ?
-                  AND LOWER(cx.titulo) = 'bebidas'
-                  AND p.cobrado = FALSE
-                  AND p.id_estado IN (
-                      SELECT id_estado
-                      FROM Estado_Pedido
-                      WHERE LOWER(nombre) IN ('en preparación', 'comiendo')
-                  )";
-        $stmt = mysqli_prepare($conexion, $sql);
-        if (!$stmt) {
-            responder(array("error" => "No se pudo preparar la confirmación de la bebida."), 500);
+        mysqli_begin_transaction($conexion);
+        try {
+            $productoProcesado = marcarProductoPedidoProcesado($conexion, $idPedido, $idProducto, "bebida");
+            if (!registrar_auditoria($conexion, "marcar_bebida_pickeada", "pedido", $idPedido, array(
+                "id_producto" => $idProducto,
+                "cantidad_consumida" => $productoProcesado["cantidad"]
+            ))) {
+                throw new RuntimeException("No se pudo registrar la auditoría del pedido.");
+            }
+            if (!mysqli_commit($conexion)) {
+                throw new RuntimeException("No se pudo confirmar el consumo de inventario.");
+            }
+        } catch (DomainException $error) {
+            mysqli_rollback($conexion);
+            responder(array("error" => $error->getMessage()), 409);
+        } catch (Throwable $error) {
+            mysqli_rollback($conexion);
+            error_log("No se pudo pickear la bebida del pedido #{$idPedido}: " . $error->getMessage());
+            responder(array("error" => "No se pudo marcar la bebida ni actualizar el inventario."), 500);
         }
-        mysqli_stmt_bind_param($stmt, "ii", $idPedido, $idProducto);
-        $correcto = mysqli_stmt_execute($stmt);
-        $actualizado = mysqli_stmt_affected_rows($stmt) > 0;
-        mysqli_stmt_close($stmt);
-        if (!$correcto) {
-            responder(array("error" => "No se pudo marcar la bebida como retirada."), 500);
-        }
-        if (!$actualizado) {
-            responder(array("error" => "La bebida no pertenece a un pedido activo o ya fue pickeada."), 409);
-        }
-        registrar_auditoria($conexion, "marcar_bebida_pickeada", "pedido", $idPedido, array(
-            "id_producto" => $idProducto
-        ));
         responder(array("ok" => true));
     }
 

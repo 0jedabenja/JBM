@@ -37,6 +37,64 @@ body[data-theme="dark"] .main {
     color: #f4f4f5;
 }
 
+.main .pagination {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin: 20px auto;
+    text-align: center;
+    width: 100%;
+}
+
+.main .pagination > span {
+    color: #62737a;
+    font-size: 14px;
+}
+
+.main .button {
+    align-items: center;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-flex;
+    font: inherit;
+    justify-content: center;
+    padding: 8px 14px;
+    text-decoration: none;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.main .button--secondary {
+    background: #fff;
+    border-color: #c9d3d5;
+    color: #001f47;
+}
+
+.main .button--secondary:hover:not(:disabled) {
+    background: #eef3f3;
+}
+
+.main .button:disabled {
+    cursor: not-allowed;
+    opacity: .55;
+}
+
+body[data-theme="dark"] .main .pagination > span {
+    color: #c2c8d0;
+}
+
+body[data-theme="dark"] .main .button--secondary {
+    background: #28384a;
+    border-color: #587491;
+    color: #cfe6ff;
+}
+
+body[data-theme="dark"] .main .button--secondary:hover:not(:disabled) {
+    background: #344b63;
+}
+
 body[data-theme="dark"] .main h1,
 body[data-theme="dark"] .main h2,
 body[data-theme="dark"] .main h3,
@@ -232,6 +290,113 @@ body[data-theme="dark"] .main .graficos-error {
     color: #ffd1d4 !important;
 }
 
+body[data-theme="dark"] .main .producto-sin-stock td {
+    background-color: #402427 !important;
+    color: #ffd1d4 !important;
+}
+
+body[data-theme="dark"] .main .producto-sin-stock td:first-child {
+    border-left-color: #d32f2f;
+}
+
+body[data-theme="dark"] .main .producto-card.producto-sin-insumos {
+    border-color: #a94b52;
+}
+
+body[data-theme="dark"] .main .caja-table th {
+    background: #25282e;
+    color: #d7dce2;
+}
+
+body[data-theme="dark"] .main .caja-content {
+    color: #e4e9ef;
+}
+
+body[data-theme="dark"] .main .caja-content .caja-heading h1,
+body[data-theme="dark"] .main .caja-content .caja-current h2,
+body[data-theme="dark"] .main .caja-content .caja-section h2 {
+    color: #e8f0f7;
+}
+
+body[data-theme="dark"] .main .caja-metrics {
+    background: #343a43;
+    border-color: #343a43;
+}
+
+body[data-theme="dark"] .main .caja-metric {
+    background: #1a1c20;
+}
+
+body[data-theme="dark"] .main .caja-metric span {
+    color: #bdc7d2;
+}
+
+body[data-theme="dark"] .main .caja-metric strong,
+body[data-theme="dark"] .main .caja-current-state strong {
+    color: #f0f4f8;
+}
+
+body[data-theme="dark"] .main .caja-table td {
+    border-color: #383b42;
+    color: #f0f1f3;
+}
+
+body[data-theme="dark"] .main .caja-table tbody tr:hover td {
+    background: #252a32;
+}
+
+body[data-theme="dark"] .main .caja-table td small,
+body[data-theme="dark"] .main .caja-empty,
+body[data-theme="dark"] .main .caja-subtitle,
+body[data-theme="dark"] .main .caja-pagination span {
+    color: #b8c2cc;
+}
+
+body[data-theme="dark"] .main .caja-warning {
+    background: #3a3020;
+    border-left-color: #d6a64b;
+    color: #f3d48f;
+}
+
+body[data-theme="dark"] .main .caja-message:not(:empty) {
+    background: #1c3325;
+    color: #a9e3bc;
+}
+
+body[data-theme="dark"] .main .caja-message.error:not(:empty) {
+    background: #3a2428;
+    color: #ffc2c7;
+}
+
+body[data-theme="dark"] .main .caja-detail-summary div {
+    border-color: #383b42;
+}
+
+body[data-theme="dark"] .main .caja-detail-summary dt {
+    color: #b8c2cc;
+}
+
+body[data-theme="dark"] .main .caja-detail-summary dd {
+    color: #f0f1f3;
+}
+
+body[data-theme="dark"] .main .caja-current-state {
+    background: #202a30;
+    border-left-color: #58b777;
+}
+
+body[data-theme="dark"] .main .caja-current-state p {
+    color: #c9d3dc;
+}
+
+body[data-theme="dark"] .main .caja-field select,
+body[data-theme="dark"] .main .caja-table td select[data-metodo-pago] {
+    background-color: #222a31;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23b8c6cb' stroke-width='1.5' d='m1 1 5 5 5-5'/%3E%3C/svg%3E");
+    border-color: #4a5966;
+    color: #f0f4f8;
+}
+
 body[data-theme="dark"] .main .producto-sin-insumos :where(h4, p, span, strong) {
     color: #ffd1d4 !important;
 }
@@ -247,6 +412,11 @@ body[data-theme="dark"] .main .notificacion-pedido:not(.error) {
 body[data-theme="dark"] .main .bienvenida-inicio {
     background: linear-gradient(135deg, #091b32, #183d61);
     border-color: #274f74;
+}
+
+body[data-theme="dark"] .main .bienvenida-inicio > * {
+    background: transparent;
+    border-color: transparent;
 }
 
 body[data-theme="dark"] .main img:not(.foto-perfil):not(.imagen-producto) {
@@ -376,6 +546,256 @@ body[data-theme="dark"] .navigation ul li[data-menu="empleados"] .icon img { con
 body[data-theme="dark"] .navigation ul li[data-menu="auditoria"] .icon img { content: url('../img/sidebar/light-audit.svg'); }
 body[data-theme="dark"] .navigation ul li[data-menu="compras"] .icon img { content: url('../img/sidebar/light-purchase.svg'); }
 
+/* Adaptación compartida para páginas autenticadas y formularios públicos. */
+img,
+svg,
+video,
+canvas {
+    max-width: 100%;
+}
+
+.main,
+.main > main,
+.main :where(section, article, form, fieldset),
+.main :where([class$="-content"], [class$="-panel"], [class$="-section"]) {
+    min-width: 0;
+}
+
+.main :where(input, select, textarea, button) {
+    max-width: 100%;
+}
+
+@media (max-width: 1100px) and (min-width: 769px) {
+    .navigation,
+    .navigation.active {
+        width: 80px;
+    }
+
+    .main,
+    .main.active {
+        left: 80px;
+        width: calc(100% - 80px);
+    }
+
+    .search {
+        width: clamp(150px, 28vw, 300px);
+    }
+
+    .search-group {
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .modulo-content,
+    .clientes-content,
+    .inicio-content,
+    .pedidos-content,
+    .mapa-content,
+    .conteos-content,
+    .auditoria-content,
+    .compras-content,
+    .caja-content,
+    .alta-content {
+        padding-left: 22px;
+        padding-right: 22px;
+    }
+}
+
+@media (max-width: 768px) {
+    .main,
+    .main.active {
+        min-height: 100vh;
+        width: 100%;
+    }
+
+    .topbar {
+        grid-template-columns: 48px minmax(0, 1fr) 48px;
+        padding: 0 4px;
+    }
+
+    .toggle {
+        width: 48px;
+    }
+
+    .search-group {
+        gap: 8px;
+        max-width: 100%;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .search {
+        flex: 1 1 120px;
+        min-width: 0;
+        width: auto;
+    }
+
+    .filter {
+        flex: 0 1 150px;
+        min-width: 0;
+        width: auto;
+    }
+
+    .search label input,
+    .filter label select {
+        min-width: 0;
+        padding-left: 34px;
+        padding-right: 10px;
+        text-overflow: ellipsis;
+    }
+
+    .main :where(.modulo-content, .clientes-content, .inicio-content, .pedidos-content,
+        .mapa-content, .conteos-content, .auditoria-content, .compras-content,
+        .caja-content, .alta-content, .ajuste-stock) {
+        max-width: 100%;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .main :where(.modulo-table, .clientes-table, .stock-tabla, .conteo-table, .auditoria-table) {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        white-space: nowrap;
+    }
+
+    .main :where(.modulo-table, .clientes-table, .stock-tabla, .conteo-table, .auditoria-table) th,
+    .main :where(.modulo-table, .clientes-table, .stock-tabla, .conteo-table, .auditoria-table) td {
+        min-width: 88px;
+    }
+
+    .main :where(.caja-heading, .caja-current-top, .mapa-header) {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .main :where(.caja-actions, .mapa-tools-row, .conteo-toolbar, .conteo-listado-toolbar,
+        .compras-actions, .alta-actions, .caja-dialog-footer) {
+        flex-wrap: wrap;
+    }
+
+    .main :where(.pedido-form, .caja-metrics, .caja-detail-summary, .graficos-inicio) {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    }
+
+    .main :where(.conteo-field, .conteo-listado-toolbar input, .conteo-listado-toolbar select) {
+        max-width: 100%;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .main :where(.alta-panel, .alta-form, .componente) {
+        max-width: 100%;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .main .alta-form > *,
+    .main .componente > * {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .main :where(.mapa-dialog, .caja-dialog, .extras-dialog, .conteo-dialog) {
+        max-height: 92dvh;
+        max-width: calc(100vw - 24px);
+        overflow-y: auto;
+    }
+
+    .main .mapa-superficie {
+        aspect-ratio: auto;
+        height: 280px;
+        max-width: 100%;
+        min-height: 240px;
+        width: 100%;
+    }
+
+    .main .mapa-pedido {
+        aspect-ratio: auto;
+        height: 240px;
+        max-width: 100%;
+        min-height: 240px;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .topbar {
+        grid-template-columns: 44px minmax(0, 1fr) 44px;
+    }
+
+    .toggle {
+        width: 44px;
+    }
+
+    .menu {
+        right: 8px;
+    }
+
+    .menu .dropdown {
+        max-width: calc(100vw - 16px);
+        right: 0;
+    }
+
+    .search-group {
+        gap: 5px;
+    }
+
+    .search label input,
+    .filter label select {
+        font-size: 0.72rem;
+        height: 38px;
+        padding-left: 29px;
+    }
+
+    .filter {
+        flex-basis: 110px;
+    }
+
+    .filter label img,
+    .search label img {
+        left: 10px;
+    }
+
+    .main :where(.modulo-content, .clientes-content, .inicio-content, .pedidos-content,
+        .mapa-content, .conteos-content, .auditoria-content, .compras-content,
+        .caja-content, .alta-content, .ajuste-stock) {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .main :where(h1) {
+        font-size: clamp(1.35rem, 6vw, 1.8rem);
+        overflow-wrap: anywhere;
+    }
+
+    .main :where(h2) {
+        font-size: clamp(1.1rem, 5vw, 1.45rem);
+        overflow-wrap: anywhere;
+    }
+
+    .main :where(.alta-panel, .compras-panel, .caja-dialog-inner, .mapa-dialog-inner) {
+        padding: 16px;
+    }
+
+    .main :where(.alta-actions, .pedido-tabs, .extras-actions, .caja-dialog-footer) {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .main :where(.alta-actions > *, .pedido-tabs button, .extras-actions button, .caja-dialog-footer > *) {
+        width: 100%;
+    }
+
+    .main .pagination {
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+    }
+
+}
+
 /* Estados, chips y botones de acciones en todos los módulos. */
 body[data-theme="dark"] .main .caja-status.abierta {
     background: #163a27;
@@ -439,17 +859,110 @@ body[data-theme="dark"] .main .clientes-table .accion[data-eliminar] {
     color: #ffbfc4 !important;
 }
 
-body[data-theme="dark"] .main .paginacion button,
-body[data-theme="dark"] .main .boton,
-body[data-theme="dark"] .main .caja-pagination button {
-    background: #294d75 !important;
-    border-color: #527da8 !important;
-    color: #fff !important;
-}
-
 body[data-theme="dark"] .main [class*="accion"]:hover,
 body[data-theme="dark"] .main [class*="-button"]:hover:not(:disabled),
 body[data-theme="dark"] .main [class*="-actions"] a:hover,
 body[data-theme="dark"] .main [class*="-actions"] button:hover:not(:disabled) {
     filter: brightness(1.15);
+}
+
+/* Interacciones compartidas para botones, enlaces y controles de los módulos. */
+.main :where(button, input[type="button"], input[type="submit"], [role="button"], a[href]) {
+    transition:
+        background-color 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease,
+        color 180ms ease,
+        filter 180ms ease,
+        transform 180ms ease;
+}
+
+.main :where(button, input[type="button"], input[type="submit"], [role="button"]):focus-visible,
+.main a[href]:focus-visible,
+.navigation a:focus-visible,
+.topbar :where(button, a, [role="button"]):focus-visible {
+    outline: 3px solid #6aa9ed;
+    outline-offset: 3px;
+}
+
+.main :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.main :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus-visible {
+    border-color: #4a8dce;
+    box-shadow: 0 0 0 3px rgba(74, 141, 206, 0.18);
+}
+
+.main tbody tr {
+    transition: background-color 160ms ease;
+}
+
+.main .producto-card {
+    transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .main :where(button, input[type="button"], input[type="submit"], [role="button"]):not(:disabled):not([aria-disabled="true"]):hover {
+        box-shadow: 0 5px 14px rgba(21, 48, 76, 0.16);
+        transform: translateY(-1px);
+    }
+
+    .main a[href]:hover {
+        filter: brightness(1.12);
+    }
+
+    .main :where(a[href][class*="button"], a[href].accion, a[href].boton, a[href].conteo-inicio):hover {
+        box-shadow: 0 5px 14px rgba(21, 48, 76, 0.16);
+        transform: translateY(-1px);
+    }
+
+    .main .producto-card:hover {
+        border-color: #8caecc;
+        box-shadow: 0 10px 24px rgba(21, 48, 76, 0.12);
+        transform: translateY(-2px);
+    }
+
+    .main tbody tr:hover {
+        background-color: rgba(67, 117, 166, 0.055);
+    }
+
+}
+
+body[data-theme="dark"] .main :where(button, input[type="button"], input[type="submit"], [role="button"]):focus-visible,
+body[data-theme="dark"] .main a[href]:focus-visible,
+body[data-theme="dark"] .navigation a:focus-visible,
+body[data-theme="dark"] .topbar :where(button, a, [role="button"]):focus-visible {
+    outline-color: #8bc4ff;
+}
+
+body[data-theme="dark"] .main :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus-visible {
+    border-color: #79b5ee;
+    box-shadow: 0 0 0 3px rgba(121, 181, 238, 0.2);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    body[data-theme="dark"] .main :where(button, input[type="button"], input[type="submit"], [role="button"]):not(:disabled):not([aria-disabled="true"]):hover,
+    body[data-theme="dark"] .main :where(a[href][class*="button"], a[href].accion, a[href].boton, a[href].conteo-inicio):hover {
+        box-shadow: 0 5px 16px rgba(0, 0, 0, 0.32);
+    }
+
+    body[data-theme="dark"] .main .producto-card:hover {
+        border-color: #587a9b;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+    }
+
+    body[data-theme="dark"] .main tbody tr:hover {
+        background-color: rgba(143, 180, 218, 0.07);
+    }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .main :where(button, input, select, textarea, [role="button"], a[href]),
+    .main tbody tr,
+    .main :where(button, input[type="button"], input[type="submit"], [role="button"], a[href]),
+    .main .producto-card {
+        transform: none !important;
+    }
 }
