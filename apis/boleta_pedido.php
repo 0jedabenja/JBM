@@ -168,17 +168,11 @@ if ($esCompra) {
                 p.porcentaje_descuento, p.monto_descuento,
                 COALESCE(CONCAT(c.nombre, ' ', c.apellido), 'Consumidor final') AS cliente,
                 COALESCE(CAST(m.numero AS CHAR), '-') AS mesa,
-                COALESCE(mp.descripcion, 'Pendiente de cobro') AS metodo_pago,
                 CONCAT(e.nombre, ' ', e.apellido) AS empleado,
                 ep.nombre AS estado
          FROM Pedido p
          LEFT JOIN Cliente c ON c.id_cliente = p.id_cliente
          LEFT JOIN Mesa m ON m.id_mesa = p.id_mesa
-         LEFT JOIN (
-            SELECT id_pedido, id_mp, ROW_NUMBER() OVER (PARTITION BY id_pedido ORDER BY fecha_hora) as rn 
-            FROM Pago_pedido
-         ) pp ON pp.id_pedido = p.id_pedido AND pp.rn = 1
-         LEFT JOIN Metodo_pago mp ON mp.id_mp = pp.id_mp
          INNER JOIN Empleado e ON e.id_empleado = p.id_empleado
          INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado
          WHERE p.id_pedido = ?"
@@ -197,13 +191,32 @@ if ($esCompra) {
     if (!$pedido || strtolower($pedido["estado"]) !== "listo" || (int)$pedido["cobrado"] !== 1) {
         responder_error_boleta("El comprobante estará disponible cuando el pedido esté listo y cobrado.", 409);
     }
+    $stmtPagos = mysqli_prepare(
+        $conexion,
+        "SELECT mp.descripcion, pp.monto
+         FROM Pago_pedido pp
+         INNER JOIN Metodo_pago mp ON mp.id_mp = pp.id_mp
+         WHERE pp.id_pedido = ?
+         ORDER BY pp.id_pago"
+    );
+    if (!$stmtPagos) {
+        responder_error_boleta("No se pudieron consultar los pagos del pedido.", 500, mysqli_error($conexion));
+    }
+    mysqli_stmt_bind_param($stmtPagos, "i", $idComprobante);
+    if (!mysqli_stmt_execute($stmtPagos)) {
+        $detalleError = mysqli_stmt_error($stmtPagos);
+        mysqli_stmt_close($stmtPagos);
+        responder_error_boleta("No se pudieron consultar los pagos del pedido.", 500, $detalleError);
+    }
+    $pagosPedido = mysqli_fetch_all(mysqli_stmt_get_result($stmtPagos), MYSQLI_ASSOC);
+    mysqli_stmt_close($stmtPagos);
     $comprobante = array(
         "fecha" => $pedido["fecha_hora_creacion"],
         "total" => $pedido["monto_total"],
         "cliente" => $pedido["cliente"],
         "mesa" => $pedido["mesa"],
         "empleado" => $pedido["empleado"],
-        "metodo_pago" => $pedido["metodo_pago"],
+        "pagos" => $pagosPedido,
         "porcentaje_descuento" => $pedido["porcentaje_descuento"],
         "monto_descuento" => $pedido["monto_descuento"],
         "observacion" => ""
@@ -251,22 +264,27 @@ $efectivoRecibido = null;
 $vuelto = null;
 $entradaEfectivo = $esCompra ? null : ($_GET["efectivo_recibido"] ?? null);
 if ($entradaEfectivo !== null) {
+    $efectivoCobradoCentavos = 0;
+    foreach ($comprobante["pagos"] as $pagoPedido) {
+        if (strtolower($pagoPedido["descripcion"]) === "efectivo") {
+            $efectivoCobradoCentavos += (int)round((float)$pagoPedido["monto"] * 100);
+        }
+    }
     if (
         !is_string($entradaEfectivo)
         || !is_numeric($entradaEfectivo)
         || !is_finite((float)$entradaEfectivo)
         || (float)$entradaEfectivo < 0
-        || strtolower($comprobante["metodo_pago"]) !== "efectivo"
+        || $efectivoCobradoCentavos <= 0
     ) {
         responder_error_boleta("Los datos del pago en efectivo no son válidos.", 400);
     }
-    $totalCentavos = (int)round((float)$comprobante["total"] * 100);
     $recibidoCentavos = (int)round((float)$entradaEfectivo * 100);
-    if ($recibidoCentavos < $totalCentavos) {
-        responder_error_boleta("El efectivo recibido no puede ser menor que el total.", 400);
+    if ($recibidoCentavos < $efectivoCobradoCentavos) {
+        responder_error_boleta("El efectivo recibido no puede ser menor que el monto cobrado en efectivo.", 400);
     }
     $efectivoRecibido = $recibidoCentavos / 100;
-    $vuelto = ($recibidoCentavos - $totalCentavos) / 100;
+    $vuelto = ($recibidoCentavos - $efectivoCobradoCentavos) / 100;
 }
 
 try {
@@ -291,7 +309,8 @@ try {
     }
     $altoDescuento = !$esCompra && (float)$comprobante["monto_descuento"] > 0 ? 10 : 0;
     $altoEfectivo = $efectivoRecibido !== null ? 11 : 0;
-    $altoBoleta = max(145, 120 + 5 * $lineasDetalles + $altoProductos + $altoDescuento + $altoEfectivo);
+    $altoPagos = $esCompra ? 0 : 8 + 5 * count($comprobante["pagos"]);
+    $altoBoleta = max(145, 120 + 5 * $lineasDetalles + $altoProductos + $altoDescuento + $altoEfectivo + $altoPagos);
     $pdf->SetAutoPageBreak(true, 13);
     $pdf->AddPage("P", array(80, $altoBoleta));
     $pdf->SetFont("Arial", "", 8);
@@ -304,7 +323,6 @@ try {
         $pdf->Cell(0, 5, texto_boleta("Mesa: " . $comprobante["mesa"]), 0, 1);
         $pdf->MultiCell(0, 5, texto_boleta("Cliente: " . $comprobante["cliente"]), 0, "L");
         $pdf->Cell(0, 5, texto_boleta("Atendió: " . $comprobante["empleado"]), 0, 1);
-        $pdf->Cell(0, 5, texto_boleta("Pago: " . $comprobante["metodo_pago"]), 0, 1);
     }
     $pdf->Ln(2);
     $pdf->SetDrawColor(120, 120, 120);
@@ -338,6 +356,16 @@ try {
     $pdf->SetFont("Arial", "B", 10);
     $pdf->Cell(34, 6, texto_boleta("TOTAL"), 0, 0, "L");
     $pdf->Cell(34, 6, texto_boleta("$ " . number_format((float)$comprobante["total"], 2, ",", ".")), 0, 1, "R");
+    if (!$esCompra) {
+        $pdf->Ln(1);
+        $pdf->SetFont("Arial", "B", 8);
+        $pdf->Cell(0, 5, texto_boleta($comprobante["pagos"] ? "Pagos" : "Pago: Pendiente de cobro"), 0, 1);
+        $pdf->SetFont("Arial", "", 8);
+        foreach ($comprobante["pagos"] as $pagoPedido) {
+            $pdf->Cell(34, 5, texto_boleta($pagoPedido["descripcion"]), 0, 0, "L");
+            $pdf->Cell(34, 5, texto_boleta("$ " . number_format((float)$pagoPedido["monto"], 2, ",", ".")), 0, 1, "R");
+        }
+    }
     if ($efectivoRecibido !== null) {
         $pdf->Ln(1);
         $pdf->SetFont("Arial", "", 8);
