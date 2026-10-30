@@ -464,10 +464,6 @@ document.getElementById("montoFinal").addEventListener("input", evento => {
     document.getElementById("passwordCierre").required = requierePassword;
     if (!requierePassword) document.getElementById("passwordCierre").value = "";
 });
-document.getElementById("efectivoRecibido").addEventListener("input", actualizarVuelto);
-document.getElementById("formCobroEfectivo").addEventListener("submit", confirmarCobroEfectivo);
-document.getElementById("tipoDescuento").addEventListener("change", actualizarResumenCobro);
-document.getElementById("porcentajeDescuento").addEventListener("input", actualizarResumenCobro);
 document.getElementById("paginaAnterior").addEventListener("click", () => { if (paginaHistorial > 1) cargarCaja(paginaHistorial - 1); });
 document.getElementById("paginaSiguiente").addEventListener("click", () => { if (paginaHistorial < totalPaginas) cargarCaja(paginaHistorial + 1); });
 document.getElementById("formCobroEfectivo").addEventListener("submit", confirmarCobroEfectivo);

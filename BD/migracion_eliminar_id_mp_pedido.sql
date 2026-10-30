@@ -1,50 +1,44 @@
--- ============================================================================
--- Migración: Eliminar columna id_mp de tabla Pedido
--- ============================================================================
--- Fecha: 2026-10-30
--- Descripción:
---   Elimina la columna id_mp de la tabla Pedido, ya que ahora se gestiona
---   completamente a través de la tabla Pago_pedido (relación N:N).
---
--- Cambios:
---   1. Modifica tabla Pedido: elimina columna id_mp y su FK
---   2. Modifica tabla Pago_pedido: simplifica eliminando id_turno e id_empleado
---
--- Precondiciones:
---   - La tabla Pedido existe
---   - La tabla Pago_pedido existe con datos (opcional, se conservan)
---   - Ya existe tabla Metodo_pago
---
--- Postmigracion:
---   - Todos los pedidos pagarán únicamente a través de Pago_pedido
---   - El sistema no acededará más a Pedido.id_mp
--- ============================================================================
+-- Migración para BD existente (hacer backup antes).
+-- 1) Crea Pago_pedido si no existe
+-- 2) Copia los pagos históricos desde Pedido.id_mp
+-- 3) Elimina Pedido.id_mp (y su FK) y las columnas sobrantes de Pago_pedido
+USE lodetorres;
 
--- Primero, eliminamos la FK de Pedido.id_mp si existe
-ALTER TABLE Pedido DROP FOREIGN KEY Pedido_ibfk_6;
+CREATE TABLE IF NOT EXISTS Pago_pedido (
+    id_pago INT AUTO_INCREMENT,
+    id_pedido INT NOT NULL,
+    id_mp INT NOT NULL,
+    monto DECIMAL(10,2) NOT NULL,
+    fecha_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_pago),
+    FOREIGN KEY (id_pedido) REFERENCES Pedido(id_pedido) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_mp) REFERENCES Metodo_pago(id_mp) ON UPDATE CASCADE
+);
 
--- Eliminamos la columna id_mp de Pedido
+-- Copia los pagos históricos (requiere que Pedido todavía tenga id_mp)
+INSERT INTO Pago_pedido (id_pedido, id_mp, monto, fecha_hora)
+SELECT p.id_pedido, p.id_mp, p.monto_total, p.fecha_hora_creacion
+FROM Pedido p
+WHERE p.cobrado = TRUE AND p.id_mp IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM Pago_pedido pp WHERE pp.id_pedido = p.id_pedido);
+
+-- Eliminar la FK de Pedido.id_mp sea cual sea su nombre
+SET @fk := (SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Pedido'
+              AND COLUMN_NAME = 'id_mp' AND REFERENCED_TABLE_NAME IS NOT NULL LIMIT 1);
+SET @sql := IF(@fk IS NULL, 'SELECT 1', CONCAT('ALTER TABLE Pedido DROP FOREIGN KEY ', @fk));
+PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 ALTER TABLE Pedido DROP COLUMN id_mp;
 
--- Ahora simplificamos Pago_pedido si tiene las columnas id_turno e id_empleado
--- (En caso de que se haya ejecutado la versión anterior)
-ALTER TABLE Pago_pedido DROP FOREIGN KEY Pago_pedido_ibfk_3;
-ALTER TABLE Pago_pedido DROP FOREIGN KEY Pago_pedido_ibfk_4;
-
--- Si las columnas existen, las eliminamos
-ALTER TABLE Pago_pedido 
-  DROP COLUMN IF EXISTS id_turno,
-  DROP COLUMN IF EXISTS id_empleado;
-
--- Verificamos la estructura final de Pago_pedido
--- Debe tener: id_pago (PK), id_pedido (FK), id_mp (FK), monto, fecha_hora
-SHOW CREATE TABLE Pago_pedido;
-
--- Validación: Contar registros para asegurar integridad
-SELECT 
-  'Pedidos totales' AS item, COUNT(*) as cantidad FROM Pedido
-UNION ALL
-SELECT 'Pedidos sin pago registrado' AS item, COUNT(*) FROM Pedido p
-  WHERE NOT EXISTS (SELECT 1 FROM Pago_pedido pp WHERE pp.id_pedido = p.id_pedido)
-UNION ALL
-SELECT 'Pagos totales registrados' AS item, COUNT(*) FROM Pago_pedido;
+-- Quitar id_turno / id_empleado de Pago_pedido si existen de una versión anterior
+SET @fk := (SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Pago_pedido'
+              AND COLUMN_NAME = 'id_turno' AND REFERENCED_TABLE_NAME IS NOT NULL LIMIT 1);
+SET @sql := IF(@fk IS NULL, 'SELECT 1', CONCAT('ALTER TABLE Pago_pedido DROP FOREIGN KEY ', @fk));
+PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+SET @fk := (SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Pago_pedido'
+              AND COLUMN_NAME = 'id_empleado' AND REFERENCED_TABLE_NAME IS NOT NULL LIMIT 1);
+SET @sql := IF(@fk IS NULL, 'SELECT 1', CONCAT('ALTER TABLE Pago_pedido DROP FOREIGN KEY ', @fk));
+PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+ALTER TABLE Pago_pedido DROP COLUMN IF EXISTS id_turno, DROP COLUMN IF EXISTS id_empleado;
