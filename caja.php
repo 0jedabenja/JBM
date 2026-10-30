@@ -396,6 +396,7 @@ async function confirmarCobroEfectivo(evento) {
     
     const boton = document.getElementById("confirmarCobroEfectivo");
     boton.disabled = true;
+    const efectivoRecibidoTotal = Array.from(document.querySelectorAll(".pago-efectivo-recibido")).reduce((suma, input) => suma + Number(input.value || 0), 0);
     const idPedidoCobrado = cobroEfectivoActual.idPedido;
     const ventanaComprobante = window.open("about:blank", "comprobanteJBM");
     if (ventanaComprobante) ventanaComprobante.opener = null;
@@ -422,6 +423,7 @@ async function confirmarCobroEfectivo(evento) {
         
         if (ventanaComprobante) {
             const parametrosComprobante = new URLSearchParams({ id_pedido: String(idPedidoCobrado) });
+            if (efectivoRecibidoTotal > 0) parametrosComprobante.set("efectivo_recibido", efectivoRecibidoTotal.toFixed(2));
             ventanaComprobante.location.replace(`apis/boleta_pedido.php?${parametrosComprobante.toString()}`);
         }
         cerrarDialogo("dialogCobroEfectivo");
