@@ -217,7 +217,6 @@ function escapeHTML(valor) { return String(valor ?? "").replace(/&/g, "&amp;").r
 function mostrarMensaje(texto, error) { const elemento = document.getElementById("mensajeCaja"); elemento.textContent = texto; elemento.className = `caja-message${error ? " error" : ""}`; }
 
 let pagosActuales = [];
-let cobroEfectivoActual = null;
 
 function construirFilaPago(indice, idMp, monto) {
     const metodo = metodosPago.find(m => Number(m.id_mp) === Number(idMp));
