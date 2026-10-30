@@ -164,7 +164,6 @@ CREATE TABLE Pedido (
     id_estado INT NOT NULL,
     id_cliente INT,
     id_descuento INT,
-    id_mp INT,
     cobrado BOOLEAN NOT NULL DEFAULT FALSE,
     porcentaje_descuento DECIMAL(5,2) NOT NULL DEFAULT 0.00,
     monto_descuento DECIMAL(10,2) NOT NULL DEFAULT 0.00,
@@ -174,8 +173,7 @@ CREATE TABLE Pedido (
     FOREIGN KEY (id_mesa) REFERENCES Mesa(id_mesa) ON DELETE SET NULL ON UPDATE CASCADE,
     FOREIGN KEY (id_estado) REFERENCES Estado_Pedido(id_estado) ON UPDATE CASCADE,
     FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente) ON DELETE SET NULL ON UPDATE CASCADE,
-    FOREIGN KEY (id_descuento) REFERENCES Descuento(id_descuento) ON DELETE SET NULL ON UPDATE CASCADE,
-    FOREIGN KEY (id_mp) REFERENCES Metodo_pago(id_mp) ON UPDATE CASCADE
+    FOREIGN KEY (id_descuento) REFERENCES Descuento(id_descuento) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 CREATE TABLE Pago_pedido (
@@ -184,13 +182,9 @@ CREATE TABLE Pago_pedido (
     id_mp INT NOT NULL,
     monto DECIMAL(10,2) NOT NULL,
     fecha_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    id_turno INT NOT NULL,
-    id_empleado INT NOT NULL,
     PRIMARY KEY (id_pago),
     FOREIGN KEY (id_pedido) REFERENCES Pedido(id_pedido) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (id_mp) REFERENCES Metodo_pago(id_mp) ON UPDATE CASCADE,
-    FOREIGN KEY (id_turno) REFERENCES Turno_caja(id_turno) ON UPDATE CASCADE,
-    FOREIGN KEY (id_empleado) REFERENCES Empleado(id_empleado) ON UPDATE CASCADE
+    FOREIGN KEY (id_mp) REFERENCES Metodo_pago(id_mp) ON UPDATE CASCADE
 );
 
 CREATE TABLE Incluye (

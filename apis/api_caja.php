@@ -21,7 +21,27 @@ function obtener_movimientos_turno($conexion, $idTurno) {
     $movimientos = array();
     $totalCobrado = 0;
     $efectivoCobrado = 0;
-    $stmt = mysqli_prepare($conexion, "SELECT p.id_pedido, p.fecha_hora_creacion, p.monto_total, p.cobrado, p.id_mp, p.id_cliente, m.numero AS numero_mesa, COALESCE(mp.descripcion, 'Pendiente de cobro') AS metodo_pago, ep.nombre AS estado FROM Pedido p LEFT JOIN Metodo_pago mp ON mp.id_mp = p.id_mp LEFT JOIN Mesa m ON m.id_mesa = p.id_mesa INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado WHERE p.id_turno = ? AND (LOWER(ep.nombre) = 'listo' OR p.cobrado = TRUE) ORDER BY CASE WHEN p.cobrado = FALSE AND LOWER(ep.nombre) = 'listo' THEN 0 WHEN p.cobrado = TRUE THEN 1 ELSE 2 END, p.fecha_hora_creacion DESC");
+    $stmt = mysqli_prepare($conexion, "
+        SELECT 
+            p.id_pedido, 
+            p.fecha_hora_creacion, 
+            p.monto_total, 
+            p.cobrado, 
+            p.id_cliente, 
+            m.numero AS numero_mesa, 
+            COALESCE(mp.descripcion, 'Pendiente de cobro') AS metodo_pago, 
+            ep.nombre AS estado
+        FROM Pedido p 
+        LEFT JOIN (
+            SELECT id_pedido, id_mp, ROW_NUMBER() OVER (PARTITION BY id_pedido ORDER BY fecha_hora) as rn 
+            FROM Pago_pedido
+        ) pp ON pp.id_pedido = p.id_pedido AND pp.rn = 1
+        LEFT JOIN Metodo_pago mp ON mp.id_mp = pp.id_mp
+        LEFT JOIN Mesa m ON m.id_mesa = p.id_mesa 
+        INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado 
+        WHERE p.id_turno = ? AND (LOWER(ep.nombre) = 'listo' OR p.cobrado = TRUE) 
+        ORDER BY CASE WHEN p.cobrado = FALSE AND LOWER(ep.nombre) = 'listo' THEN 0 WHEN p.cobrado = TRUE THEN 1 ELSE 2 END, p.fecha_hora_creacion DESC
+    ");
     mysqli_stmt_bind_param($stmt, "i", $idTurno);
     mysqli_stmt_execute($stmt);
     $resultado = mysqli_stmt_get_result($stmt);
@@ -38,7 +58,8 @@ function obtener_movimientos_turno($conexion, $idTurno) {
         SELECT COALESCE(SUM(pp.monto), 0) AS efectivo_total
         FROM Pago_pedido pp
         INNER JOIN Metodo_pago mp ON pp.id_mp = mp.id_mp
-        WHERE pp.id_turno = ? AND LOWER(mp.descripcion) = 'efectivo'
+        INNER JOIN Pedido p ON p.id_pedido = pp.id_pedido
+        WHERE p.id_turno = ? AND LOWER(mp.descripcion) = 'efectivo'
     ");
     if ($stmtEfectivo) {
         mysqli_stmt_bind_param($stmtEfectivo, "i", $idTurno);
@@ -264,8 +285,8 @@ if ($accion === "cobrar") {
 
     $stmtInsertPago = mysqli_prepare(
         $conexion,
-        "INSERT INTO Pago_pedido (id_pedido, id_mp, monto, fecha_hora, id_turno, id_empleado)
-         VALUES (?, ?, ?, NOW(), ?, ?)"
+        "INSERT INTO Pago_pedido (id_pedido, id_mp, monto, fecha_hora)
+         VALUES (?, ?, ?, NOW())"
     );
     if (!$stmtInsertPago) {
         mysqli_rollback($conexion);
@@ -273,7 +294,7 @@ if ($accion === "cobrar") {
     }
 
     foreach ($metodosValidos as $metodo) {
-        mysqli_stmt_bind_param($stmtInsertPago, "iidii", $idPedido, $metodo["id_mp"], $metodo["monto"], $idTurnoAbierto, $idEmpleado);
+        mysqli_stmt_bind_param($stmtInsertPago, "iid", $idPedido, $metodo["id_mp"], $metodo["monto"]);
         if (!mysqli_stmt_execute($stmtInsertPago)) {
             $detalleError = mysqli_stmt_error($stmtInsertPago);
             mysqli_stmt_close($stmtInsertPago);
@@ -287,7 +308,7 @@ if ($accion === "cobrar") {
     $stmt = mysqli_prepare(
         $conexion,
         "UPDATE Pedido
-         SET cobrado = TRUE, id_mp = ?, id_descuento = ?, monto_total = ?,
+         SET cobrado = TRUE, id_descuento = ?, monto_total = ?,
             porcentaje_descuento = ?, monto_descuento = ?
          WHERE id_pedido = ? AND cobrado = FALSE
            AND id_turno IN (SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL)
@@ -297,11 +318,10 @@ if ($accion === "cobrar") {
         mysqli_rollback($conexion);
         responder_caja(array("error" => "No se pudo preparar el cobro del pedido."), 500);
     }
-    $idMpPrincipal = $metodosValidos[0]["id_mp"];
     $idDescuento = $entrada["id_descuento"] ?? null;
     $porcentajeDescuento = $entrada["porcentaje_descuento"] ?? 0;
     $montoDescuento = $entrada["monto_descuento"] ?? 0;
-    mysqli_stmt_bind_param($stmt, "iidddi", $idMpPrincipal, $idDescuento, $totalCobro, $porcentajeDescuento, $montoDescuento, $idPedido);
+    mysqli_stmt_bind_param($stmt, "iddi", $idDescuento, $totalCobro, $porcentajeDescuento, $montoDescuento, $idPedido);
     if (!mysqli_stmt_execute($stmt)) {
         $detalleError = mysqli_stmt_error($stmt);
         mysqli_stmt_close($stmt);
