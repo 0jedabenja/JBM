@@ -1,3 +1,34 @@
+:root {
+    /* Colores - Modo Claro */
+    --color-primary: #007AFF;
+    --color-secondary: #F5F5F7;
+    --color-tertiary: #FFFFFF;
+    --color-text: #000000;
+    --color-text-secondary: #6E6E73;
+    --color-border: #D1D1D6;
+    --color-bg-hover: #F2F2F7;
+    --color-background: #FFFFFF;
+    
+    /* Espacios */
+    --radius: 8px;
+    --radius-lg: 12px;
+    
+    /* Fuente */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+body[data-theme="dark"] {
+    /* Colores - Modo Oscuro */
+    --color-primary: #0A84FF;
+    --color-secondary: #1C1C1E;
+    --color-tertiary: #2C2C2E;
+    --color-text: #FFFFFF;
+    --color-text-secondary: #A1A1A6;
+    --color-border: #424245;
+    --color-bg-hover: #3A3A3C;
+    --color-background: #000000;
+}
+
 .menu .dropdown ul li .theme-toggle {
     background: transparent;
     border: 0;
