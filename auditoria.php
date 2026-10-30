@@ -87,12 +87,32 @@ verificar_permiso("auditoria");
     const formularioFiltros = document.getElementById("filtrosAuditoria");
     const filtroAccion = document.getElementById("filtroAccion");
     const filtroEntidad = document.getElementById("filtroEntidad");
+    const filtroUsuario = document.getElementById("filtroUsuario");
+    const filtroDesde = document.getElementById("filtroDesde");
+    const filtroHasta = document.getElementById("filtroHasta");
 
+    /* Debounce para evitar múltiples requests al escribir rápido */
+    let timeoutFiltro;
+    function dispararFiltro() {
+        clearTimeout(timeoutFiltro);
+        timeoutFiltro = setTimeout(() => {
+            paginaAuditoriaActual = 1;
+            cargarAuditoria();
+        }, 300);
+    }
+
+    /* Listeners para filtros en tiempo real */
+    filtroUsuario.addEventListener("input", dispararFiltro);
+    filtroAccion.addEventListener("change", dispararFiltro);
+    filtroEntidad.addEventListener("change", dispararFiltro);
+    filtroDesde.addEventListener("change", dispararFiltro);
+    filtroHasta.addEventListener("change", dispararFiltro);
+
+    /* Prevenir submit del formulario */
     formularioFiltros.addEventListener("submit", (evento) => {
         evento.preventDefault();
-        paginaAuditoriaActual = 1;
-        cargarAuditoria();
     });
+    
     document.getElementById("limpiarFiltros").addEventListener("click", () => {
         formularioFiltros.reset();
         paginaAuditoriaActual = 1;
