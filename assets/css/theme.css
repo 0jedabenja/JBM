@@ -18,23 +18,23 @@ html[data-theme="dark"] {
 }
 
 body {
-    --form-bg: #fff;
-    --text-main: #222;
-    --input-border: #ddd;
+    --form-bg: var(--color-tertiary);
+    --text-main: var(--color-text);
+    --input-border: var(--color-border);
 }
 
 body[data-theme="dark"] {
-    --form-bg: #1a1c20;
-    --text-main: #f0f1f3;
-    --input-border: #34373d;
-    background: #0b0b0d;
-    color: #f4f4f5;
+    --form-bg: var(--color-tertiary);
+    --text-main: var(--color-text);
+    --input-border: var(--color-border);
+    background: var(--color-background);
+    color: var(--color-text);
     color-scheme: dark;
 }
 
 body[data-theme="dark"] .main {
-    background: #111214;
-    color: #f4f4f5;
+    background: var(--color-background);
+    color: var(--color-text);
 }
 
 .main .pagination {

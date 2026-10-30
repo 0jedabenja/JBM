@@ -15,7 +15,7 @@ if ($consultaCategorias) {
 }
 
 $insumos = array();
-$consultaInsumos = mysqli_query($conexion, "SELECT id_insumo, nombre FROM Insumo WHERE activo = TRUE ORDER BY nombre ASC");
+$consultaInsumos = mysqli_query($conexion, "SELECT i.id_insumo, i.nombre, COALESCE(m.unidad, '') AS unidad FROM Insumo i LEFT JOIN Medida m ON m.id_medida = i.id_medida WHERE i.activo = TRUE ORDER BY i.nombre ASC");
 if ($consultaInsumos) {
     while ($row = mysqli_fetch_assoc($consultaInsumos)) {
         $insumos[] = $row;
@@ -141,11 +141,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <select name="id_insumo[]" required>
                     <option value="">Seleccione un insumo...</option>
                     <?php foreach ($insumos as $insumo): ?>
-                        <option value="<?php echo $insumo["id_insumo"]; ?>"><?php echo htmlspecialchars($insumo["nombre"], ENT_QUOTES, "UTF-8"); ?></option>
+                        <option value="<?php echo $insumo["id_insumo"]; ?>" data-unidad="<?php echo htmlspecialchars($insumo["unidad"], ENT_QUOTES, "UTF-8"); ?>"><?php echo htmlspecialchars($insumo["nombre"] . ($insumo["unidad"] !== "" ? " (" . $insumo["unidad"] . ")" : ""), ENT_QUOTES, "UTF-8"); ?></option>
                     <?php endforeach; ?>
                 </select>
                 <input type="number" name="cantidad[]" min="0.01" step="0.01" required>
-                <button type="button" onclick="quitar(this)">Quitar</button>
+                <span class="unidad-componente"></span><button type="button" onclick="quitar(this)">Quitar</button>
             </div>
         </div>
         <button type="button" onclick="agregar()">Agregar insumo</button>
@@ -162,15 +162,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             <select name="id_insumo[]" required>
                 <option value="">Seleccione un insumo...</option>
                 <?php foreach ($insumos as $insumo): ?>
-                    <option value="<?php echo $insumo["id_insumo"]; ?>"><?php echo htmlspecialchars($insumo["nombre"], ENT_QUOTES, "UTF-8"); ?></option>
+                    <option value="<?php echo $insumo["id_insumo"]; ?>" data-unidad="<?php echo htmlspecialchars($insumo["unidad"], ENT_QUOTES, "UTF-8"); ?>"><?php echo htmlspecialchars($insumo["nombre"] . ($insumo["unidad"] !== "" ? " (" . $insumo["unidad"] . ")" : ""), ENT_QUOTES, "UTF-8"); ?></option>
                 <?php endforeach; ?>
             </select>
             <input type="number" name="cantidad[]" min="0.01" step="0.01" required>
-            <button type="button" onclick="quitar(this)">Quitar</button>
+            <span class="unidad-componente"></span><button type="button" onclick="quitar(this)">Quitar</button>
         </div>
     </template>
     <script>
         function agregar() { document.getElementById("componentes").appendChild(document.getElementById("plantilla").content.cloneNode(true)); }
+        function actualizarUnidad(componente) { const opcion = componente.querySelector("select").selectedOptions[0]; componente.querySelector(".unidad-componente").textContent = opcion && opcion.dataset.unidad ? opcion.dataset.unidad : ""; }
+        document.addEventListener("change", (e) => { if (e.target.matches("#componentes select")) actualizarUnidad(e.target.parentElement); });
+        document.querySelectorAll("#componentes .componente").forEach(actualizarUnidad);
         function quitar(boton) { if (document.querySelectorAll("#componentes .componente").length > 1) boton.parentElement.remove(); }
     </script>
 </body>

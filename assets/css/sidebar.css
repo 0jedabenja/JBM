@@ -421,6 +421,8 @@ body {
     .navigation.active {
         width: 0;
         border-left-width: 0;
+        box-shadow: none;
+        visibility: hidden;
     }
 
     .main,
@@ -450,6 +452,8 @@ body {
     }
 
     .mesa strong { font-size: 10px; }
+    .mesa .mesa-prefijo,
+    .mesa small { display: none !important; }
     .mesa small { font-size: 9px; }
 
 }

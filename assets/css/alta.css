@@ -108,7 +108,12 @@ body[data-theme="dark"] .alta-success {
     align-items: center;
     display: grid;
     gap: 8px;
-    grid-template-columns: 1fr 150px auto;
+    grid-template-columns: 1fr 150px 70px auto;
+}
+
+.unidad-componente {
+    color: #001f47;
+    font-weight: 600;
 }
 
 .componente button {
