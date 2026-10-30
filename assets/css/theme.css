@@ -260,6 +260,17 @@ body[data-theme="dark"] .main :where(div, section, article, aside, fieldset, det
     background-color: #1a1c20;
 }
 
+/* Contenedores de maquetación: sin fondo propio para que no se vean como bloques grises. */
+body[data-theme="dark"] .main :is(
+    .pedido-view, .pedidos-content, .mapa-content, .mapa-layout, .mapa-header, .mapa-tools-row, .mapa-summary, .mapa-legend, .mapa-actions-bar,
+    .caja-heading, .caja-section-heading, .caja-actions, .caja-current-top, .caja-dialog-head, .caja-dialog-footer,
+    .compras-heading, .compras-actions, .compra-card-actions, .conteo-toolbar, .conteo-listado-toolbar, .conteo-actions,
+    .alta-actions, .clientes-actions, .modulo-actions, .error-actions, .pedido-pendiente-actions, .cocina-toolbar,
+    .extras-header, .extras-lista, .extras-actions, .lista-mesas-limpieza, .menu-grid, .categoria-menu, .search-group, .form-group, .footer-left, .footer-right, .pedido-productos
+) {
+    background-color: transparent;
+}
+
 body[data-theme="dark"] .main :where(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]),
 body[data-theme="dark"] .main button,
 body[data-theme="dark"] .main [role="button"] {

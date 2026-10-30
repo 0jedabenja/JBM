@@ -50,7 +50,7 @@ $tokenCsrf = obtener_token_csrf();
 <dialog id="dialogAbrir" class="caja-dialog" aria-labelledby="tituloDialogAbrir"><form id="formAbrir" class="caja-dialog-inner"><div class="caja-dialog-head"><div><h2 id="tituloDialogAbrir">Abrir caja</h2><p>Indica el efectivo disponible al iniciar el turno.</p></div><button class="caja-dialog-close" type="button" data-cerrar-dialog="dialogAbrir" aria-label="Cerrar">&times;</button></div><div class="caja-field"><label for="montoInicial">Monto inicial</label><input id="montoInicial" type="number" min="0" step="0.01" required inputmode="decimal" placeholder="0,00"></div><p id="errorAbrir" class="caja-message error" role="alert"></p><div class="caja-dialog-footer"><button class="caja-button secondary" type="button" data-cerrar-dialog="dialogAbrir">Cancelar</button><button class="caja-button" type="submit">Confirmar apertura</button></div></form></dialog>
 <dialog id="dialogCerrar" class="caja-dialog" aria-labelledby="tituloDialogCerrar"><form id="formCerrar" class="caja-dialog-inner"><div class="caja-dialog-head"><div><h2 id="tituloDialogCerrar">Cerrar caja</h2><p>Cuenta el efectivo y registra el monto final del turno.</p></div><button class="caja-dialog-close" type="button" data-cerrar-dialog="dialogCerrar" aria-label="Cerrar">&times;</button></div><div class="caja-current-state"><p>Efectivo esperado</p><strong id="efectivoEsperadoCierre">$ 0,00</strong></div><div class="caja-field"><label for="montoFinal">Efectivo contado al cierre</label><input id="montoFinal" type="number" min="0" step="0.01" required inputmode="decimal" placeholder="0,00"></div><p id="diferenciaCierre" class="caja-subtitle"></p><div id="confirmacionPasswordCierre" class="caja-field" hidden><label for="passwordCierre">Contraseña del usuario</label><input id="passwordCierre" type="password" autocomplete="current-password" placeholder="Ingresa tu contraseña"></div><p id="errorCerrar" class="caja-message error" role="alert"></p><div class="caja-dialog-footer"><button class="caja-button secondary" type="button" data-cerrar-dialog="dialogCerrar">Cancelar</button><button class="caja-button" type="submit">Confirmar cierre</button></div></form></dialog>
 <dialog id="dialogDetalle" class="caja-dialog" aria-labelledby="tituloDialogDetalle"><div class="caja-dialog-inner"><div class="caja-dialog-head"><div><h2 id="tituloDialogDetalle">Detalle de sesión</h2><p id="subtituloDetalle"></p></div><button class="caja-dialog-close" type="button" data-cerrar-dialog="dialogDetalle" aria-label="Cerrar">&times;</button></div><dl id="resumenDetalle" class="caja-detail-summary"></dl><h3>Movimientos</h3><div class="caja-detail-movements caja-table-wrap"><table class="caja-table"><thead><tr><th>Pedido</th><th>Fecha</th><th>Importe</th><th>Medio</th><th>Estado</th></tr></thead><tbody id="movimientosDetalle"></tbody></table></div><p id="sinMovimientosDetalle" class="caja-empty" hidden>No hay movimientos en esta sesión.</p></div></dialog>
-<dialog id="dialogCobroEfectivo" class="caja-dialog" aria-labelledby="tituloCobroEfectivo"><form id="formCobroEfectivo" class="caja-dialog-inner"><div class="caja-dialog-head"><div><h2 id="tituloCobroEfectivo">Cobrar pedido</h2><p id="clienteCobroEfectivo"></p><p id="mesaCobroEfectivo"></p></div><button class="caja-dialog-close" type="button" data-cerrar-dialog="dialogCobroEfectivo" aria-label="Cerrar">&times;</button></div><div class="caja-current-state"><p>Subtotal</p><strong id="subtotalCobroEfectivo">$ 0,00</strong></div><div id="bloqueDescuentoCobro"><div class="caja-field"><label for="tipoDescuento">Descuento</label><select id="tipoDescuento"><option value="ninguno">Sin descuento</option><option value="personalizado">Personalizado (%)</option></select></div><div id="campoPorcentajeDescuento" class="caja-field" hidden><label for="porcentajeDescuento">Porcentaje personalizado</label><input id="porcentajeDescuento" type="number" min="0.01" max="100" step="0.01" inputmode="decimal" value="10"></div><div class="caja-current-state"><p>Descuento aplicado</p><strong id="montoDescuentoCobro">$ 0,00</strong></div></div><div class="caja-current-state"><p>Total a cobrar</p><strong id="totalCobroEfectivo">$ 0,00</strong></div><div id="campoEfectivoRecibido" class="caja-field"><label for="efectivoRecibido">Efectivo recibido</label><input id="efectivoRecibido" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00"></div><div id="campoVueltoCobro" class="caja-current-state"><p>Vuelto</p><strong id="vueltoCobroEfectivo">$ 0,00</strong></div><p id="errorCobroEfectivo" class="caja-message error" role="alert"></p><div class="caja-dialog-footer"><button class="caja-button secondary" type="button" data-cerrar-dialog="dialogCobroEfectivo">Cancelar</button><button id="confirmarCobroEfectivo" class="caja-button" type="submit">Confirmar cobro</button></div></form></dialog>
+<dialog id="dialogCobroEfectivo" class="caja-dialog" aria-labelledby="tituloCobroEfectivo"><form id="formCobroEfectivo" class="caja-dialog-inner"><div class="caja-dialog-head"><div><h2 id="tituloCobroEfectivo">Cobrar pedido</h2><p id="clienteCobroEfectivo"></p><p id="mesaCobroEfectivo"></p></div><button class="caja-dialog-close" type="button" data-cerrar-dialog="dialogCobroEfectivo" aria-label="Cerrar">&times;</button></div><div class="caja-current-state"><p>Subtotal</p><strong id="subtotalCobroEfectivo">$ 0,00</strong></div><div id="bloqueDescuentoCobro"><div class="caja-field"><label for="tipoDescuento">Descuento</label><select id="tipoDescuento"><option value="ninguno">Sin descuento</option><option value="personalizado">Personalizado (%)</option></select></div><div id="campoPorcentajeDescuento" class="caja-field" hidden><label for="porcentajeDescuento">Porcentaje personalizado</label><input id="porcentajeDescuento" type="number" min="0.01" max="100" step="0.01" inputmode="decimal" value="10"></div><div class="caja-current-state"><p>Descuento aplicado</p><strong id="montoDescuentoCobro">$ 0,00</strong></div></div><div class="caja-current-state"><p>Total a cobrar</p><strong id="totalCobroEfectivo">$ 0,00</strong></div><div class="caja-field"><label for="metodoPagoCobro">Método de pago</label><div id="pagosMultiples" style="display:flex;flex-direction:column;gap:8px"></div><button type="button" id="agregarMetodoPago" class="caja-button secondary" style="align-self:flex-start;margin-top:8px">+ Agregar otro método</button></div><div id="resumenPagos" style="margin-top:12px"></div><div id="cambioEfectivo" hidden><div class="caja-current-state"><p>Vuelto</p><strong id="vueltoCobroEfectivo">$ 0,00</strong></div></div><p id="errorCobroEfectivo" class="caja-message error" role="alert"></p><div class="caja-dialog-footer"><button class="caja-button secondary" type="button" data-cerrar-dialog="dialogCobroEfectivo">Cancelar</button><button id="confirmarCobroEfectivo" class="caja-button" type="submit">Confirmar cobro</button></div></form></dialog>
 
 <script>
 const esAdministrador = <?php echo $esAdministrador ? "true" : "false"; ?>;
@@ -124,7 +124,7 @@ function renderizarTurno(datos) {
 function renderizarMovimientos(movimientos, idContenedor, permitirCobro) {
     const contenedor = document.getElementById(idContenedor);
     if (!movimientos.length) {
-        contenedor.innerHTML = `<tr><td class="caja-empty" colspan="${permitirCobro ? 6 : 5}">No hay movimientos registrados.</td></tr>`;
+        contenedor.innerHTML = `<tr><td class="caja-empty" colspan="${permitirCobro ? 5 : 5}">No hay movimientos registrados.</td></tr>`;
         return;
     }
     contenedor.innerHTML = movimientos.map(movimiento => {
@@ -132,13 +132,10 @@ function renderizarMovimientos(movimientos, idContenedor, permitirCobro) {
         const cobrado = Number(movimiento.cobrado) === 1;
         const estado = cobrado ? "Cobrado" : listo ? "Listo para cobrar" : "En preparación";
         const estadoClass = cobrado ? "cobrado" : "pendiente";
-        const opcionesPago = metodosPago.map(metodo => `<option value="${Number(metodo.id_mp)}" ${Number(metodo.id_mp) === Number(movimiento.id_mp) ? "selected" : ""}>${escapeHTML(metodo.descripcion)}</option>`).join("");
-        const efectivoRecibido = pagosEfectivoTemporales.get(Number(movimiento.id_pedido));
-        const datosEfectivo = efectivoRecibido === undefined ? "" : `&efectivo_recibido=${encodeURIComponent(efectivoRecibido.toFixed(2))}`;
         const accion = permitirCobro && listo && !cobrado
-            ? `<select aria-label="Medio de pago del pedido ${Number(movimiento.id_pedido)}" data-metodo-pago><option value="">Medio de pago...</option>${opcionesPago}</select> <button class="caja-button secondary" type="button" data-cobrar="${Number(movimiento.id_pedido)}" data-total="${Number(movimiento.monto_total)}" data-cliente="${Number(movimiento.id_cliente || 0)}" data-mesa="${escapeHTML(movimiento.numero_mesa ?? "")}">Cobrar</button>`
+            ? `<button class="caja-button secondary" type="button" data-cobrar="${Number(movimiento.id_pedido)}" data-total="${Number(movimiento.monto_total)}" data-cliente="${Number(movimiento.id_cliente || 0)}" data-mesa="${escapeHTML(movimiento.numero_mesa ?? "")}" data-metodo-pago="${Number(metodosPago[0]?.id_mp || 1)}">Cobrar</button>`
             : permitirCobro && cobrado
-                ? `<a class="caja-button secondary" href="apis/boleta_pedido.php?id_pedido=${Number(movimiento.id_pedido)}${datosEfectivo}" target="comprobanteJBM">Imprimir comprobante</a>`
+                ? `<a class="caja-button secondary" href="apis/boleta_pedido.php?id_pedido=${Number(movimiento.id_pedido)}" target="comprobanteJBM">Imprimir comprobante</a>`
                 : "-";
         return `<tr><td>#${escapeHTML(movimiento.id_pedido)}</td><td>${escapeHTML(formatearFecha(movimiento.fecha_hora_creacion))}</td><td>${moneda(movimiento.monto_total)}</td><td>${escapeHTML(movimiento.metodo_pago)}</td><td><span class="caja-movement-state ${estadoClass}">${estado}</span></td>${permitirCobro ? `<td>${accion}</td>` : ""}</tr>`;
     }).join("");
@@ -219,26 +216,96 @@ function formatearFecha(valor) { return valor ? String(valor).replace("T", " ") 
 function escapeHTML(valor) { return String(valor ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
 function mostrarMensaje(texto, error) { const elemento = document.getElementById("mensajeCaja"); elemento.textContent = texto; elemento.className = `caja-message${error ? " error" : ""}`; }
 
-function actualizarVuelto() {
-    const recibido = Number(document.getElementById("efectivoRecibido").value);
-    const vuelto = Number.isFinite(recibido) && cobroEfectivoActual && recibido >= cobroEfectivoActual.total
-        ? Math.round((recibido - cobroEfectivoActual.total) * 100) / 100
-        : 0;
-    document.getElementById("vueltoCobroEfectivo").textContent = moneda(vuelto);
+let pagosActuales = [];
+let cobroEfectivoActual = null;
+
+function construirFilaPago(indice, idMp, monto) {
+    const metodo = metodosPago.find(m => Number(m.id_mp) === Number(idMp));
+    const esEfectivo = metodo && String(metodo.descripcion).toLowerCase() === "efectivo";
+    const filaId = `pago-${indice}`;
+    
+    let html = `<div id="${filaId}" style="display:grid;grid-template-columns:1fr 100px 40px;gap:8px;align-items:end;padding:8px;background:var(--color-bg-secondary);border-radius:8px">
+        <div>
+            <label for="${filaId}-metodo">Método</label>
+            <select class="pago-metodo" data-indice="${indice}" id="${filaId}-metodo">
+                <option value="">Seleccionar...</option>
+                ${metodosPago.map(m => `<option value="${Number(m.id_mp)}" ${Number(m.id_mp) === Number(idMp) ? "selected" : ""}>${escapeHTML(m.descripcion)}</option>`).join("")}
+            </select>
+        </div>
+        <div>
+            <label for="${filaId}-monto">Monto</label>
+            <input class="pago-monto" data-indice="${indice}" id="${filaId}-monto" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" value="${monto.toFixed(2)}" />
+        </div>
+        <button type="button" class="caja-button secondary pago-eliminar" data-indice="${indice}" style="padding:8px 12px;height:40px" aria-label="Eliminar pago">−</button>
+    </div>`;
+    
+    if (esEfectivo && monto > 0) {
+        html += `<div id="${filaId}-efectivo" style="display:grid;grid-template-columns:1fr 100px;gap:8px;padding:8px;background:var(--color-secondary,#e8f0f8);border-radius:8px;margin-top:4px">
+            <div>
+                <label for="${filaId}-recibido">Efectivo recibido</label>
+                <input class="pago-efectivo-recibido" data-indice="${indice}" id="${filaId}-recibido" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" value="${monto.toFixed(2)}" />
+            </div>
+            <div>
+                <span style="font-size:0.875rem;color:var(--color-text-secondary)">Vuelto</span>
+                <strong id="${filaId}-vuelto" style="display:block">$ 0,00</strong>
+            </div>
+        </div>`;
+    }
+    
+    return html;
 }
 
-function actualizarOpcionesDescuento() {
-    const selector = document.getElementById("tipoDescuento");
-    if (!selector) return;
-    const seleccionado = selector.value;
-    selector.innerHTML = '<option value="ninguno">Sin descuento</option>' +
-        descuentosFijos.map(descuento => `<option value="fijo:${Number(descuento.id_descuento)}" data-porcentaje="${Number(descuento.valor)}">${Number(descuento.valor)}% fijo</option>`).join("") +
-        '<option value="personalizado">Personalizado (%)</option>';
-    if (Array.from(selector.options).some(opcion => opcion.value === seleccionado)) selector.value = seleccionado;
+function actualizarPagosUI() {
+    const contenedor = document.getElementById("pagosMultiples");
+    contenedor.innerHTML = pagosActuales.map((pago, indice) => construirFilaPago(indice, pago.id_mp, pago.monto)).join("");
+    
+    document.querySelectorAll(".pago-metodo, .pago-monto, .pago-efectivo-recibido").forEach(elem => {
+        elem.addEventListener("change", actualizarResumenCobro);
+        elem.addEventListener("input", actualizarResumenCobro);
+    });
+    document.querySelectorAll(".pago-eliminar").forEach(btn => {
+        btn.addEventListener("click", evento => {
+            evento.preventDefault();
+            const indice = Number(btn.dataset.indice);
+            pagosActuales = pagosActuales.filter((_, i) => i !== indice);
+            actualizarPagosUI();
+            actualizarResumenCobro();
+        });
+    });
+    
+    actualizarResumenCobro();
+}
+
+function obtenerPagosActuales() {
+    const pagos = [];
+    document.querySelectorAll(".pago-metodo").forEach(selectMetodo => {
+        const indice = Number(selectMetodo.dataset.indice);
+        const idMp = Number(selectMetodo.value);
+        const inputMonto = document.querySelector(`.pago-monto[data-indice="${indice}"]`);
+        const monto = Number(inputMonto?.value || 0);
+        
+        if (idMp > 0 && monto > 0) {
+            const metodo = metodosPago.find(m => Number(m.id_mp) === Number(idMp));
+            const esEfectivo = metodo && String(metodo.descripcion).toLowerCase() === "efectivo";
+            
+            if (esEfectivo) {
+                const inputRecibido = document.querySelector(`.pago-efectivo-recibido[data-indice="${indice}"]`);
+                const recibido = Number(inputRecibido?.value || 0);
+                if (recibido < monto) {
+                    return;
+                }
+                pagos.push({ id_mp: idMp, monto });
+            } else {
+                pagos.push({ id_mp: idMp, monto });
+            }
+        }
+    });
+    return pagos;
 }
 
 function actualizarResumenCobro() {
     if (!cobroEfectivoActual) return;
+    
     const tipoDescuento = document.getElementById("tipoDescuento").value;
     const esClienteFrecuente = cobroEfectivoActual.idCliente > 1;
     document.getElementById("bloqueDescuentoCobro").hidden = !esClienteFrecuente;
@@ -258,66 +325,112 @@ function actualizarResumenCobro() {
     document.getElementById("subtotalCobroEfectivo").textContent = moneda(cobroEfectivoActual.subtotal);
     document.getElementById("montoDescuentoCobro").textContent = moneda(descuento);
     document.getElementById("totalCobroEfectivo").textContent = moneda(cobroEfectivoActual.total);
-    const campoRecibido = document.getElementById("efectivoRecibido");
-    if (!campoRecibido.value || Number(campoRecibido.value) < cobroEfectivoActual.total) {
-        campoRecibido.value = cobroEfectivoActual.total.toFixed(2);
+    
+    const pagos = obtenerPagosActuales();
+    const sumaPagos = pagos.reduce((suma, pago) => suma + pago.monto, 0);
+    const totalCobroEfectivo = Math.round(cobroEfectivoActual.total * 100) / 100;
+    
+    // Actualizar vueltos para cada pago en efectivo
+    document.querySelectorAll(".pago-metodo").forEach(selectMetodo => {
+        const indice = Number(selectMetodo.dataset.indice);
+        const idMp = Number(selectMetodo.value);
+        const metodo = metodosPago.find(m => Number(m.id_mp) === Number(idMp));
+        const esEfectivo = metodo && String(metodo.descripcion).toLowerCase() === "efectivo";
+        
+        const filaMonto = document.querySelector(`.pago-monto[data-indice="${indice}"]`);
+        const monto = Number(filaMonto?.value || 0);
+        const filaRecibido = document.querySelector(`.pago-efectivo-recibido[data-indice="${indice}"]`);
+        const filaVuelto = document.getElementById(`pago-${indice}-vuelto`);
+        
+        if (esEfectivo && filaRecibido && filaVuelto) {
+            const recibido = Number(filaRecibido.value || 0);
+            const vuelto = Math.max(0, Math.round((recibido - monto) * 100) / 100);
+            filaVuelto.textContent = moneda(vuelto);
+        }
+    });
+    
+    // Mostrar resumen
+    const resumenDiv = document.getElementById("resumenPagos");
+    let html = `<div style="background:var(--color-bg-secondary);padding:8px;border-radius:8px"><strong>Total a cobrar:</strong> ${moneda(totalCobroEfectivo)}<br/><strong>Total ingresado:</strong> ${moneda(sumaPagos)}`;
+    
+    if (sumaPagos < totalCobroEfectivo) {
+        const falta = Math.round((totalCobroEfectivo - sumaPagos) * 100) / 100;
+        html += `<br/><span style="color:var(--color-warning)"><strong>Falta: ${moneda(falta)}</strong></span>`;
+    } else if (sumaPagos > totalCobroEfectivo) {
+        const sobra = Math.round((sumaPagos - totalCobroEfectivo) * 100) / 100;
+        html += `<br/><span style="color:var(--color-success)"><strong>Sobra: ${moneda(sobra)}</strong></span>`;
     }
-    campoRecibido.min = cobroEfectivoActual.total.toFixed(2);
-    actualizarVuelto();
+    html += `</div>`;
+    
+    resumenDiv.innerHTML = html;
+    
+    const botonConfirmar = document.getElementById("confirmarCobroEfectivo");
+    botonConfirmar.disabled = sumaPagos < totalCobroEfectivo;
+}
+
+function actualizarOpcionesDescuento() {
+    const selector = document.getElementById("tipoDescuento");
+    if (!selector) return;
+    const seleccionado = selector.value;
+    selector.innerHTML = '<option value="ninguno">Sin descuento</option>' +
+        descuentosFijos.map(descuento => `<option value="fijo:${Number(descuento.id_descuento)}" data-porcentaje="${Number(descuento.valor)}">${Number(descuento.valor)}% fijo</option>`).join("") +
+        '<option value="personalizado">Personalizado (%)</option>';
+    if (Array.from(selector.options).some(opcion => opcion.value === seleccionado)) selector.value = seleccionado;
 }
 
 async function confirmarCobroEfectivo(evento) {
     evento.preventDefault();
     if (!cobroEfectivoActual) return;
+    
     const tipoSeleccionado = document.getElementById("tipoDescuento").value;
-    const tipoDescuento = tipoSeleccionado.startsWith("fijo:") ? "fijo" : tipoSeleccionado;
-    const efectivoRecibido = Number(document.getElementById("efectivoRecibido").value);
-    const esEfectivo = cobroEfectivoActual.medioPago.toLowerCase() === "efectivo";
-    if (tipoDescuento === "personalizado" && (!Number.isFinite(Number(document.getElementById("porcentajeDescuento").value)) || Number(document.getElementById("porcentajeDescuento").value) <= 0 || Number(document.getElementById("porcentajeDescuento").value) > 100)) {
+    const pagos = obtenerPagosActuales();
+    
+    if (pagos.length === 0) {
+        document.getElementById("errorCobroEfectivo").textContent = "Debes agregar al menos un método de pago.";
+        return;
+    }
+    
+    if (tipoSeleccionado === "personalizado" && (!Number.isFinite(Number(document.getElementById("porcentajeDescuento").value)) || Number(document.getElementById("porcentajeDescuento").value) <= 0 || Number(document.getElementById("porcentajeDescuento").value) > 100)) {
         document.getElementById("errorCobroEfectivo").textContent = "El descuento debe ser mayor que 0 y no superar el 100 por ciento.";
         return;
     }
-    if (esEfectivo && (!Number.isFinite(efectivoRecibido) || efectivoRecibido < cobroEfectivoActual.total)) {
-        document.getElementById("errorCobroEfectivo").textContent = "El efectivo recibido debe ser igual o mayor que el total.";
-        return;
-    }
+    
     const boton = document.getElementById("confirmarCobroEfectivo");
     boton.disabled = true;
     const idPedidoCobrado = cobroEfectivoActual.idPedido;
-    const efectivoComprobante = esEfectivo ? Math.round(efectivoRecibido * 100) / 100 : null;
     const ventanaComprobante = window.open("about:blank", "comprobanteJBM");
     if (ventanaComprobante) ventanaComprobante.opener = null;
     let cobroConfirmado = false;
+    
     try {
+        const tipoDescuento = tipoSeleccionado.startsWith("fijo:") ? "fijo" : tipoSeleccionado;
         const respuesta = await fetch("apis/api_caja.php", {
             method: "POST",
             headers: { "Content-Type": "application/json", "X-CSRF-Token": tokenCsrfCaja },
             body: JSON.stringify({
                 accion: "cobrar",
                 id_pedido: cobroEfectivoActual.idPedido,
-                id_mp: cobroEfectivoActual.idMetodoPago,
+                pagos: pagos,
                 tipo_descuento: tipoDescuento,
                 id_descuento: tipoSeleccionado.startsWith("fijo:") ? Number(tipoSeleccionado.split(":")[1]) : null,
-                porcentaje: tipoDescuento === "personalizado" ? Number(document.getElementById("porcentajeDescuento").value) : null,
-                efectivo_recibido: esEfectivo ? efectivoRecibido : null
+                porcentaje_descuento: tipoDescuento === "personalizado" ? Number(document.getElementById("porcentajeDescuento").value) : 0,
+                monto_descuento: Number(document.getElementById("montoDescuentoCobro").textContent.replace(/[^\d.,]/g, "").replace(".", "").replace(",", "."))
             })
         });
         const resultado = await respuesta.json();
         if (!respuesta.ok) throw new Error(resultado.error || "No se pudo registrar el cobro.");
         cobroConfirmado = true;
-        if (esEfectivo) pagosEfectivoTemporales.set(idPedidoCobrado, efectivoComprobante);
+        
         if (ventanaComprobante) {
             const parametrosComprobante = new URLSearchParams({ id_pedido: String(idPedidoCobrado) });
-            if (efectivoComprobante !== null) {
-                parametrosComprobante.set("efectivo_recibido", efectivoComprobante.toFixed(2));
-            }
             ventanaComprobante.location.replace(`apis/boleta_pedido.php?${parametrosComprobante.toString()}`);
         }
         cerrarDialogo("dialogCobroEfectivo");
-        mostrarMensaje(esEfectivo ? `Pedido cobrado. Vuelto: ${moneda(resultado.vuelto)}.` : "Pedido cobrado.", false);
+        mostrarMensaje("Pedido cobrado.", false);
         window.AlertasJBM?.reproducir("cobrado");
-        window.AlertasJBM?.navegador("Cobro confirmado", `El pedido #${resultado.id_pedido || cobroEfectivoActual.idPedido} fue cobrado.`);
+        window.AlertasJBM?.navegador("Cobro confirmado", `El pedido #${idPedidoCobrado} fue cobrado con ${pagos.length} método(s) de pago.`);
         cobroEfectivoActual = null;
+        pagosActuales = [];
         await cargarCaja();
     } catch (error) {
         if (!cobroConfirmado && ventanaComprobante && !ventanaComprobante.closed) {
@@ -358,6 +471,15 @@ document.getElementById("tipoDescuento").addEventListener("change", actualizarRe
 document.getElementById("porcentajeDescuento").addEventListener("input", actualizarResumenCobro);
 document.getElementById("paginaAnterior").addEventListener("click", () => { if (paginaHistorial > 1) cargarCaja(paginaHistorial - 1); });
 document.getElementById("paginaSiguiente").addEventListener("click", () => { if (paginaHistorial < totalPaginas) cargarCaja(paginaHistorial + 1); });
+document.getElementById("formCobroEfectivo").addEventListener("submit", confirmarCobroEfectivo);
+document.getElementById("tipoDescuento").addEventListener("change", actualizarResumenCobro);
+document.getElementById("porcentajeDescuento").addEventListener("input", actualizarResumenCobro);
+document.getElementById("agregarMetodoPago").addEventListener("click", evento => {
+    evento.preventDefault();
+    const indiceNuevo = Math.max(...pagosActuales.map((_, i) => i), -1) + 1;
+    pagosActuales.push({ id_mp: 0, monto: 0 });
+    actualizarPagosUI();
+});
 document.querySelectorAll("dialog.caja-dialog").forEach(dialogo => dialogo.addEventListener("cancel", evento => { evento.preventDefault(); cerrarDialogo(dialogo.id); }));
 document.addEventListener("click", async evento => {
     const botonDetalle = evento.target.closest("[data-detalle]");
@@ -365,22 +487,17 @@ document.addEventListener("click", async evento => {
     const botonCerrarDialogo = evento.target.closest("[data-cerrar-dialog]");
     if (botonDetalle) await verDetalle(Number(botonDetalle.dataset.detalle));
     if (botonCobrar) {
-        const selectorMetodo = botonCobrar.closest("tr").querySelector("[data-metodo-pago]");
-        const idMetodoPago = Number(selectorMetodo?.value);
-        if (!idMetodoPago) {
-            mostrarMensaje("Selecciona el medio de pago antes de cobrar.", true);
-            return;
-        }
-        const medioPago = selectorMetodo.selectedOptions[0].textContent.trim();
+        const idMetodoPago = Number(botonCobrar.dataset.metodoPago || metodosPago[0]?.id_mp || 1);
         cobroEfectivoActual = {
             idPedido: Number(botonCobrar.dataset.cobrar),
-            idMetodoPago,
-            medioPago,
             idCliente: Number(botonCobrar.dataset.cliente || 0),
             numeroMesa: botonCobrar.dataset.mesa,
             subtotal: Math.round(Number(botonCobrar.dataset.total) * 100) / 100,
             total: Math.round(Number(botonCobrar.dataset.total) * 100) / 100
         };
+        
+        pagosActuales = [{ id_mp: idMetodoPago, monto: cobroEfectivoActual.total }];
+        
         document.getElementById("errorCobroEfectivo").textContent = "";
         document.getElementById("clienteCobroEfectivo").textContent = cobroEfectivoActual.idCliente > 1
             ? "Cliente registrado: puede recibir descuentos."
@@ -390,16 +507,10 @@ document.addEventListener("click", async evento => {
             : "Sin mesa asignada";
         document.getElementById("tipoDescuento").value = "ninguno";
         document.getElementById("porcentajeDescuento").value = "10";
-        document.getElementById("campoEfectivoRecibido").hidden = medioPago.toLowerCase() !== "efectivo";
-        document.getElementById("campoVueltoCobro").hidden = medioPago.toLowerCase() !== "efectivo";
-        document.getElementById("efectivoRecibido").required = medioPago.toLowerCase() === "efectivo";
+        
         actualizarOpcionesDescuento();
-        actualizarResumenCobro();
-        const campoRecibido = document.getElementById("efectivoRecibido");
-        campoRecibido.value = cobroEfectivoActual.total.toFixed(2);
-        campoRecibido.min = cobroEfectivoActual.total.toFixed(2);
+        actualizarPagosUI();
         document.getElementById("dialogCobroEfectivo").showModal();
-        if (medioPago.toLowerCase() === "efectivo") campoRecibido.select();
     }
     if (botonCerrarDialogo) cerrarDialogo(botonCerrarDialogo.dataset.cerrarDialog);
 });
