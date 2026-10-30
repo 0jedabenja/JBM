@@ -133,7 +133,7 @@ function renderizarMovimientos(movimientos, idContenedor, permitirCobro) {
         const estado = cobrado ? "Cobrado" : listo ? "Listo para cobrar" : "En preparación";
         const estadoClass = cobrado ? "cobrado" : "pendiente";
         const accion = permitirCobro && listo && !cobrado
-            ? `<button class="caja-button secondary" type="button" data-cobrar="${Number(movimiento.id_pedido)}" data-total="${Number(movimiento.monto_total)}" data-cliente="${Number(movimiento.id_cliente || 0)}" data-mesa="${escapeHTML(movimiento.numero_mesa ?? "")}" data-metodo-pago="${Number(metodosPago[0]?.id_mp || 1)}">Cobrar</button>`
+            ? `<button class="caja-button secondary" type="button" data-cobrar="${Number(movimiento.id_pedido)}" data-total="${Number(movimiento.monto_total)}" data-cliente="${Number(movimiento.id_cliente || 0)}" data-mesa="${escapeHTML(movimiento.numero_mesa ?? "")}">Cobrar</button>`
             : permitirCobro && cobrado
                 ? `<a class="caja-button secondary" href="apis/boleta_pedido.php?id_pedido=${Number(movimiento.id_pedido)}" target="comprobanteJBM">Imprimir comprobante</a>`
                 : "-";

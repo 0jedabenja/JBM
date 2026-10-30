@@ -174,7 +174,11 @@ if ($esCompra) {
          FROM Pedido p
          LEFT JOIN Cliente c ON c.id_cliente = p.id_cliente
          LEFT JOIN Mesa m ON m.id_mesa = p.id_mesa
-         LEFT JOIN Metodo_pago mp ON mp.id_mp = p.id_mp
+         LEFT JOIN (
+            SELECT id_pedido, id_mp, ROW_NUMBER() OVER (PARTITION BY id_pedido ORDER BY fecha_hora) as rn 
+            FROM Pago_pedido
+         ) pp ON pp.id_pedido = p.id_pedido AND pp.rn = 1
+         LEFT JOIN Metodo_pago mp ON mp.id_mp = pp.id_mp
          INNER JOIN Empleado e ON e.id_empleado = p.id_empleado
          INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado
          WHERE p.id_pedido = ?"
