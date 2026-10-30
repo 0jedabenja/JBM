@@ -106,7 +106,11 @@ function responder_listados($conexion) {
     $resultado = mysqli_query($conexion, $sqlHistorial);
     while ($conteo = mysqli_fetch_assoc($resultado)) $historial[] = $conteo;
 
-    responder_conteo(array("categorias" => $categorias, "pendientes" => $pendientes, "historial" => $historial));
+    $cajaAbierta = false;
+    $resultadoCaja = mysqli_query($conexion, "SELECT 1 FROM Turno_caja WHERE fecha_hora_cierre IS NULL LIMIT 1");
+    if ($resultadoCaja && mysqli_fetch_assoc($resultadoCaja)) $cajaAbierta = true;
+
+    responder_conteo(array("categorias" => $categorias, "pendientes" => $pendientes, "historial" => $historial, "caja_abierta" => $cajaAbierta));
 }
 
 $metodo = $_SERVER["REQUEST_METHOD"];
@@ -141,6 +145,15 @@ if ($accion === "iniciar") {
         $idCategoria = filter_var($filtro, FILTER_VALIDATE_INT);
         if ($idCategoria === false || $idCategoria <= 0) responder_conteo(array("error" => "La categoría seleccionada no es válida."), 400);
         $tipo = "categoria";
+    }
+
+    $resultadoCaja = mysqli_query($conexion, "SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL LIMIT 1");
+    if (!$resultadoCaja) {
+        error_log("No se pudo consultar la caja abierta: " . mysqli_error($conexion));
+        responder_conteo(array("error" => "No se pudo verificar el estado de la caja."), 500);
+    }
+    if (mysqli_fetch_assoc($resultadoCaja)) {
+        responder_conteo(array("error" => "No se puede iniciar un conteo con una sesión de caja abierta. Cerrá la caja primero."), 409);
     }
 
     mysqli_begin_transaction($conexion);

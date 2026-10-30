@@ -20,8 +20,10 @@ verificar_permiso("auditoria");
             <?php include_once "includes/profile.php"; ?>
         </div>
         <main class="auditoria-content">
-            <h1>Auditoría del sistema</h1>
-            <p class="auditoria-description">Registro de operaciones importantes. Se muestran 100 eventos por página.</p>
+            <header class="page-heading">
+                <h1>Auditoría del sistema</h1>
+                <p class="auditoria-description">Registro de operaciones importantes. Se muestran 100 eventos por página.</p>
+            </header>
             <form id="filtrosAuditoria" class="auditoria-filtros">
                 <label>Usuario
                     <input type="search" id="filtroUsuario" placeholder="Nombre o usuario" maxlength="100">

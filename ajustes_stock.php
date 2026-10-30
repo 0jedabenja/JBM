@@ -17,8 +17,10 @@ verificar_permiso("insumos");
 <div class="main">
     <div class="topbar"><div class="toggle"><img src="assets/img/sidebar/dark-menu.svg" alt="Abrir menú"></div><?php include_once __DIR__ . "/includes/profile.php"; ?></div>
     <main class="ajuste-stock">
-        <h1>Registrar salida de stock</h1>
-        <p>Registra pérdidas, insumos dañados o consumo del personal. Las salidas se descuentan del inventario y quedan en el historial de movimientos.</p>
+        <header class="page-heading">
+            <h1>Registrar salida de stock</h1>
+            <p>Registra pérdidas, insumos dañados o consumo del personal. Las salidas se descuentan del inventario y quedan en el historial de movimientos.</p>
+        </header>
         <form id="formAjusteStock">
             <label for="tipoMovimiento">Motivo</label>
             <select id="tipoMovimiento" required>

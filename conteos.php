@@ -20,7 +20,10 @@ verificar_permiso("conteos");
             <?php include_once "includes/profile.php"; ?>
         </div>
         <main class="conteos-content">
-            <h1>Conteo de insumos</h1>
+            <header class="page-heading">
+                <h1>Conteo de insumos</h1>
+                <p>Compará el stock real con el del sistema y aplicá las diferencias. Solo se puede iniciar con la caja cerrada.</p>
+            </header>
             <p id="mensajeConteo" class="conteo-message" role="status" aria-live="polite"></p>
             <section aria-labelledby="tituloNuevoConteo">
                 <h2 id="tituloNuevoConteo">Nuevo conteo</h2>
@@ -33,6 +36,7 @@ verificar_permiso("conteos");
                         </select>
                     </div>
                     <button id="btnIniciarConteo" class="conteo-button" type="button">Iniciar conteo</button>
+                    <p id="avisoCajaConteo" class="conteo-caja-aviso" role="alert" hidden>Hay una sesión de caja abierta. Cerrá la caja para poder iniciar un conteo.</p>
                 </div>
             </section>
             <section id="panelConteo" class="conteo-section" hidden>
@@ -153,6 +157,12 @@ verificar_permiso("conteos");
             if (Array.from(categoriaConteo.options).some((opcion) => opcion.value === seleccion)) categoriaConteo.value = seleccion;
             renderPendientes(datos.pendientes);
             renderHistorial(datos.historial);
+            const cajaAbierta = Boolean(datos.caja_abierta);
+            const botonIniciar = document.getElementById("btnIniciarConteo");
+            botonIniciar.disabled = cajaAbierta;
+            botonIniciar.classList.toggle("bloqueado", cajaAbierta);
+            botonIniciar.title = cajaAbierta ? "Cerrá la caja para iniciar un conteo" : "";
+            document.getElementById("avisoCajaConteo").hidden = !cajaAbierta;
         } catch (error) {
             mostrarMensaje(error.message, true);
         }

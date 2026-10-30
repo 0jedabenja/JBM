@@ -1,4 +1,4 @@
-:root {
+﻿:root {
     /* Colores - Modo Claro */
     --color-primary: #007AFF;
     --color-secondary: #F5F5F7;
@@ -1007,4 +1007,247 @@ body[data-theme="dark"] .main :where(input:not([type="checkbox"]):not([type="rad
     .main .producto-card {
         transform: none !important;
     }
+}
+
+/* Islas flotantes del modo oscuro: borde, esquinas redondeadas y sombra. */
+body[data-theme="dark"] .main :is(
+    section.caja-current, article, details, .card, .panel, .alta-panel, .grafico-card, .form-container,
+    .pedido-panel, .cocina-pedido, .producto-card, .producto-extra, .mesa-pendiente-limpieza, .stock-alerta, .stock-vacio,
+    .caja-metric, .caja-current-state, .caja-warning, .mensaje-vacio
+) {
+    border: 1px solid #34373d;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+}
+
+/* Cabeceras de módulo como islas. */
+body[data-theme="dark"] .main :is(.caja-heading, .compras-heading, .mapa-header, .extras-header, .caja-current) {
+    background-color: #1a1c20;
+    border: 1px solid #34373d;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+    padding: 14px 20px;
+}
+
+body[data-theme="dark"] .main .caja-current {
+    padding: 20px;
+}
+
+body[data-theme="dark"] .main .caja-metrics {
+    background: transparent;
+    border: 0;
+    gap: 14px;
+}
+
+body[data-theme="dark"] .main .caja-current-state {
+    border-left-width: 4px;
+}
+
+body[data-theme="dark"] .main dialog {
+    border: 1px solid #34373d;
+    border-radius: 14px;
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
+}
+
+
+/* Cabecera de página (h1 + p) como isla con detalle de acento. */
+.main .page-heading {
+    background-color: #fff;
+    border: 1px solid #dce3e3;
+    border-left: 4px solid #001f47;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 31, 71, 0.08);
+    margin: 0 0 20px;
+    padding: 16px 22px;
+}
+
+.main .page-heading h1 {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    font-size: 28px;
+    margin: 0;
+    padding: 0;
+}
+
+.main .page-heading p {
+    color: #62737a;
+    margin: 6px 0 0;
+}
+
+body[data-theme="dark"] .main .page-heading {
+    background-color: #1a1c20;
+    border-color: #34373d;
+    border-left-color: #8fb4da;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+}
+
+body[data-theme="dark"] .main .page-heading p {
+    color: #a1a1a6;
+}
+
+/* Selector de mesa del pedido como isla flotante. */
+.main #selectorMesa {
+    background-color: #fff;
+    border: 1px solid #dce3e3;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 31, 71, 0.08);
+    margin: 16px 0;
+    padding: 16px 20px;
+}
+
+body[data-theme="dark"] .main #selectorMesa {
+    background-color: #1a1c20;
+    border-color: #34373d;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+}
+
+.main #selectorMesa > h3 {
+    border-left: 4px solid #001f47;
+    margin-top: 0;
+    padding-left: 10px;
+}
+
+body[data-theme="dark"] .main #selectorMesa > h3 {
+    border-left-color: #8fb4da;
+}
+/* Menú de productos del pedido: isla flotante con categorías y tarjetas. */
+.main #menuProductos {
+    background-color: #fff;
+    border: 1px solid #dce3e3;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 31, 71, 0.08);
+    padding: 8px 20px 20px;
+}
+
+body[data-theme="dark"] .main #menuProductos {
+    background-color: #1a1c20;
+    border-color: #34373d;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+}
+
+.main #menuProductos .categoria-menu h3 {
+    border-left: 4px solid #001f47;
+    padding-left: 10px;
+}
+
+body[data-theme="dark"] .main #menuProductos .categoria-menu h3 {
+    border-left-color: #8fb4da;
+}
+
+.main #menuProductos .producto-card:not(.elegido) {
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+body[data-theme="dark"] .main #menuProductos .producto-card:not(.elegido) {
+    background-color: #202328;
+    border-color: #34373d;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+}
+
+.main #menuProductos .producto-card.elegido {
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+
+/* Cabecera con acciones (botón agregar) a la derecha. */
+.main .page-heading--actions {
+    align-items: center;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+}
+
+.main .page-heading--actions .modulo-actions,
+.main .page-heading--actions .clientes-actions {
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+/* Secciones de conteos como islas. */
+.main .conteos-content > section {
+    background-color: #fff;
+    border: 1px solid #dce3e3;
+    border-left: 4px solid #001f47;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 31, 71, 0.08);
+    margin: 0 0 20px;
+    padding: 18px 22px;
+}
+
+body[data-theme="dark"] .main .conteos-content > section {
+    background-color: #1a1c20;
+    border-color: #34373d;
+    border-left-color: #8fb4da;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+}
+
+.main .conteos-content > section[hidden] {
+    display: none;
+}
+
+/* Alta de producto: los insumos no deben desbordar el panel. */
+.main .alta-panel .componente {
+    grid-template-columns: minmax(0, 1fr) minmax(90px, 150px) minmax(40px, auto) auto;
+}
+
+.main .alta-panel .componente > * {
+    box-sizing: border-box;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.main .alta-panel .componente select,
+.main .alta-panel .componente input {
+    width: 100%;
+}
+
+@media (max-width: 700px) {
+    .main .page-heading--actions {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .main .alta-panel .componente {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* Separación entre el menú de productos y el panel del pedido. */
+.main #menuProductos + .pedido-panel {
+    margin-top: 24px;
+}
+
+/* Conteo bloqueado por caja abierta. */
+.main .conteo-button.bloqueado:disabled {
+    background: #fdecea;
+    border-color: #d9534f;
+    color: #b42318;
+    cursor: not-allowed;
+    opacity: 1;
+}
+
+.main .conteo-caja-aviso {
+    align-self: center;
+    background: #fdecea;
+    border: 1px solid #d9534f;
+    border-radius: 8px;
+    color: #b42318;
+    font-weight: 600;
+    margin: 0;
+    padding: 10px 14px;
+}
+
+.main .conteo-caja-aviso[hidden] {
+    display: none;
+}
+
+body[data-theme="dark"] .main .conteo-button.bloqueado:disabled,
+body[data-theme="dark"] .main .conteo-caja-aviso {
+    background: #3a1c1c;
+    border-color: #c9524d;
+    color: #ffb4ae;
 }
