@@ -346,7 +346,7 @@ body {
     opacity: 0;
 }
 
-.menu:hover .dropdown {
+.menu.active .dropdown {
     visibility: visible;
     opacity: 1;
 }
