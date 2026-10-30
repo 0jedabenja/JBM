@@ -33,11 +33,12 @@ function obtener_movimientos_turno($conexion, $idTurno) {
             ep.nombre AS estado
         FROM Pedido p 
         LEFT JOIN (
-            SELECT id_pedido, id_mp, ROW_NUMBER() OVER (PARTITION BY id_pedido ORDER BY fecha_hora) as rn 
-            FROM Pago_pedido
-        ) pp ON pp.id_pedido = p.id_pedido AND pp.rn = 1
-        LEFT JOIN Metodo_pago mp ON mp.id_mp = pp.id_mp
-        LEFT JOIN Mesa m ON m.id_mesa = p.id_mesa 
+            SELECT pp2.id_pedido, GROUP_CONCAT(DISTINCT mp2.descripcion ORDER BY pp2.id_pago SEPARATOR ' + ') AS descripcion
+            FROM Pago_pedido pp2
+            INNER JOIN Metodo_pago mp2 ON mp2.id_mp = pp2.id_mp
+            GROUP BY pp2.id_pedido
+        ) mp ON mp.id_pedido = p.id_pedido
+        LEFT JOIN Mesa m ON m.id_mesa = p.id_mesa
         INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado 
         WHERE p.id_turno = ? AND (LOWER(ep.nombre) = 'listo' OR p.cobrado = TRUE) 
         ORDER BY CASE WHEN p.cobrado = FALSE AND LOWER(ep.nombre) = 'listo' THEN 0 WHEN p.cobrado = TRUE THEN 1 ELSE 2 END, p.fecha_hora_creacion DESC
