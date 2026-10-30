@@ -50,6 +50,7 @@ $puedeCocina = in_array($rolActual, array("administrador", "cocina"), true);
         </header>
         <div class="extras-busqueda"><input id="buscarExtra" type="search" placeholder="Filtrar productos" aria-label="Filtrar productos" autocomplete="off"></div>
         <div id="menuExtras" class="extras-lista"></div>
+        <label class="pedido-forzar-stock extras-forzar"><input id="forzarStockExtras" type="checkbox"><span><strong>Forzar aunque falte stock</strong><small>Permite elegir productos sin insumos suficientes; el stock puede quedar negativo.</small></span></label>
         <p id="mensajeExtras" class="mensaje" role="status"></p>
         <footer class="extras-actions"><span id="resumenExtras" class="extras-resumen">Sin productos seleccionados</span><button id="cerrarExtras" class="secondary" type="button">Cancelar</button><button id="guardarExtras" type="button">Agregar al pedido</button></footer>
     </dialog>
@@ -86,6 +87,14 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("buscarCliente").addEventListener("input", buscarClientes);
         document.getElementById("resultadosClientes").addEventListener("click", seleccionarCliente);
         document.getElementById("buscarExtra").addEventListener("input", renderMenuExtras);
+        document.getElementById("forzarStockExtras").addEventListener("change", () => {
+            if (!extrasForzado()) {
+                Object.keys(cantidadesExtras).forEach(id => {
+                    if (Number(productosDisponibles.find(p => Number(p.id_producto) === Number(id))?.disponible) === 0) delete cantidadesExtras[id];
+                });
+            }
+            renderMenuExtras();
+        });
         document.getElementById("menuExtras").addEventListener("click", cambiarCantidadExtra);
         document.getElementById("menuExtras").addEventListener("keydown", evento => {
             if (
@@ -128,7 +137,7 @@ async function cargarMesasLimpieza() {
             <article class="mesa-pendiente-limpieza">
                 <h3>Mesa ${escapeHTML(mesa.numero)}</h3>
                 <button class="boton-accion-pedido" type="button" data-limpiar-mesa="${Number(mesa.id_mesa)}">Marcar limpia</button>
-            </article>`).join("") : '<p class="mensaje">No hay mesas pendientes de limpieza.</p>';
+            </article>`).join("") : '<p class="mensaje-vacio">No hay mesas pendientes de limpieza.</p>';
         mensaje.textContent = mesas.length ? "Tocá «Marcar limpia» cuando termines de limpiar la mesa." : "";
     } catch (error) {
         mensaje.textContent = error.message;
@@ -176,8 +185,9 @@ function renderMenuPedido() {
     menu.innerHTML = filtrados.length
         ? renderProductosAgrupados(filtrados, producto => {
             const cantidad = carrito.find(linea => linea.id_producto === Number(producto.id_producto))?.cantidad || 0;
-            const disponible = Number(producto.disponible) !== 0;
-            return `<article class="producto-card ${disponible ? "" : "producto-sin-insumos"}${cantidad > 0 ? " elegido" : ""}" data-producto="${Number(producto.id_producto)}" role="button" tabindex="${disponible ? "0" : "-1"}" aria-label="Agregar ${escapeHTML(producto.nombre)}"><h4>${escapeHTML(producto.nombre)}</h4><p>$ ${escapeHTML(producto.precio)}${disponible ? "" : " · Insumos insuficientes"}</p><div class="controles-cantidad"><button type="button" class="boton-producto boton-restar" data-cambio="-1" data-id="${Number(producto.id_producto)}" aria-label="Quitar ${escapeHTML(producto.nombre)}" ${cantidad ? "" : "disabled"}>−</button><span data-cantidad="${Number(producto.id_producto)}">${cantidad}</span></div></article>`;
+            const hayInsumos = Number(producto.disponible) !== 0;
+            const disponible = hayInsumos || stockForzado();
+            return `<article class="producto-card ${hayInsumos ? "" : "producto-sin-insumos"}${cantidad > 0 ? " elegido" : ""}" data-producto="${Number(producto.id_producto)}" role="button" tabindex="${disponible ? "0" : "-1"}" aria-label="Agregar ${escapeHTML(producto.nombre)}"><h4>${escapeHTML(producto.nombre)}</h4><div class="extra-footer"><span class="extra-precio">$ ${escapeHTML(producto.precio)}${hayInsumos ? "" : " · Insumos insuficientes"}</span><div class="controles-cantidad"><button type="button" class="boton-producto boton-restar" data-cambio="-1" data-id="${Number(producto.id_producto)}" aria-label="Quitar ${escapeHTML(producto.nombre)}" ${cantidad ? "" : "disabled"}>−</button><span class="extra-cantidad" data-cantidad="${Number(producto.id_producto)}">${cantidad > 0 ? cantidad : "+"}</span></div></div></article>`;
         })
         : '<p class="mensaje">No se encontraron productos.</p>';
     menu.querySelectorAll(".boton-restar").forEach(boton => boton.addEventListener("click", evento => {
@@ -189,7 +199,7 @@ function renderMenuPedido() {
         const agregarDesdeTarjeta = evento => {
             if (evento.target.closest("button")) return;
             const producto = productosDisponibles.find(item => Number(item.id_producto) === Number(tarjeta.dataset.producto));
-            if (!producto || Number(producto.disponible) === 0) return;
+            if (!producto || (Number(producto.disponible) === 0 && !stockForzado())) return;
             cambiarCantidad(producto, 1);
         };
         tarjeta.addEventListener("click", agregarDesdeTarjeta);
@@ -199,7 +209,19 @@ function renderMenuPedido() {
     });
     aplicarEstadoBotonesMenu();
 }
-document.addEventListener("DOMContentLoaded", () => document.getElementById("buscarProductoPedido")?.addEventListener("input", renderMenuPedido));
+function stockForzado() {
+    return Boolean(document.getElementById("forzarStockPedido")?.checked);
+}
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("buscarProductoPedido")?.addEventListener("input", renderMenuPedido);
+    document.getElementById("forzarStockPedido")?.addEventListener("change", () => {
+        if (!stockForzado()) {
+            carrito = carrito.filter(linea => Number(productosDisponibles.find(p => Number(p.id_producto) === linea.id_producto)?.disponible) !== 0);
+            renderCarrito();
+        }
+        renderMenuPedido();
+    });
+});
 function renderProductosAgrupados(productos, renderProducto) {
     const ordenCategorias = { bebidas: 0, postres: 1, parrilla: 2, comidas: 2 };
     const categorias = new Map();
@@ -271,6 +293,7 @@ async function abrirExtras(idPedido) {
     document.getElementById("tituloExtras").textContent = `Pedido #${pedidoExtrasActual}`;
     document.getElementById("buscarExtra").value = "";
     document.getElementById("mensajeExtras").textContent = "";
+    document.getElementById("forzarStockExtras").checked = false;
     try {
         if (!productosDisponibles.length) await cargarMenu();
         if (!productosDisponibles.length) throw new Error("No se pudieron cargar los productos.");
@@ -290,15 +313,19 @@ function renderMenuExtras() {
     menu.innerHTML = productos.length ? renderProductosAgrupados(productos, producto => {
         const id = Number(producto.id_producto);
         const cantidad = Number(cantidadesExtras[id] || 0);
+        const hayInsumos = Number(producto.disponible) !== 0;
         const botonRestar = cantidad > 0
             ? `<button type="button" data-extra-restar="${id}" aria-label="Quitar ${escapeHTML(producto.nombre)}">−</button>`
             : "";
-        return `<article class="producto-extra${cantidad > 0 ? " elegido" : ""}" data-extra-producto="${id}" role="button" tabindex="0" aria-label="Agregar ${escapeHTML(producto.nombre)}"><div class="extra-nombre">${escapeHTML(producto.nombre)}</div><div class="extra-footer"><span class="extra-precio">$ ${escapeHTML(producto.precio)}</span><div class="controles-cantidad">${botonRestar}<span class="extra-cantidad">${cantidad > 0 ? cantidad : "+"}</span></div></div></article>`;
+        return `<article class="producto-extra${hayInsumos ? "" : " producto-sin-insumos"}${cantidad > 0 ? " elegido" : ""}" data-extra-producto="${id}" role="button" tabindex="${hayInsumos || extrasForzado() ? "0" : "-1"}" aria-label="Agregar ${escapeHTML(producto.nombre)}"><div class="extra-nombre">${escapeHTML(producto.nombre)}</div><div class="extra-footer"><span class="extra-precio">$ ${escapeHTML(producto.precio)}${hayInsumos ? "" : " · Insumos insuficientes"}</span><div class="controles-cantidad">${botonRestar}<span class="extra-cantidad">${cantidad > 0 ? cantidad : "+"}</span></div></div></article>`;
     }) : '<p class="extras-vacio">No se encontraron productos.</p>';
     const totalUnidades = Object.values(cantidadesExtras).reduce((suma, n) => suma + Number(n || 0), 0);
     document.getElementById("resumenExtras").textContent = totalUnidades
         ? ` ${totalUnidades === 1 ? "producto seleccionado" : "productos seleccionados"}`
         : "Sin productos seleccionados";
+}
+function extrasForzado() {
+    return Boolean(document.getElementById("forzarStockExtras")?.checked);
 }
 function cambiarCantidadExtra(evento) {
     const botonRestar = evento.target.closest("button[data-extra-restar]");
@@ -308,6 +335,8 @@ function cambiarCantidadExtra(evento) {
         cantidadesExtras[id] = Math.max(0, Number(cantidadesExtras[id] || 0) - 1);
     } else if (tarjeta) {
         const id = Number(tarjeta.dataset.extraProducto);
+        const producto = productosDisponibles.find(item => Number(item.id_producto) === id);
+        if (Number(producto?.disponible) === 0 && !extrasForzado()) return;
         cantidadesExtras[id] = Number(cantidadesExtras[id] || 0) + 1;
     } else {
         return;
@@ -325,8 +354,8 @@ async function guardarProductosExtras() {
     const boton = document.getElementById("guardarExtras");
     boton.disabled = true;
     try {
-        let respuesta = await enviarProductosExtras(productos, false);
-        if (respuesta.status === 409 && respuesta.datos.faltantes && window.confirm(`${respuesta.datos.error}\n¿Quieres continuar igualmente?`)) {
+        let respuesta = await enviarProductosExtras(productos, extrasForzado());
+        if (!extrasForzado() && respuesta.status === 409 && respuesta.datos.faltantes && window.confirm(`${respuesta.datos.error}\n¿Quieres continuar igualmente?`)) {
             respuesta = await enviarProductosExtras(productos, true);
         }
         if (!respuesta.ok) throw new Error(respuesta.datos.error || "No se pudieron agregar los productos.");
@@ -419,8 +448,8 @@ function cambiarCantidad(producto, cambio) {
 function renderCarrito() {
     const contenedor = document.getElementById("carrito");
     actualizarContadoresMenu();
-    if (!carrito.length) { contenedor.textContent = "No hay productos agregados."; return; }
-    contenedor.innerHTML = carrito.map(p => `<div class="linea-carrito"><span>${escapeHTML(p.nombre)}</span><div class="controles-cantidad"><button type="button" class="boton-carrito" data-id="${p.id_producto}" data-cambio="-1" aria-label="Quitar uno de ${escapeHTML(p.nombre)}">−</button><span>${p.cantidad}</span><button type="button" class="boton-carrito" data-id="${p.id_producto}" data-cambio="1" aria-label="Agregar uno de ${escapeHTML(p.nombre)}">+</button></div><strong>$ ${(p.precio * p.cantidad).toFixed(2)}</strong></div>`).join("");
+    if (!carrito.length) { contenedor.innerHTML = '<p class="mensaje-vacio">No hay productos agregados.</p>'; return; }
+    contenedor.innerHTML = carrito.map(p => `<div class="linea-carrito"><span class="carrito-nombre">${escapeHTML(p.nombre)} <b class="carrito-cantidad">× ${p.cantidad}</b></span><div class="controles-cantidad"><button type="button" class="boton-carrito" data-id="${p.id_producto}" data-cambio="-1" aria-label="Quitar uno de ${escapeHTML(p.nombre)}">−</button><button type="button" class="boton-carrito" data-id="${p.id_producto}" data-cambio="1" aria-label="Agregar uno de ${escapeHTML(p.nombre)}">+</button></div><strong>$ ${(p.precio * p.cantidad).toFixed(2)}</strong></div>`).join("");
     contenedor.querySelectorAll(".boton-carrito").forEach(boton => boton.addEventListener("click", () => {
         const producto = carrito.find(p => p.id_producto === Number(boton.dataset.id));
         if (producto) cambiarCantidad(producto, Number(boton.dataset.cambio));
@@ -429,14 +458,15 @@ function renderCarrito() {
 function actualizarContadoresMenu() {
     document.querySelectorAll("#menuProductos [data-cantidad]").forEach(contador => {
         const producto = carrito.find(linea => linea.id_producto === Number(contador.dataset.cantidad));
-        contador.textContent = producto ? producto.cantidad : "0";
+        contador.textContent = producto ? producto.cantidad : "+";
+        contador.closest(".producto-card")?.classList.toggle("elegido", Boolean(producto));
     });
     aplicarEstadoBotonesMenu();
 }
 function aplicarEstadoBotonesMenu() {
     document.querySelectorAll("#menuProductos .boton-producto").forEach(boton => {
         const contador = document.querySelector(`#menuProductos [data-cantidad="${boton.dataset.id}"]`);
-        const cantidad = Number(contador?.textContent || 0);
+        const cantidad = Number(contador?.textContent) || 0;
         const bloqueado = cantidad === 0;
         boton.disabled = bloqueado;
         boton.classList.toggle("bloqueado", bloqueado);
@@ -509,7 +539,7 @@ async function cargarEstadoCajaPedido() {
         cajaAbierta = Boolean(datos.abierta);
         const aviso = document.getElementById("estadoCajaPedido");
         aviso.textContent = cajaAbierta ? "Caja abierta. Se pueden crear pedidos." : "Caja cerrada. Abre una sesión de caja para crear pedidos.";
-        aviso.className = cajaAbierta ? "mensaje exito" : "advertencia-caja";
+        aviso.className = cajaAbierta ? "advertencia-caja caja-abierta" : "advertencia-caja";
         document.querySelectorAll("#formPedido button[type=submit]").forEach(boton => {
             boton.disabled = !cajaAbierta;
             boton.classList.toggle("bloqueado", !cajaAbierta);
@@ -578,7 +608,7 @@ function renderPendientes(pedidos) {
         const avisoBebidas = estado === "comiendo" && bebidasPendientes ? '<p class="aviso-bebidas">Marca todas las bebidas como pickeadas para poder cerrar el pedido.</p>' : "";
         const acciones = `<div class="pedido-pendiente-actions">${estado !== "listo" ? `<button type="button" class="boton-accion-pedido" data-agregar="${Number(p.id_pedido)}">Agregar productos</button>` : ""}${estado === "comiendo" ? `<button type="button" class="boton-accion-pedido" data-cerrar="${Number(p.id_pedido)}" ${bebidasPendientes ? "disabled" : ""}>Cerrar pedido</button>` : ""}</div>`;
         return `<article class="pedido-panel"><h3>Pedido #${Number(p.id_pedido)} <span class="estado-pedido">${escapeHTML(p.estado)}</span></h3><p>Mesa: ${escapeHTML(p.mesa || "-")} | Creado: ${escapeHTML(p.fecha_hora_creacion)}</p>${descripcion}<ul class="pedido-productos">${productos}</ul>${avisoBebidas}${acciones}</article>`;
-    }).join("") : "No hay pedidos pendientes.";
+    }).join("") : '<p class="mensaje-vacio">No hay pedidos pendientes.</p>';
 }
 function manejarAccionesPendientes(evento) {
     const botonPickear = evento.target.closest("button[data-pickear-bebida]");
@@ -653,7 +683,7 @@ function renderCocina(pedidos) {
         const completos = p.productos.every(x => Number(x.completado) === 1);
         const productos = p.productos.map(x => `<button type="button" class="producto-cocina ${Number(x.completado) ? "completo" : ""}" data-completar="${Number(p.id_pedido)}" data-producto="${Number(x.id_producto)}" ${Number(x.completado) ? "disabled" : ""}><span>${escapeHTML(x.nombre)} × ${Number(x.cantidad)}</span><strong>${Number(x.completado) ? "Completo" : "Tocar para completar"}</strong></button>`).join("");
         return `<article class="cocina-pedido"><h3>Pedido #${Number(p.id_pedido)}</h3><p>Mesa: ${escapeHTML(p.mesa || "-")} | <span class="reloj" data-inicio="${escapeHTML(p.fecha_hora_creacion)}"></span></p>${productos}<button type="button" class="boton-accion-pedido" data-listo="${Number(p.id_pedido)}" ${completos ? "" : "disabled"}>Marcar como listo</button></article>`;
-    }).join("") : "No hay pedidos en cocina.";
+    }).join("") : '<p class="mensaje-vacio">No hay pedidos en cocina.</p>';
     actualizarRelojes();
 }
 function manejarAccionesCocina(evento) {

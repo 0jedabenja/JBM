@@ -178,6 +178,21 @@ CREATE TABLE Pedido (
     FOREIGN KEY (id_mp) REFERENCES Metodo_pago(id_mp) ON UPDATE CASCADE
 );
 
+CREATE TABLE Pago_pedido (
+    id_pago INT AUTO_INCREMENT,
+    id_pedido INT NOT NULL,
+    id_mp INT NOT NULL,
+    monto DECIMAL(10,2) NOT NULL,
+    fecha_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_turno INT NOT NULL,
+    id_empleado INT NOT NULL,
+    PRIMARY KEY (id_pago),
+    FOREIGN KEY (id_pedido) REFERENCES Pedido(id_pedido) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_mp) REFERENCES Metodo_pago(id_mp) ON UPDATE CASCADE,
+    FOREIGN KEY (id_turno) REFERENCES Turno_caja(id_turno) ON UPDATE CASCADE,
+    FOREIGN KEY (id_empleado) REFERENCES Empleado(id_empleado) ON UPDATE CASCADE
+);
+
 CREATE TABLE Incluye (
     id_compra INT,
     id_insumo INT,
