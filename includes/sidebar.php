@@ -44,7 +44,6 @@ $rutaFavicon = in_array($faviconSeccion, array("favicon.svg", "favicon-sistema.s
     ? $rutaBase . "assets/img/" . $faviconSeccion
     : $rutaBase . "assets/img/sidebar/" . $faviconSeccion;
 ?>
-<link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/css/apple-design.css">
 <link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/css/sidebar.css">
 <link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/css/theme.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/theme.css'); ?>">
 <link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/css/sin-seleccion.css">
