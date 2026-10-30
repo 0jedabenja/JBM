@@ -29,12 +29,25 @@ function obtener_movimientos_turno($conexion, $idTurno) {
         $movimientos[] = $movimiento;
         if ((int) $movimiento["cobrado"] === 1) {
             $totalCobrado += (float) $movimiento["monto_total"];
-            if (strtolower($movimiento["metodo_pago"]) === "efectivo") {
-                $efectivoCobrado += (float) $movimiento["monto_total"];
-            }
         }
     }
     mysqli_stmt_close($stmt);
+    
+    // Calcular efectivo cobrado desde Pago_pedido usando JOIN con Metodo_pago
+    $stmtEfectivo = mysqli_prepare($conexion, "
+        SELECT COALESCE(SUM(pp.monto), 0) AS efectivo_total
+        FROM Pago_pedido pp
+        INNER JOIN Metodo_pago mp ON pp.id_mp = mp.id_mp
+        WHERE pp.id_turno = ? AND LOWER(mp.descripcion) = 'efectivo'
+    ");
+    if ($stmtEfectivo) {
+        mysqli_stmt_bind_param($stmtEfectivo, "i", $idTurno);
+        mysqli_stmt_execute($stmtEfectivo);
+        $resultEfectivo = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtEfectivo));
+        mysqli_stmt_close($stmtEfectivo);
+        $efectivoCobrado = (float)($resultEfectivo["efectivo_total"] ?? 0);
+    }
+    
     return array("movimientos" => $movimientos, "total_cobrado" => $totalCobrado, "efectivo_cobrado" => $efectivoCobrado);
 }
 
