@@ -34,9 +34,13 @@ verificar_permiso("productos");
             <?php include_once 'includes/profile.php'; ?>
         </div>
         <main class="modulo-content">
-            <h2>Listado de Productos</h2>
-            <div class="modulo-actions"><a href="altas/alta_producto.php" title="Cargar producto">+</a></div>
-            <table class="modulo-table">
+            <header class="page-heading page-heading--actions">
+                <div>
+                    <h1>Listado de Productos</h1>
+                    <p>Administrá el menú, los precios y la disponibilidad de los productos.</p>
+                </div>
+                <div class="modulo-actions"><a href="altas/alta_producto.php" title="Cargar producto">+</a></div>
+            </header>            <table class="modulo-table">
                 <thead>
                     <tr>
                         <th>ID</th>

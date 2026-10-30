@@ -24,9 +24,11 @@ $rutaBase = '';
         </div>
 
         <main class="alta-content">
-            <section class="alta-panel mi-cuenta-panel">
+            <header class="page-heading">
                 <h1>Mi cuenta</h1>
                 <p class="mi-cuenta-descripcion">Modificá los datos asociados a tu usuario.</p>
+            </header>
+            <section class="alta-panel mi-cuenta-panel">
                 <p id="mensajeCuenta" class="alta-success" role="status" aria-live="polite" data-testid="mensaje-cuenta"></p>
 
                 <form id="formCuenta" class="alta-form mi-cuenta-form" data-testid="form-cuenta">

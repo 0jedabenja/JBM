@@ -33,9 +33,13 @@ verificar_permiso("empleados");
             <?php include_once 'includes/profile.php'; ?>
         </div>
         <main class="modulo-content">
-            <h2>Listado de Empleados</h2>
-            <div class="modulo-actions"><a href="altas/alta_empleado.php" title="Cargar empleado">+</a></div>
-            <table class="modulo-table"><thead><tr><th>ID</th><th>Nombre</th><th>Apellido</th><th>Usuario</th><th>Rol</th><th>Acciones</th></tr></thead>
+            <header class="page-heading page-heading--actions">
+                <div>
+                    <h1>Listado de Empleados</h1>
+                    <p>Gestioná los usuarios del sistema y sus roles.</p>
+                </div>
+                <div class="modulo-actions"><a href="altas/alta_empleado.php" title="Cargar empleado">+</a></div>
+            </header>            <table class="modulo-table"><thead><tr><th>ID</th><th>Nombre</th><th>Apellido</th><th>Usuario</th><th>Rol</th><th>Acciones</th></tr></thead>
                 <tbody id="tablaEmpleados"><tr><td colspan="6" class="texto-centrado">No se encontraron empleados.</td></tr></tbody>
             </table>
             <nav class="pagination" aria-label="Paginación de empleados"><button class="button button--secondary" type="button" id="btnAnterior">Anterior</button><span id="infoPagina">Página 1</span><button class="button button--secondary" type="button" id="btnSiguiente">Siguiente</button></nav>

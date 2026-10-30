@@ -34,9 +34,13 @@ verificar_permiso("insumos");
             <?php include_once 'includes/profile.php'; ?>
         </div>
         <main class="modulo-content">
-            <h2>Listado de Insumos</h2>
-            <div class="modulo-actions"><a class="accion-stock" href="ajustes_stock.php" title="Registrar pérdida, avería o consumo del personal">Registrar salida de stock</a><a href="altas/alta_insumo.php" title="Cargar insumo">+</a></div>
-            <table class="modulo-table"><thead><tr><th>ID</th><th>Nombre</th><th>Unidad de Medida</th><th>Cant. Actual</th><th>Stock Mínimo</th><th>Costo</th><th>Acciones</th></tr></thead>
+            <header class="page-heading page-heading--actions">
+                <div>
+                    <h1>Listado de Insumos</h1>
+                    <p>Controlá el stock, el costo y las unidades de cada insumo.</p>
+                </div>
+                <div class="modulo-actions"><a class="accion-stock" href="ajustes_stock.php" title="Registrar pérdida, avería o consumo del personal">Registrar salida de stock</a><a href="altas/alta_insumo.php" title="Cargar insumo">+</a></div>
+            </header>            <table class="modulo-table"><thead><tr><th>ID</th><th>Nombre</th><th>Unidad de Medida</th><th>Cant. Actual</th><th>Stock Mínimo</th><th>Costo</th><th>Acciones</th></tr></thead>
                 <tbody id="tablaInsumos"><tr><td colspan="7" class="texto-centrado">No se encontraron insumos.</td></tr></tbody>
             </table>
             <nav class="pagination" aria-label="Paginación de insumos"><button class="button button--secondary" type="button" id="btnAnterior">Anterior</button><span id="infoPagina">Página 1</span><button class="button button--secondary" type="button" id="btnSiguiente">Siguiente</button></nav>

@@ -21,7 +21,10 @@ $puedeCocina = in_array($rolActual, array("administrador", "cocina"), true);
     <div class="main">
         <div class="topbar"><div class="toggle"><img src="assets/img/sidebar/dark-menu.svg" alt="Abrir menú"></div><?php include_once 'includes/profile.php'; ?></div>
         <main class="pedidos-content">
-            <h1>Pedidos</h1>
+            <header class="page-heading">
+                <h1>Pedidos</h1>
+                <p>Creá pedidos, seguí los pendientes, las mesas para limpiar y la cocina.</p>
+            </header>
             <nav class="pedido-tabs" aria-label="Secciones de pedidos">
                 <?php if ($puedeCrear): ?><button type="button" data-vista="creacion">Crear pedido</button><?php endif; ?>
                 <?php if ($puedeCrear): ?><button type="button" data-vista="pendientes">Pendientes</button><?php endif; ?>

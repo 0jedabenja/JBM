@@ -40,8 +40,10 @@ $nombre = $fila["nombre"];
             <?php include_once 'includes/profile.php'; ?>
         </div>
         <main class="modulo-content">
-            <h2>Movimientos: <?php echo htmlspecialchars($nombre, ENT_QUOTES, "UTF-8"); ?></h2>
-            <p class="descripcion"><?php echo $tipo === "insumo" ? "Los movimientos se muestran con signo: negativo resta y positivo suma." : "Se muestran las unidades vendidas en pedidos."; ?></p>
+            <header class="page-heading">
+                <h1>Movimientos: <?php echo htmlspecialchars($nombre, ENT_QUOTES, "UTF-8"); ?></h1>
+                <p class="descripcion"><?php echo $tipo === "insumo" ? "Los movimientos se muestran con signo: negativo resta y positivo suma." : "Se muestran las unidades vendidas en pedidos."; ?></p>
+            </header>
             <form id="filtrosMovimientos" class="filtros-movimientos">
                 <label for="filtroTipo">Tipo de movimiento
                     <select id="filtroTipo">

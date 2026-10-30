@@ -51,12 +51,15 @@ verificar_permiso("clientes");
         </div>
 
         <main class="clientes-content">
-            <h2>Listado de Clientes</h2>
-
-            <div class="clientes-actions">
+            <header class="page-heading page-heading--actions">
+                <div>
+                    <h1>Listado de Clientes</h1>
+                    <p>Consultá, buscá y administrá los clientes registrados.</p>
+                </div>
+                <div class="clientes-actions">
                 <a href="altas/alta_cliente.php" title="Cargar cliente">+</a>
             </div>
-
+            </header>
             <table class="clientes-table">
                 <thead>
                     <tr>

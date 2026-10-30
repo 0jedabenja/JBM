@@ -54,7 +54,6 @@ function obtener_movimientos_turno($conexion, $idTurno) {
     }
     mysqli_stmt_close($stmt);
     
-    // Calcular efectivo cobrado desde Pago_pedido usando JOIN con Metodo_pago
     $stmtEfectivo = mysqli_prepare($conexion, "
         SELECT COALESCE(SUM(pp.monto), 0) AS efectivo_total
         FROM Pago_pedido pp
@@ -322,7 +321,7 @@ if ($accion === "cobrar") {
     $idDescuento = $entrada["id_descuento"] ?? null;
     $porcentajeDescuento = $entrada["porcentaje_descuento"] ?? 0;
     $montoDescuento = $entrada["monto_descuento"] ?? 0;
-    mysqli_stmt_bind_param($stmt, "iddi", $idDescuento, $totalCobro, $porcentajeDescuento, $montoDescuento, $idPedido);
+    mysqli_stmt_bind_param($stmt, "idddi", $idDescuento, $totalCobro, $porcentajeDescuento, $montoDescuento, $idPedido);
     if (!mysqli_stmt_execute($stmt)) {
         $detalleError = mysqli_stmt_error($stmt);
         mysqli_stmt_close($stmt);

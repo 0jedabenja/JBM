@@ -38,7 +38,9 @@ $tokenCsrf = obtener_token_csrf();
                     <div class="caja-metric"><span>Tiempo abierta</span><strong id="tiempoCaja">00:00:00</strong></div>
                 </div>
                 <div id="avisoTurnoLargo" class="caja-warning" hidden>Esta sesión supera las 6 horas.</div>
-                <div class="caja-section-heading"><h2>Movimientos del turno</h2></div>
+                <div class="caja-section-heading"><h2>Pedidos a cobrar</h2></div>
+                <div class="caja-table-wrap"><table class="caja-table"><thead><tr><th>Pedido</th><th>Hora</th><th>Importe</th><th>Medio de pago</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="pedidosPorCobrar"></tbody></table></div>
+                <div class="caja-section-heading"><h2>Cobrados en el turno</h2></div>
                 <div class="caja-table-wrap"><table class="caja-table"><thead><tr><th>Pedido</th><th>Hora</th><th>Importe</th><th>Medio de pago</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="movimientosCaja"></tbody></table></div>
             </div>
         </section>
@@ -97,6 +99,7 @@ function renderizarTurno(datos) {
     if (!sesionAbierta) {
         document.getElementById("resumenTurno").textContent = "No hay un turno abierto. Abre caja para habilitar nuevos pedidos.";
         document.getElementById("estadoTurno").innerHTML = '<div class="caja-current-state"><p>La caja está cerrada. El monto inicial se solicitará al abrir el próximo turno.</p></div>';
+        document.getElementById("pedidosPorCobrar").innerHTML = '<tr><td class="caja-empty" colspan="6">No hay movimientos en un turno abierto.</td></tr>';
         document.getElementById("movimientosCaja").innerHTML = '<tr><td class="caja-empty" colspan="6">No hay movimientos en un turno abierto.</td></tr>';
         return;
     }
@@ -117,14 +120,17 @@ function renderizarTurno(datos) {
         });
     }
     pedidosListosCajaAnteriores = pedidosListos;
-    renderizarMovimientos(movimientos, "movimientosCaja", true);
+    const porCobrar = movimientos.filter(movimiento => Number(movimiento.cobrado) !== 1);
+    const cobrados = movimientos.filter(movimiento => Number(movimiento.cobrado) === 1);
+    renderizarMovimientos(porCobrar, "pedidosPorCobrar", true, "No hay pedidos pendientes de cobro.");
+    renderizarMovimientos(cobrados, "movimientosCaja", true, "Todavía no se cobró ningún pedido en este turno.");
     actualizarTiempoCaja();
 }
 
-function renderizarMovimientos(movimientos, idContenedor, permitirCobro) {
+function renderizarMovimientos(movimientos, idContenedor, permitirCobro, mensajeVacio = "No hay movimientos registrados.") {
     const contenedor = document.getElementById(idContenedor);
     if (!movimientos.length) {
-        contenedor.innerHTML = `<tr><td class="caja-empty" colspan="${permitirCobro ? 5 : 5}">No hay movimientos registrados.</td></tr>`;
+        contenedor.innerHTML = `<tr><td class="caja-empty" colspan="${permitirCobro ? 6 : 5}">${escapeHTML(mensajeVacio)}</td></tr>`;
         return;
     }
     contenedor.innerHTML = movimientos.map(movimiento => {
@@ -218,17 +224,38 @@ function mostrarMensaje(texto, error) { const elemento = document.getElementById
 
 let pagosActuales = [];
 
+function esMetodoEfectivo(metodo) {
+    return metodo && String(metodo.descripcion).trim().toLowerCase() === "efectivo";
+}
+
+function obtenerMetodosDisponibles(indiceActual, idMpSeleccionado = 0) {
+    const usados = pagosActuales
+        .map((pago, indice) => indice === indiceActual ? null : Number(pago.id_mp))
+        .filter((idMp) => Number.isFinite(idMp) && idMp > 0);
+
+    return metodosPago.filter((metodo) => {
+        const idMp = Number(metodo.id_mp);
+        if (!Number.isFinite(idMp) || idMp <= 0) return false;
+        if (idMp === Number(idMpSeleccionado)) return true;
+        return !usados.includes(idMp);
+    });
+}
+
 function construirFilaPago(indice, idMp, monto) {
     const metodo = metodosPago.find(m => Number(m.id_mp) === Number(idMp));
-    const esEfectivo = metodo && String(metodo.descripcion).toLowerCase() === "efectivo";
+    const esEfectivo = esMetodoEfectivo(metodo);
     const filaId = `pago-${indice}`;
+    const metodosDisponibles = obtenerMetodosDisponibles(indice, idMp);
+    const opciones = metodosDisponibles.length
+        ? metodosDisponibles.map(m => `<option value="${Number(m.id_mp)}" ${Number(m.id_mp) === Number(idMp) ? "selected" : ""}>${escapeHTML(m.descripcion)}</option>`).join("")
+        : `<option value="" selected>No hay métodos disponibles</option>`;
     
     let html = `<div id="${filaId}" style="display:grid;grid-template-columns:1fr 100px 40px;gap:8px;align-items:end;padding:8px;background:var(--color-bg-secondary);border-radius:8px">
         <div>
             <label for="${filaId}-metodo">Método</label>
             <select class="pago-metodo" data-indice="${indice}" id="${filaId}-metodo">
                 <option value="">Seleccionar...</option>
-                ${metodosPago.map(m => `<option value="${Number(m.id_mp)}" ${Number(m.id_mp) === Number(idMp) ? "selected" : ""}>${escapeHTML(m.descripcion)}</option>`).join("")}
+                ${opciones}
             </select>
         </div>
         <div>
@@ -238,7 +265,7 @@ function construirFilaPago(indice, idMp, monto) {
         <button type="button" class="caja-button secondary pago-eliminar" data-indice="${indice}" style="padding:8px 12px;height:40px" aria-label="Eliminar pago">−</button>
     </div>`;
     
-    if (esEfectivo && monto > 0) {
+    if (esEfectivo && monto > 0 && pagosActuales.length === 1) {
         html += `<div id="${filaId}-efectivo" style="display:grid;grid-template-columns:1fr 100px;gap:8px;padding:8px;background:var(--color-secondary,#e8f0f8);border-radius:8px;margin-top:4px">
             <div>
                 <label for="${filaId}-recibido">Efectivo recibido</label>
@@ -258,8 +285,23 @@ function actualizarPagosUI() {
     const contenedor = document.getElementById("pagosMultiples");
     contenedor.innerHTML = pagosActuales.map((pago, indice) => construirFilaPago(indice, pago.id_mp, pago.monto)).join("");
     
-    document.querySelectorAll(".pago-metodo, .pago-monto, .pago-efectivo-recibido").forEach(elem => {
-        elem.addEventListener("change", actualizarResumenCobro);
+    const botonAgregar = document.getElementById("agregarMetodoPago");
+    const metodosDisponibles = obtenerMetodosDisponibles(pagosActuales.length, 0);
+    botonAgregar.disabled = metodosDisponibles.length === 0;
+
+    document.querySelectorAll(".pago-metodo").forEach(select => {
+        select.addEventListener("change", () => {
+            const indice = Number(select.dataset.indice);
+            pagosActuales[indice].id_mp = Number(select.value);
+            actualizarPagosUI();
+        });
+    });
+    document.querySelectorAll(".pago-monto").forEach(input => {
+        input.addEventListener("input", () => {
+            pagosActuales[Number(input.dataset.indice)].monto = Number(input.value || 0);
+        });
+    });
+    document.querySelectorAll(".pago-monto, .pago-efectivo-recibido").forEach(elem => {
         elem.addEventListener("input", actualizarResumenCobro);
     });
     document.querySelectorAll(".pago-eliminar").forEach(btn => {
@@ -287,7 +329,7 @@ function obtenerPagosActuales() {
             const metodo = metodosPago.find(m => Number(m.id_mp) === Number(idMp));
             const esEfectivo = metodo && String(metodo.descripcion).toLowerCase() === "efectivo";
             
-            if (esEfectivo) {
+            if (esEfectivo && pagosActuales.length === 1) {
                 const inputRecibido = document.querySelector(`.pago-efectivo-recibido[data-indice="${indice}"]`);
                 const recibido = Number(inputRecibido?.value || 0);
                 if (recibido < monto) {
@@ -329,7 +371,6 @@ function actualizarResumenCobro() {
     const sumaPagos = pagos.reduce((suma, pago) => suma + pago.monto, 0);
     const totalCobroEfectivo = Math.round(cobroEfectivoActual.total * 100) / 100;
     
-    // Actualizar vueltos para cada pago en efectivo
     document.querySelectorAll(".pago-metodo").forEach(selectMetodo => {
         const indice = Number(selectMetodo.dataset.indice);
         const idMp = Number(selectMetodo.value);
@@ -348,7 +389,6 @@ function actualizarResumenCobro() {
         }
     });
     
-    // Mostrar resumen
     const resumenDiv = document.getElementById("resumenPagos");
     let html = `<div style="background:var(--color-bg-secondary);padding:8px;border-radius:8px"><strong>Total a cobrar:</strong> ${moneda(totalCobroEfectivo)}<br/><strong>Total ingresado:</strong> ${moneda(sumaPagos)}`;
     
@@ -473,8 +513,10 @@ document.getElementById("tipoDescuento").addEventListener("change", actualizarRe
 document.getElementById("porcentajeDescuento").addEventListener("input", actualizarResumenCobro);
 document.getElementById("agregarMetodoPago").addEventListener("click", evento => {
     evento.preventDefault();
-    const indiceNuevo = Math.max(...pagosActuales.map((_, i) => i), -1) + 1;
-    pagosActuales.push({ id_mp: 0, monto: 0 });
+    const metodosDisponibles = obtenerMetodosDisponibles(pagosActuales.length, 0);
+    if (!metodosDisponibles.length) return;
+    const restante = Math.max(0, Math.round((cobroEfectivoActual.total - pagosActuales.reduce((s, p) => s + Number(p.monto || 0), 0)) * 100) / 100);
+    pagosActuales.push({ id_mp: Number(metodosDisponibles[0].id_mp), monto: restante });
     actualizarPagosUI();
 });
 document.querySelectorAll("dialog.caja-dialog").forEach(dialogo => dialogo.addEventListener("cancel", evento => { evento.preventDefault(); cerrarDialogo(dialogo.id); }));
@@ -484,7 +526,7 @@ document.addEventListener("click", async evento => {
     const botonCerrarDialogo = evento.target.closest("[data-cerrar-dialog]");
     if (botonDetalle) await verDetalle(Number(botonDetalle.dataset.detalle));
     if (botonCobrar) {
-        const idMetodoPago = Number(botonCobrar.dataset.metodoPago || metodosPago[0]?.id_mp || 1);
+        const idMetodoPagoInicial = Number(metodosPago.find(m => esMetodoEfectivo(m))?.id_mp || metodosPago[0]?.id_mp || 1);
         cobroEfectivoActual = {
             idPedido: Number(botonCobrar.dataset.cobrar),
             idCliente: Number(botonCobrar.dataset.cliente || 0),
@@ -493,7 +535,7 @@ document.addEventListener("click", async evento => {
             total: Math.round(Number(botonCobrar.dataset.total) * 100) / 100
         };
         
-        pagosActuales = [{ id_mp: idMetodoPago, monto: cobroEfectivoActual.total }];
+        pagosActuales = [{ id_mp: idMetodoPagoInicial, monto: cobroEfectivoActual.total }];
         
         document.getElementById("errorCobroEfectivo").textContent = "";
         document.getElementById("clienteCobroEfectivo").textContent = cobroEfectivoActual.idCliente > 1
