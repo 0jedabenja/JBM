@@ -8,8 +8,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $correo = strtolower(trim($_POST['correo'] ?? ''));
 
     if (filter_var($correo, FILTER_VALIDATE_EMAIL)) {
-        require_once __DIR__ . '/librerias/PHPMailer/src/Exception.php';
-        require_once __DIR__ . '/librerias/PHPMailer/src/PHPMailer.php';
         require_once __DIR__ . '/includes/conexionBD.php';
 
         $correo_remitente = 'contacto@lodetorres.shop';
@@ -77,19 +75,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $cuerpo_html .= '<p style="margin:28px 0 0;">Atentamente,<br><strong>El equipo de Lo de Torres</strong></p></td></tr>';
                                 $cuerpo_html .= '<tr><td style="padding:18px 36px;background-color:#f7f9fb;color:#7a8798;font-size:12px;line-height:1.5;">Este es un mensaje automático relacionado con la seguridad de tu cuenta. Por favor, no respondas a este correo.</td></tr></table></body></html>';
 
-                                try {
-                                    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
-                                    $mail->isMail();
-                                    $mail->CharSet = \PHPMailer\PHPMailer\PHPMailer::CHARSET_UTF8;
-                                    $mail->setFrom($correo_remitente, 'Lo de Torres');
-                                    $mail->addAddress($correo);
-                                    $mail->isHTML(true);
-                                    $mail->Subject = 'Restablecimiento de contraseña - Lo de Torres';
-                                    $mail->Body = $cuerpo_html;
-                                    $mail->AltBody = $cuerpo_texto;
-                                    $mail->send();
-                                } catch (\PHPMailer\PHPMailer\Exception $error) {
-                                    error_log('Recuperación de contraseña: PHPMailer no pudo enviar el mensaje: ' . $error->getMessage());
+                                $asunto = '=?UTF-8?B?' . base64_encode('Restablecimiento de contraseña - Lo de Torres') . '?=';
+                                $encabezado = "MIME-Version: 1.0\r\n";
+                                $encabezado .= "Content-type: text/html; charset=utf-8\r\n";
+                                $encabezado .= "From: Lo de Torres <{$correo_remitente}>\r\n";
+                                $encabezado .= "Reply-To: {$correo_remitente}\r\n";
+                                $encabezado .= "Return-Path: {$correo_remitente}\r\n";
+                                $encabezado .= "X-Mailer: PHP/" . phpversion() . "\r\n";
+
+                                if (!@mail($correo, $asunto, $cuerpo_html, $encabezado, '-f' . $correo_remitente)) {
+                                    error_log('Recuperación de contraseña: mail() no pudo enviar el mensaje.');
                                     $error_recuperacion = true;
                                     $invalidar = mysqli_prepare(
                                         $conexion,

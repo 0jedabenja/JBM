@@ -192,7 +192,7 @@ $puedeLimpiar = usuario_tiene_permiso("crear_pedido");
             elemento.style.top = `${Math.max(0, Number(mesa.pos_y || 0)) / MAPA_HEIGHT * 100}%`;
             elemento.style.width = `${Math.max(60, Number(mesa.ancho || 100)) / MAPA_WIDTH * 100}%`;
             elemento.innerHTML = `
-                <strong>Mesa ${escapeHTML(mesa.numero)}</strong>
+                <strong><span class="mesa-prefijo">Mesa </span>${escapeHTML(mesa.numero)}</strong>
                 <small>${escapeHTML(mesa.estado)}</small>
                 ${puedeEditar || (puedeLimpiar && estado === "paralimpiar") ? `
                     <span class="mesa-actions">

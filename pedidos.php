@@ -43,7 +43,16 @@ $puedeCocina = in_array($rolActual, array("administrador", "cocina"), true);
     </div>
     <div id="notificacionPedido" class="notificacion-pedido" role="alert" aria-live="assertive" hidden></div>
     <?php if ($puedeCrear): ?>
-    <dialog id="dialogoExtras" class="extras-dialog"><h2>Agregar productos al pedido</h2><p id="tituloExtras"></p><input id="buscarExtra" type="search" placeholder="Filtrar productos"><div id="menuExtras"></div><p id="mensajeExtras" class="mensaje" role="status"></p><div class="extras-actions"><button id="cerrarExtras" class="secondary" type="button">Cancelar</button><button id="guardarExtras" type="button">Agregar al pedido</button></div></dialog>
+    <dialog id="dialogoExtras" class="extras-dialog" tabindex="-1">
+        <header class="extras-header">
+            <div><h2>Agregar productos</h2><p id="tituloExtras"></p></div>
+            <button id="cerrarExtrasX" class="extras-cerrar" type="button" aria-label="Cerrar">&times;</button>
+        </header>
+        <div class="extras-busqueda"><input id="buscarExtra" type="search" placeholder="Filtrar productos" aria-label="Filtrar productos" autocomplete="off"></div>
+        <div id="menuExtras" class="extras-lista"></div>
+        <p id="mensajeExtras" class="mensaje" role="status"></p>
+        <footer class="extras-actions"><span id="resumenExtras" class="extras-resumen">Sin productos seleccionados</span><button id="cerrarExtras" class="secondary" type="button">Cancelar</button><button id="guardarExtras" type="button">Agregar al pedido</button></footer>
+    </dialog>
     <?php endif; ?>
 <script>
 const puedeCrear = <?php echo $puedeCrear ? "true" : "false"; ?>;
@@ -88,6 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
         document.getElementById("cerrarExtras").addEventListener("click", () => document.getElementById("dialogoExtras").close());
+        document.getElementById("cerrarExtrasX").addEventListener("click", () => document.getElementById("dialogoExtras").close());
         document.getElementById("guardarExtras").addEventListener("click", guardarProductosExtras);
         setInterval(() => {
             if (document.visibilityState === "visible") cargarMapaPedido();
@@ -265,7 +275,9 @@ async function abrirExtras(idPedido) {
         if (!productosDisponibles.length) await cargarMenu();
         if (!productosDisponibles.length) throw new Error("No se pudieron cargar los productos.");
         renderMenuExtras();
-        document.getElementById("dialogoExtras").showModal();
+        const dialogoExtras = document.getElementById("dialogoExtras");
+        dialogoExtras.showModal();
+        dialogoExtras.focus({ preventScroll: true });
     } catch (error) {
         mostrarNotificacion(error.message, true);
     }
@@ -281,8 +293,12 @@ function renderMenuExtras() {
         const botonRestar = cantidad > 0
             ? `<button type="button" data-extra-restar="${id}" aria-label="Quitar ${escapeHTML(producto.nombre)}">−</button>`
             : "";
-        return `<article class="producto-extra" data-extra-producto="${id}" role="button" tabindex="0" aria-label="Agregar ${escapeHTML(producto.nombre)}"><span>${escapeHTML(producto.nombre)} · $ ${escapeHTML(producto.precio)}</span><div class="controles-cantidad">${botonRestar}<span>${cantidad}</span></div></article>`;
-    }) : "<p>No se encontraron productos.</p>";
+        return `<article class="producto-extra${cantidad > 0 ? " elegido" : ""}" data-extra-producto="${id}" role="button" tabindex="0" aria-label="Agregar ${escapeHTML(producto.nombre)}"><div class="extra-nombre">${escapeHTML(producto.nombre)}</div><div class="extra-footer"><span class="extra-precio">$ ${escapeHTML(producto.precio)}</span><div class="controles-cantidad">${botonRestar}<span class="extra-cantidad">${cantidad > 0 ? cantidad : "+"}</span></div></div></article>`;
+    }) : '<p class="extras-vacio">No se encontraron productos.</p>';
+    const totalUnidades = Object.values(cantidadesExtras).reduce((suma, n) => suma + Number(n || 0), 0);
+    document.getElementById("resumenExtras").textContent = totalUnidades
+        ? ` ${totalUnidades === 1 ? "producto seleccionado" : "productos seleccionados"}`
+        : "Sin productos seleccionados";
 }
 function cambiarCantidadExtra(evento) {
     const botonRestar = evento.target.closest("button[data-extra-restar]");
@@ -365,7 +381,7 @@ async function cargarMapaPedido() {
             boton.style.left = `${Number(mesa.pos_x || 0) / 1200 * 100}%`;
             boton.style.top = `${Number(mesa.pos_y || 0) / 700 * 100}%`;
             boton.style.width = `${Number(mesa.ancho || 100) / 1200 * 100}%`;
-            boton.innerHTML = `<strong>Mesa ${escapeHTML(mesa.numero)}</strong><small>${escapeHTML(mesa.estado)}</small>`;
+            boton.innerHTML = `<strong><span class="mesa-prefijo">Mesa </span>${escapeHTML(mesa.numero)}</strong><small>${escapeHTML(mesa.estado)}</small>`;
             boton.disabled = estado !== "libre";
             if (estado === "libre") boton.addEventListener("click", () => seleccionarMesa(mesa, boton));
             if (String(mesa.id_mesa) === idSeleccionado) boton.classList.add("seleccionada");
