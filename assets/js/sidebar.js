@@ -86,3 +86,31 @@ esMovil.addEventListener?.("change", evento => {
         aplicarEstadoSidebar(true);
     }
 });
+
+/* Menú de usuario - click para abrir/cerrar */
+(function() {
+    const menu = document.querySelector(".menu");
+    const profile = document.querySelector(".menu .profile");
+    
+    if (!menu || !profile) return;
+    
+    profile.addEventListener("click", (evento) => {
+        evento.stopPropagation();
+        menu.classList.toggle("active");
+    });
+    
+    /* Cerrar al hacer click afuera */
+    document.addEventListener("click", (evento) => {
+        if (!menu.contains(evento.target)) {
+            menu.classList.remove("active");
+        }
+    });
+    
+    /* Cerrar al hacer click en un enlace del menú */
+    const linksMenu = menu.querySelectorAll(".dropdown a");
+    linksMenu.forEach(link => {
+        link.addEventListener("click", () => {
+            menu.classList.remove("active");
+        });
+    });
+})();
