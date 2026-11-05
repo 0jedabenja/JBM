@@ -81,17 +81,22 @@ verificar_permiso("empleados");
         }
         function cambiarPagina(delta) { paginaActual = Math.max(1, paginaActual + delta); cargarEmpleados(); }
         function buscarEmpleados() { clearTimeout(timeoutBusqueda); timeoutBusqueda = setTimeout(() => { paginaActual = 1; cargarEmpleados(); }, 300); }
-        function eliminarEmpleado(id) { if (!confirm("¿Está seguro de que desea desactivar este empleado?")) return; fetch("apis/eliminar.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "empleado", id: Number(id) }) }).then(response => { if (!response.ok) throw new Error(); return response.json(); }).then(cargarEmpleados).catch(() => alert("No se pudo desactivar el empleado.")); }
-        function restablecerEmpleado(id) {
-            const nueva = prompt("Nueva contraseña (mínimo 8 caracteres):");
-            if (!nueva || nueva.length < 8) return;
-            const confirmar = prompt("Repetir nueva contraseña:");
-            if (nueva !== confirmar) { alert("Las contraseñas no coinciden."); return; }
-            const admin = prompt("Contraseña del administrador para confirmar:");
-            if (!admin) return;
-            fetch("apis/api_reestablecer_usuario.php", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({id_empleado:id,nueva_password:nueva,admin_password:admin})})
+        async function eliminarEmpleado(id) { if (!await JBM.confirmar("¿Está seguro de que desea desactivar este empleado?", { aceptar: "Desactivar", peligro: true })) return; fetch("apis/eliminar.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "empleado", id: Number(id) }) }).then(response => { if (!response.ok) throw new Error(); return response.json(); }).then(cargarEmpleados).catch(() => JBM.avisar("No se pudo desactivar el empleado.", "Error")); }
+        async function restablecerEmpleado(id) {
+            const v = await JBM.pedir({
+                titulo: "Restablecer contraseña",
+                aceptar: "Restablecer",
+                campos: [
+                    { name: "nueva", label: "Nueva contraseña (mínimo 8 caracteres)", type: "password" },
+                    { name: "repetir", label: "Repetir nueva contraseña", type: "password" },
+                    { name: "admin", label: "Contraseña del administrador para confirmar", type: "password" }
+                ],
+                validar: d => d.nueva.length < 8 ? "La contraseña debe tener al menos 8 caracteres." : d.nueva !== d.repetir ? "Las contraseñas no coinciden." : ""
+            });
+            if (!v) return;
+            fetch("apis/api_reestablecer_usuario.php", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({id_empleado:id,nueva_password:v.nueva,admin_password:v.admin})})
                 .then(async r => {const d=await r.json(); if(!r.ok) throw new Error(d.error||"No se pudo restablecer."); return d;})
-                .then(()=>alert("Contraseña restablecida.")).catch(e=>alert(e.message));
+                .then(()=>JBM.avisar("Contraseña restablecida.")).catch(e=>JBM.avisar(e.message, "Error"));
         }
         function escapeHTML(valor) { if (valor === null || valor === undefined) return ""; return String(valor).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;"); }
     </script>

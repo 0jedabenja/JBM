@@ -83,3 +83,20 @@
         .caja-status.cerrada{border-color:#e8d3aa}
         .caja-button:focus-visible,.caja-field select:focus-visible,.caja-table td select[data-metodo-pago]:focus-visible{outline:3px solid #4382c3;outline-offset:2px}
         .caja-table td select[data-metodo-pago]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%2341565e' stroke-width='1.5' d='m1 1 5 5 5-5'/%3E%3C/svg%3E")}
+
+        /* Los dialogos quedan fuera de .main, por eso el modo oscuro de tablas y detalle se repite aqui. */
+        body[data-theme="dark"] dialog.caja-dialog h3 { color: #f3f7f8; }
+        body[data-theme="dark"] dialog.caja-dialog .caja-table th { background: #25282e; color: #d7dce2; }
+        body[data-theme="dark"] dialog.caja-dialog .caja-table td { border-color: #383b42; color: #f0f1f3; }
+        body[data-theme="dark"] dialog.caja-dialog .caja-table tbody tr:hover td { background: #252a32; }
+        body[data-theme="dark"] dialog.caja-dialog .caja-table td small,
+        body[data-theme="dark"] dialog.caja-dialog .caja-empty,
+        body[data-theme="dark"] dialog.caja-dialog .caja-subtitle { color: #b8c2cc; }
+        body[data-theme="dark"] dialog.caja-dialog .caja-detail-summary div { border-color: #383b42; }
+        body[data-theme="dark"] dialog.caja-dialog .caja-detail-summary dt { color: #b8c2cc; }
+        body[data-theme="dark"] dialog.caja-dialog .caja-detail-summary dd { color: #f0f1f3; }
+        body[data-theme="dark"] dialog.caja-dialog .caja-movement-state { background: #2a3340; border: 1px solid #46556a; border-radius: 4px; color: #d7e5f4; padding: 2px 8px; }
+        body[data-theme="dark"] dialog.caja-dialog .caja-movement-state.cobrado { color: #9fe5b6; }
+        body[data-theme="dark"] dialog.caja-dialog .caja-movement-state.pendiente { color: #ffd68a; }
+        body[data-theme="dark"] dialog.caja-dialog .caja-message:not(:empty) { background: #1c3325; color: #a9e3bc; }
+        body[data-theme="dark"] dialog.caja-dialog .caja-message.error:not(:empty) { background: #3a2428; color: #ffc2c7; }

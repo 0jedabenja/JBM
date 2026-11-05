@@ -91,7 +91,7 @@
         boton.addEventListener("click", async () => {
             desbloquear();
             if (activadas()) {
-                if (!window.confirm("¿Estás seguro que quieres silenciar las notificaciones?")) return;
+                if (!await window.JBM.confirmar("¿Estás seguro que quieres silenciar las notificaciones?", { aceptar: "Silenciar" })) return;
                 localStorage.setItem(estadoKey, "1");
             } else {
                 localStorage.removeItem(estadoKey);

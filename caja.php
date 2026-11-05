@@ -62,6 +62,7 @@ let efectivoEsperadoActual = 0;
 let paginaHistorial = 1;
 let totalPaginas = 1;
 let metodosPago = [];
+let conteoEnCurso = false;
 let descuentosFijos = [];
 let cobroEfectivoActual = null;
 const pagosEfectivoTemporales = new Map();
@@ -74,6 +75,7 @@ async function cargarCaja(pagina = paginaHistorial) {
         const datos = await respuesta.json();
         if (!respuesta.ok) throw new Error(datos.error || "No se pudo consultar la caja.");
         sesionAbierta = datos.abierta;
+        conteoEnCurso = Boolean(datos.conteo_en_curso);
         metodosPago = datos.metodos_pago || [];
         descuentosFijos = datos.descuentos || [];
         actualizarOpcionesDescuento();
@@ -260,7 +262,7 @@ function construirFilaPago(indice, idMp, monto) {
         </div>
         <div>
             <label for="${filaId}-monto">Monto</label>
-            <input class="pago-monto" data-indice="${indice}" id="${filaId}-monto" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00" value="${monto.toFixed(2)}" />
+            <input class="pago-monto" data-indice="${indice}" id="${filaId}-monto" type="number" min="0" ${pagosActuales.length > 1 ? `max="${cobroEfectivoActual.total.toFixed(2)}"` : ""} step="0.01" inputmode="decimal" placeholder="0,00" value="${monto.toFixed(2)}" />
         </div>
         <button type="button" class="caja-button secondary pago-eliminar" data-indice="${indice}" style="padding:8px 12px;height:40px" aria-label="Eliminar pago">−</button>
     </div>`;
@@ -298,7 +300,15 @@ function actualizarPagosUI() {
     });
     document.querySelectorAll(".pago-monto").forEach(input => {
         input.addEventListener("input", () => {
-            pagosActuales[Number(input.dataset.indice)].monto = Number(input.value || 0);
+            const indice = Number(input.dataset.indice);
+            if (pagosActuales.length > 1) {
+                const escrito = Number(input.value || 0);
+                balancearPagos(indice, escrito);
+                if (pagosActuales[indice].monto !== escrito) input.value = pagosActuales[indice].monto;
+            } else {
+                pagosActuales[indice].monto = Number(input.value || 0);
+            }
+            actualizarResumenCobro();
         });
     });
     document.querySelectorAll(".pago-monto, .pago-efectivo-recibido").forEach(elem => {
@@ -309,12 +319,27 @@ function actualizarPagosUI() {
             evento.preventDefault();
             const indice = Number(btn.dataset.indice);
             pagosActuales = pagosActuales.filter((_, i) => i !== indice);
+            if (pagosActuales.length === 1) pagosActuales[0].monto = cobroEfectivoActual.total;
             actualizarPagosUI();
             actualizarResumenCobro();
         });
     });
     
     actualizarResumenCobro();
+}
+
+// Con pagos divididos el monto editado se limita al total y la última fila absorbe lo que falta.
+function balancearPagos(indice, valor) {
+    const total = Math.round(cobroEfectivoActual.total * 100) / 100;
+    const ultima = pagosActuales.length - 1;
+    const destino = indice === ultima ? ultima - 1 : ultima;
+    const otros = pagosActuales.reduce((s, p, i) => (i === indice || i === destino) ? s : s + Number(p.monto || 0), 0);
+    const maximo = Math.max(0, Math.round((total - otros) * 100) / 100);
+    const nuevo = Math.min(Math.max(0, Math.round(valor * 100) / 100), maximo);
+    pagosActuales[indice].monto = nuevo;
+    pagosActuales[destino].monto = Math.round((maximo - nuevo) * 100) / 100;
+    const inputDestino = document.querySelector(`.pago-monto[data-indice="${destino}"]`);
+    if (inputDestino) inputDestino.value = pagosActuales[destino].monto.toFixed(2);
 }
 
 function obtenerPagosActuales() {
@@ -366,6 +391,12 @@ function actualizarResumenCobro() {
     document.getElementById("subtotalCobroEfectivo").textContent = moneda(cobroEfectivoActual.subtotal);
     document.getElementById("montoDescuentoCobro").textContent = moneda(descuento);
     document.getElementById("totalCobroEfectivo").textContent = moneda(cobroEfectivoActual.total);
+    if (pagosActuales.length > 1 && cobroEfectivoActual.totalBalanceado !== cobroEfectivoActual.total) {
+        balancearPagos(0, pagosActuales[0].monto);
+        const inputPrimero = document.querySelector('.pago-monto[data-indice="0"]');
+        if (inputPrimero) inputPrimero.value = pagosActuales[0].monto.toFixed(2);
+    }
+    cobroEfectivoActual.totalBalanceado = cobroEfectivoActual.total;
     
     const pagos = obtenerPagosActuales();
     const sumaPagos = pagos.reduce((suma, pago) => suma + pago.monto, 0);
@@ -404,7 +435,7 @@ function actualizarResumenCobro() {
     resumenDiv.innerHTML = html;
     
     const botonConfirmar = document.getElementById("confirmarCobroEfectivo");
-    botonConfirmar.disabled = sumaPagos < totalCobroEfectivo;
+    botonConfirmar.disabled = Math.abs(sumaPagos - totalCobroEfectivo) > 0.005;
 }
 
 function actualizarOpcionesDescuento() {
@@ -483,7 +514,17 @@ async function confirmarCobroEfectivo(evento) {
     }
 }
 
-document.getElementById("botonAbrir").addEventListener("click", () => { document.getElementById("errorAbrir").textContent = ""; document.getElementById("formAbrir").reset(); document.getElementById("dialogAbrir").showModal(); document.getElementById("montoInicial").focus(); });
+document.getElementById("botonAbrir").addEventListener("click", async () => {
+    if (conteoEnCurso) {
+        if (!esAdministrador) {
+            await JBM.avisar("Hay un conteo de insumos en curso. Tenés que avisarle al administrador para que lo termine y así poder abrir la caja.", "Conteo en curso");
+            return;
+        }
+        if (!await JBM.confirmar("Hay un conteo de insumos en curso. Para abrir la caja hay que cerrarlo: se cancelará y las existencias no se modificarán. ¿Querés cerrarlo?", { titulo: "Conteo en curso", aceptar: "Cerrar conteo", cancelar: "Volver", peligro: true })) return;
+        if (!await enviar({accion:"cancelar_conteos"}, "Conteo cerrado. Ya podés abrir la caja.")) return;
+    }
+    document.getElementById("errorAbrir").textContent = ""; document.getElementById("formAbrir").reset(); document.getElementById("dialogAbrir").showModal(); document.getElementById("montoInicial").focus();
+});
 document.getElementById("botonCerrar").addEventListener("click", () => { document.getElementById("errorCerrar").textContent = ""; document.getElementById("formCerrar").reset(); document.getElementById("confirmacionPasswordCierre").hidden = true; document.getElementById("passwordCierre").required = false; document.getElementById("diferenciaCierre").textContent = ""; document.getElementById("efectivoEsperadoCierre").textContent = moneda(efectivoEsperadoActual); document.getElementById("dialogCerrar").showModal(); document.getElementById("montoFinal").focus(); });
 document.getElementById("formAbrir").addEventListener("submit", async evento => { evento.preventDefault(); await enviar({accion:"abrir", monto_inicial:Number(document.getElementById("montoInicial").value)}, "Caja abierta.", "errorAbrir"); });
 document.getElementById("formCerrar").addEventListener("submit", async evento => {

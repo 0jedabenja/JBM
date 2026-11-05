@@ -1251,3 +1251,9 @@ body[data-theme="dark"] .main .conteo-caja-aviso {
     border-color: #c9524d;
     color: #ffb4ae;
 }
+
+body[data-theme="dark"] .main .estado-pedido.estado-pedido--pendiente { background: #1c2a4a; border-color: #3a5ba0; color: #a9c4ff !important; }
+body[data-theme="dark"] .main .estado-pedido.estado-pedido--en-preparacion { background: #49351c; border-color: #80612f; color: #ffd68a !important; }
+body[data-theme="dark"] .main .estado-pedido.estado-pedido--comiendo { background: #33244d; border-color: #6b4fa0; color: #d9c2ff !important; }
+body[data-theme="dark"] .main .estado-pedido.estado-pedido--listo { background: #163a27; border-color: #3f8058; color: #9fe5b6 !important; }
+body[data-theme="dark"] .main .estado-pedido.estado-pedido--cancelado { background: #3a2428; border-color: #8a4048; color: #ffc2c7 !important; }

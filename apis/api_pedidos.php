@@ -711,6 +711,89 @@ if ($metodo === "POST") {
         registrar_auditoria($conexion, "cerrar_pedido", "pedido", $idPedido);
         responder(array("ok" => true, "estado" => "Listo"));
     }
+
+    if ($accion === "cancelar_pedido") {
+        verificar_permiso("crear_pedido", true);
+        $idPedido = filter_var($entradaAccion["id_pedido"] ?? null, FILTER_VALIDATE_INT);
+        if ($idPedido === false || $idPedido <= 0) {
+            responder(array("error" => "Pedido no válido."), 400);
+        }
+        mysqli_begin_transaction($conexion);
+        try {
+            $stmtPedido = mysqli_prepare(
+                $conexion,
+                "SELECT p.id_mesa, p.cobrado, LOWER(ep.nombre) AS estado
+                 FROM Pedido p
+                 INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado
+                 WHERE p.id_pedido = ?
+                 FOR UPDATE"
+            );
+            mysqli_stmt_bind_param($stmtPedido, "i", $idPedido);
+            mysqli_stmt_execute($stmtPedido);
+            $pedido = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtPedido));
+            mysqli_stmt_close($stmtPedido);
+            if (!$pedido || (bool)$pedido["cobrado"] || !in_array($pedido["estado"], array("pendiente", "en preparación", "comiendo", "listo"), true)) {
+                mysqli_rollback($conexion);
+                responder(array("error" => "Solo se pueden cancelar pedidos activos que no estén cobrados."), 409);
+            }
+
+            $stmtConsumo = mysqli_prepare(
+                $conexion,
+                "SELECT mi.id_insumo, i.costo, -SUM(mi.cantidad) AS cantidad_devolver
+                 FROM Movimiento_Insumo mi
+                 INNER JOIN Insumo i ON i.id_insumo = mi.id_insumo
+                 WHERE mi.tipo = 'pedido' AND mi.referencia_id = ?
+                 GROUP BY mi.id_insumo, i.costo
+                 HAVING cantidad_devolver > 0"
+            );
+            mysqli_stmt_bind_param($stmtConsumo, "i", $idPedido);
+            mysqli_stmt_execute($stmtConsumo);
+            $devoluciones = mysqli_fetch_all(mysqli_stmt_get_result($stmtConsumo), MYSQLI_ASSOC);
+            mysqli_stmt_close($stmtConsumo);
+
+            $stmtDevolver = mysqli_prepare($conexion, "UPDATE Insumo SET cantidad_actual = cantidad_actual + ? WHERE id_insumo = ?");
+            foreach ($devoluciones as $devolucion) {
+                $cantidad = (float)$devolucion["cantidad_devolver"];
+                $idInsumo = (int)$devolucion["id_insumo"];
+                mysqli_stmt_bind_param($stmtDevolver, "di", $cantidad, $idInsumo);
+                if (!mysqli_stmt_execute($stmtDevolver)
+                    || !registrar_movimiento_insumo($conexion, $idInsumo, "cancelacion_pedido", $cantidad, (float)$devolucion["costo"], $idPedido, "Devolución por cancelación del pedido #{$idPedido}")) {
+                    throw new RuntimeException("No se pudo devolver el stock.");
+                }
+            }
+            mysqli_stmt_close($stmtDevolver);
+
+            $stmtEstado = mysqli_prepare(
+                $conexion,
+                "UPDATE Pedido SET id_estado = (SELECT id_estado FROM Estado_Pedido WHERE LOWER(nombre) = 'cancelado' LIMIT 1) WHERE id_pedido = ?"
+            );
+            mysqli_stmt_bind_param($stmtEstado, "i", $idPedido);
+            if (!mysqli_stmt_execute($stmtEstado)) {
+                throw new RuntimeException("No se pudo cancelar el pedido.");
+            }
+            mysqli_stmt_close($stmtEstado);
+
+            if ($pedido["id_mesa"] !== null) {
+                $idMesa = (int)$pedido["id_mesa"];
+                $stmtMesa = mysqli_prepare(
+                    $conexion,
+                    "UPDATE Mesa SET id_estado = (SELECT id_estado FROM Estado_Mesa WHERE LOWER(nombre) = 'libre' LIMIT 1) WHERE id_mesa = ?"
+                );
+                mysqli_stmt_bind_param($stmtMesa, "i", $idMesa);
+                if (!mysqli_stmt_execute($stmtMesa)) {
+                    throw new RuntimeException("No se pudo liberar la mesa.");
+                }
+                mysqli_stmt_close($stmtMesa);
+            }
+            mysqli_commit($conexion);
+        } catch (Throwable $error) {
+            mysqli_rollback($conexion);
+            error_log("No se pudo cancelar el pedido #{$idPedido}: " . $error->getMessage());
+            responder(array("error" => "No se pudo cancelar el pedido."), 500);
+        }
+        registrar_auditoria($conexion, "cancelar_pedido", "pedido", $idPedido, array("insumos_devueltos" => count($devoluciones)));
+        responder(array("ok" => true, "estado" => "Cancelado"));
+    }
 }
 
 if ($metodo !== "POST") {

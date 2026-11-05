@@ -78,6 +78,14 @@ let temporizadorNotificacion = null;
 document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("click", desbloquearSonido, { once: true, capture: true });
     document.querySelectorAll(".pedido-tabs button").forEach(boton => boton.addEventListener("click", () => activarVista(boton.dataset.vista)));
+    const tabs = document.querySelector(".pedido-tabs");
+    if (tabs) {
+        const indicador = document.createElement("span");
+        indicador.className = "pedido-tab-indicador";
+        tabs.prepend(indicador);
+        window.addEventListener("resize", moverIndicadorTabs);
+        window.addEventListener("load", moverIndicadorTabs);
+    }
     const inicial = puedeCrear ? "creacion" : "cocina";
     activarVista(inicial);
     if (puedeCrear) {
@@ -119,9 +127,19 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("listaCocina").addEventListener("click", manejarAccionesCocina);
     }
 });
+function moverIndicadorTabs() {
+    const indicador = document.querySelector(".pedido-tab-indicador");
+    const activo = document.querySelector(".pedido-tabs button.active");
+    if (!indicador || !activo) return;
+    indicador.style.width = `${activo.offsetWidth}px`;
+    indicador.style.height = `${activo.offsetHeight}px`;
+    indicador.style.transform = `translate(${activo.offsetLeft}px, ${activo.offsetTop}px)`;
+    requestAnimationFrame(() => indicador.classList.add("listo"));
+}
 function activarVista(vista) {
     document.querySelectorAll(".pedido-view").forEach(seccion => seccion.classList.remove("active"));
     document.querySelectorAll(".pedido-tabs button").forEach(boton => boton.classList.toggle("active", boton.dataset.vista === vista));
+    moverIndicadorTabs();
     const seccion = document.getElementById(`vista-${vista}`); if (seccion) seccion.classList.add("active");
     if (vista === "pendientes") cargarPedidos("pendientes");
     if (vista === "limpieza" && puedeCrear) cargarMesasLimpieza();
@@ -358,7 +376,7 @@ async function guardarProductosExtras() {
     boton.disabled = true;
     try {
         let respuesta = await enviarProductosExtras(productos, extrasForzado());
-        if (!extrasForzado() && respuesta.status === 409 && respuesta.datos.faltantes && window.confirm(`${respuesta.datos.error}\n¿Quieres continuar igualmente?`)) {
+        if (!extrasForzado() && respuesta.status === 409 && respuesta.datos.faltantes && await JBM.confirmar(`${respuesta.datos.error}\n¿Quieres continuar igualmente?`, { aceptar: "Continuar igualmente" })) {
             respuesta = await enviarProductosExtras(productos, true);
         }
         if (!respuesta.ok) throw new Error(respuesta.datos.error || "No se pudieron agregar los productos.");
@@ -609,8 +627,8 @@ function renderPendientes(pedidos) {
         }).join("");
         const descripcion = p.descripcion ? `<p>Detalle: ${escapeHTML(p.descripcion)}</p>` : "";
         const avisoBebidas = estado === "comiendo" && bebidasPendientes ? '<p class="aviso-bebidas">Marca todas las bebidas como pickeadas para poder cerrar el pedido.</p>' : "";
-        const acciones = `<div class="pedido-pendiente-actions">${estado !== "listo" ? `<button type="button" class="boton-accion-pedido" data-agregar="${Number(p.id_pedido)}">Agregar productos</button>` : ""}${estado === "comiendo" ? `<button type="button" class="boton-accion-pedido" data-cerrar="${Number(p.id_pedido)}" ${bebidasPendientes ? "disabled" : ""}>Cerrar pedido</button>` : ""}</div>`;
-        return `<article class="pedido-panel"><h3>Pedido #${Number(p.id_pedido)} <span class="estado-pedido">${escapeHTML(p.estado)}</span></h3><p>Mesa: ${escapeHTML(p.mesa || "-")} | Creado: ${escapeHTML(p.fecha_hora_creacion)}</p>${descripcion}<ul class="pedido-productos">${productos}</ul>${avisoBebidas}${acciones}</article>`;
+        const acciones = `<div class="pedido-pendiente-actions">${estado !== "listo" ? `<button type="button" class="boton-accion-pedido" data-agregar="${Number(p.id_pedido)}">Agregar productos</button>` : ""}${estado === "comiendo" ? `<button type="button" class="boton-accion-pedido" data-cerrar="${Number(p.id_pedido)}" ${bebidasPendientes ? "disabled" : ""}>Cerrar pedido</button>` : ""}<button type="button" class="boton-accion-pedido boton-cancelar-pedido" data-cancelar="${Number(p.id_pedido)}">Cancelar pedido</button></div>`;
+        return `<article class="pedido-panel"><h3>Pedido #${Number(p.id_pedido)} <span class="estado-pedido estado-pedido--${String(p.estado || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-")}">${escapeHTML(p.estado)}</span></h3><p>Mesa: ${escapeHTML(p.mesa || "-")} | Creado: ${escapeHTML(p.fecha_hora_creacion)}</p>${descripcion}<ul class="pedido-productos">${productos}</ul>${avisoBebidas}${acciones}</article>`;
     }).join("") : '<p class="mensaje-vacio">No hay pedidos pendientes.</p>';
 }
 function manejarAccionesPendientes(evento) {
@@ -624,8 +642,26 @@ function manejarAccionesPendientes(evento) {
         abrirExtras(Number(botonAgregar.dataset.agregar));
         return;
     }
+    const botonCancelar = evento.target.closest("button[data-cancelar]");
+    if (botonCancelar) { cancelarPedido(Number(botonCancelar.dataset.cancelar)); return; }
     const botonCerrar = evento.target.closest("button[data-cerrar]");
     if (botonCerrar) cerrarPedido(Number(botonCerrar.dataset.cerrar));
+}
+async function cancelarPedido(idPedido) {
+    if (!await JBM.confirmar(`¿Cancelar el pedido #${idPedido}? Se devolverá al stock lo ya consumido y la mesa quedará libre.`, { aceptar: "Cancelar pedido", cancelar: "Volver", peligro: true })) return;
+    try {
+        const respuesta = await fetch("apis/api_pedidos.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ accion: "cancelar_pedido", id_pedido: idPedido })
+        });
+        const datos = await respuesta.json();
+        if (!respuesta.ok) throw new Error(datos.error || "No se pudo cancelar el pedido.");
+        mostrarNotificacion(`Pedido #${idPedido} cancelado.`);
+        await cargarPedidos("pendientes");
+    } catch (error) {
+        mostrarNotificacion(error.message, true);
+    }
 }
 async function marcarBebidaPickeada(idPedido, idProducto, boton) {
     boton.disabled = true;
