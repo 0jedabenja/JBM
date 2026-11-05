@@ -17,6 +17,11 @@ function entrada_caja() {
     return is_array($datos) ? $datos : $_POST;
 }
 
+function hay_conteo_en_curso($conexion) {
+    $resultado = mysqli_query($conexion, "SELECT 1 FROM Conteo_Insumo WHERE estado = 'En curso' LIMIT 1");
+    return (bool) ($resultado && mysqli_fetch_assoc($resultado));
+}
+
 function obtener_movimientos_turno($conexion, $idTurno) {
     $movimientos = array();
     $totalCobrado = 0;
@@ -141,6 +146,7 @@ if ($metodo === "GET") {
         "efectivo_esperado" => $abierta ? (float) $abierta["monto_inicial"] + $resumen["efectivo_cobrado"] : 0,
         "sesiones_propias" => $sesionesPropias,
         "es_administrador" => $esAdministrador,
+        "conteo_en_curso" => hay_conteo_en_curso($conexion),
         "historial" => $historial,
         "pagina" => $pagina,
         "por_pagina" => $porPagina,
@@ -154,7 +160,18 @@ if (!validar_token_csrf($_SERVER["HTTP_X_CSRF_TOKEN"] ?? "")) {
 
 $entrada = entrada_caja();
 $accion = $entrada["accion"] ?? "";
+if ($accion === "cancelar_conteos") {
+    if (obtener_rol_sesion() !== "administrador") responder_caja(array("error" => "Solo un administrador puede cerrar el conteo."), 403);
+    mysqli_query($conexion, "UPDATE Conteo_Insumo SET estado = 'Cancelado', fecha_fin = NOW() WHERE estado = 'En curso'");
+    registrar_auditoria($conexion, "cancelar_conteo", "conteo_insumos", null, array("motivo" => "apertura_de_caja"));
+    responder_caja(array("ok" => true));
+}
 if ($accion === "abrir") {
+    if (hay_conteo_en_curso($conexion)) {
+        responder_caja(array("error" => obtener_rol_sesion() === "administrador"
+            ? "Hay un conteo en curso. Cerralo para poder abrir la caja."
+            : "Hay un conteo en curso. Avisá al administrador para que lo termine y así poder abrir la caja."), 409);
+    }
     $montoInicial = filter_var($entrada["monto_inicial"] ?? null, FILTER_VALIDATE_FLOAT);
     if ($montoInicial === false || $montoInicial < 0) responder_caja(array("error" => "El monto inicial no es válido."), 400);
     $resultado = mysqli_query($conexion, "SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL LIMIT 1");

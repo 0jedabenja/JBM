@@ -422,7 +422,7 @@ $puedeLimpiar = usuario_tiene_permiso("crear_pedido");
     }
 
     async function eliminarMesa(idMesa, confirmacion) {
-        if (!window.confirm(confirmacion)) return false;
+        if (!await JBM.confirmar(confirmacion, { aceptar: "Eliminar", peligro: true })) return false;
 
         const respuesta = await fetch("apis/api_mesas.php", {
             method: "DELETE",

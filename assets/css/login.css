@@ -419,3 +419,28 @@ footer {
         margin-bottom: 1.5rem;
     }
 }
+
+/* Sobre nosotros: estilo moderno */
+.overlay-background{-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);background-color:rgba(10,20,30,.35)}
+.popup-box{border:1px solid var(--input-border);border-radius:1.75rem;box-shadow:0 24px 70px rgba(10,20,30,.3),0 4px 14px rgba(10,20,30,.12);padding:2rem 1.5rem;transform:translateY(24px) scale(.95);opacity:0;transition:background-color .3s ease,transform .45s cubic-bezier(.2,.9,.3,1.1),opacity .3s ease}
+.overlay-background.active .popup-box{opacity:1;transform:none}
+.popup-title{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.75rem}
+.company-description{font-size:.9rem;margin-bottom:1.25rem}
+.people-list{display:grid;gap:.75rem;overflow:visible}
+.person{background:rgba(127,127,127,.08);border:1px solid var(--input-border);border-radius:1.25rem;gap:1.1rem;padding:.9rem 1rem;position:relative;transition:background-color .25s ease,border-color .25s ease,transform .25s ease;opacity:0;transform:translateY(12px)}
+.overlay-background.active .person{animation:about-persona-in .5s cubic-bezier(.2,.9,.3,1) forwards}
+.overlay-background.active .person:nth-child(1){animation-delay:.12s}
+.overlay-background.active .person:nth-child(2){animation-delay:.22s}
+@keyframes about-persona-in{to{opacity:1;transform:none}}
+.person:hover{background:rgba(127,127,127,.14);border-color:#007AFF}
+.avatar{background:rgba(127,127,127,.2);border:3px solid #fff;box-shadow:0 0 0 2px #007AFF,0 6px 16px rgba(0,0,0,.2);cursor:zoom-in;flex-shrink:0;height:4.5rem;transform-origin:left center;transition:transform .35s cubic-bezier(.2,.9,.3,1.2),box-shadow .35s ease;width:4.5rem}
+.person-info strong{font-size:1rem}
+.person-role{background:rgba(0,122,255,.12);border-radius:999px;color:#007AFF;font-weight:600;padding:.15rem .6rem;width:fit-content}
+.github-btn{align-items:center;background:var(--text-main);border-radius:999px;color:var(--form-bg);display:inline-flex;font-size:.75rem;font-weight:600;gap:.4rem;margin-top:.15rem;padding:.3rem .75rem;text-decoration:none;transition:transform .2s ease,opacity .2s ease;width:fit-content}
+.github-btn:hover{opacity:.85;transform:translateY(-1px)}
+.github-btn svg{fill:currentColor;height:.95rem;width:.95rem}
+@media (hover:hover) and (min-width:769px){
+  .person:hover{z-index:5}
+  .person:hover .avatar{box-shadow:0 0 0 3px #007AFF,0 18px 40px rgba(0,0,0,.4);transform:scale(2.3);z-index:6}
+}
+@media (prefers-reduced-motion:reduce){.person,.popup-box,.avatar{animation:none!important;transition-duration:.01ms!important}.person{opacity:1;transform:none}}

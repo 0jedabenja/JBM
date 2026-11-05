@@ -157,8 +157,8 @@ verificar_permiso("clientes");
             }, 300);
         }
 
-        function eliminarCliente(id) {
-            if (!confirm("¿Está seguro de que desea desactivar este cliente?")) {
+        async function eliminarCliente(id) {
+            if (!await JBM.confirmar("¿Está seguro de que desea desactivar este cliente?", { aceptar: "Desactivar", peligro: true })) {
                 return;
             }
 
@@ -176,7 +176,7 @@ verificar_permiso("clientes");
                 .then(() => cargarClientes())
                 .catch(error => {
                     console.error("Error al desactivar el cliente:", error);
-                    alert("No se pudo desactivar el cliente.");
+                    JBM.avisar("No se pudo desactivar el cliente.", "Error");
                 });
         }
 

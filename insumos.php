@@ -40,7 +40,13 @@ verificar_permiso("insumos");
                     <p>Controlá el stock, el costo y las unidades de cada insumo.</p>
                 </div>
                 <div class="modulo-actions"><a class="accion-stock" href="ajustes_stock.php" title="Registrar pérdida, avería o consumo del personal">Registrar salida de stock</a><a href="altas/alta_insumo.php" title="Cargar insumo">+</a></div>
-            </header>            <table class="modulo-table"><thead><tr><th>ID</th><th>Nombre</th><th>Unidad de Medida</th><th>Cant. Actual</th><th>Stock Mínimo</th><th>Costo</th><th>Acciones</th></tr></thead>
+            </header>
+            <div class="stock-legend" aria-label="Leyenda de stock">
+                <span class="stock-legend-item"><span class="dot normal"></span>Stock normal</span>
+                <span class="stock-legend-item"><span class="dot bajo"></span>Bajo el stock de aviso</span>
+                <span class="stock-legend-item"><span class="dot negativo"></span>Stock negativo</span>
+            </div>
+            <table class="modulo-table"><thead><tr><th>ID</th><th>Nombre</th><th>Unidad de Medida</th><th>Cant. Actual</th><th>Stock Mínimo</th><th>Costo</th><th>Acciones</th></tr></thead>
                 <tbody id="tablaInsumos"><tr><td colspan="7" class="texto-centrado">No se encontraron insumos.</td></tr></tbody>
             </table>
             <nav class="pagination" aria-label="Paginación de insumos"><button class="button button--secondary" type="button" id="btnAnterior">Anterior</button><span id="infoPagina">Página 1</span><button class="button button--secondary" type="button" id="btnSiguiente">Siguiente</button></nav>
@@ -75,7 +81,9 @@ verificar_permiso("insumos");
                             const distintivoStockNegativo = tieneStockNegativo
                                 ? '<strong>Stock negativo</strong>'
                                 : "";
+                            const stockMinimo = Number(insumo.stock_minimo);
                             if (tieneStockNegativo) fila.classList.add("producto-sin-stock");
+                            else if (Number.isFinite(cantidadActual) && Number.isFinite(stockMinimo) && cantidadActual < stockMinimo) fila.classList.add("insumo-stock-bajo");
                             fila.innerHTML = `<td>${escapeHTML(insumo.id_insumo)}</td><td>${escapeHTML(insumo.nombre)}</td><td>${escapeHTML(insumo.unidad)}</td><td>${escapeHTML(insumo.cantidad_actual)} ${distintivoStockNegativo}</td><td>${escapeHTML(insumo.stock_minimo)}</td><td>$ ${escapeHTML(insumo.costo)}</td><td class="acciones-producto"><a class="accion accion-movimientos" href="movimientos.php?tipo=insumo&id=${encodeURIComponent(insumo.id_insumo)}">Movimientos</a><a class="accion accion-editar" href="modificar_insumo.php?id=${encodeURIComponent(insumo.id_insumo)}">Editar</a><button type="button" class="accion accion-desactivar" onclick="eliminarInsumo(${insumo.id_insumo})">Desactivar</button></td>`;
                             tbody.appendChild(fila);
                         });
@@ -87,7 +95,7 @@ verificar_permiso("insumos");
         }
         function cambiarPagina(delta) { paginaActual = Math.max(1, paginaActual + delta); cargarInsumos(); }
         function buscarInsumos() { clearTimeout(timeoutBusqueda); timeoutBusqueda = setTimeout(() => { paginaActual = 1; cargarInsumos(); }, 300); }
-        function eliminarInsumo(id) { if (!confirm("¿Está seguro de que desea desactivar este insumo?")) return; fetch("apis/eliminar.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "insumo", id: Number(id) }) }).then(response => { if (!response.ok) throw new Error(); return response.json(); }).then(cargarInsumos).catch(() => alert("No se pudo desactivar el insumo.")); }
+        async function eliminarInsumo(id) { if (!await JBM.confirmar("¿Está seguro de que desea desactivar este insumo?", { aceptar: "Desactivar", peligro: true })) return; fetch("apis/eliminar.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "insumo", id: Number(id) }) }).then(response => { if (!response.ok) throw new Error(); return response.json(); }).then(cargarInsumos).catch(() => JBM.avisar("No se pudo desactivar el insumo.", "Error")); }
         function escapeHTML(valor) { if (valor === null || valor === undefined) return ""; return String(valor).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;"); }
     </script>
 </body>

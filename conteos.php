@@ -169,7 +169,7 @@ verificar_permiso("conteos");
     }
 
     async function iniciarConteo() {
-        if (!window.confirm("¿Querés iniciar el conteo? Se guardará el stock actual como referencia.")) return;
+        if (!await JBM.confirmar("¿Querés iniciar el conteo? Se guardará el stock actual como referencia.", { aceptar: "Iniciar conteo" })) return;
         try {
             const datos = await solicitar("apis/api_conteos.php", {
                 method: "POST",
@@ -338,7 +338,7 @@ verificar_permiso("conteos");
                 const datos = await solicitar(`apis/api_conteos.php?id_conteo=${encodeURIComponent(continuar.dataset.continuar)}`, { cache: "no-store" });
                 mostrarConteo(datos);
             }
-            if (cancelar && window.confirm("¿Cancelar este conteo? No se actualizarán las existencias.")) {
+            if (cancelar && await JBM.confirmar("¿Cancelar este conteo? No se actualizarán las existencias.", { aceptar: "Cancelar conteo", cancelar: "Volver", peligro: true })) {
                 await solicitar("apis/api_conteos.php", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -417,7 +417,7 @@ verificar_permiso("conteos");
     }
 
     async function cancelarConteo() {
-        if (!conteoActivo || !window.confirm("¿Cancelar este conteo? No se actualizarán las existencias.")) return;
+        if (!conteoActivo || !await JBM.confirmar("¿Cancelar este conteo? No se actualizarán las existencias.", { aceptar: "Cancelar conteo", cancelar: "Volver", peligro: true })) return;
         try {
             await solicitar("apis/api_conteos.php", {
                 method: "POST",

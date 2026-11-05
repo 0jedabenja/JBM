@@ -55,3 +55,33 @@ body[data-theme="dark"] .mapa-dialog-head p{color:var(--color-text-secondary)}
 /* Responsive */
 @media(max-width:768px){.pedidos-content .pedido-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;width:100%;padding:6px;border-radius:var(--radius-lg)}.pedidos-content .pedido-tabs button{width:auto;padding:10px 8px;font-size:13px;text-align:center;border-radius:10px}.pedido-form{grid-template-columns:1fr 1fr}.menu-grid{gap:10px;grid-template-columns:repeat(2,minmax(0,1fr))}.producto-card{padding:10px}.producto-card h4{font-size:13px;margin:0 0 4px}.producto-card p{font-size:12px;margin:2px 0}.producto-card .controles-cantidad{gap:6px}.producto-card .controles-cantidad button{min-width:28px;padding:4px}.mesa-pedido{width:9%!important;height:38px!important;min-height:38px!important;border-width:2px;border-radius:10px}.mesa-pedido strong{font-size:10px}.mesa-pedido small{font-size:9px;display:none}.mesa-pedido .mesa-prefijo{display:none}.mapa-pedido{min-height:280px}}
 @media(max-width:500px){.pedido-form{grid-template-columns:1fr}.pedido-tabs{flex-wrap:wrap}.pedidos-content{padding:16px 20px}.linea-carrito{grid-template-columns:1fr auto;grid-auto-rows:auto}.linea-carrito>span{grid-column:1/-1}.linea-carrito>div{grid-column:1}.linea-carrito>strong{grid-column:2;grid-row:2}}
+
+.estado-pedido--pendiente{background:#e8eefc;color:#1f4fb4}
+.estado-pedido--en-preparacion{background:#fff1e0;color:#a85a00}
+.estado-pedido--comiendo{background:#efe5fa;color:#6a2fb0}
+.estado-pedido--listo{background:#e1f4e8;color:#16723b}
+.estado-pedido--cancelado{background:#fde4e2;color:#b3261e}
+
+.boton-cancelar-pedido{background:#fde4e2;border:1px solid #e0a5a0;color:#b3261e}
+.boton-cancelar-pedido:hover{background:#f9cfcb}
+body[data-theme="dark"] .boton-cancelar-pedido{background:#3a2428;border-color:#8a4048;color:#ffc2c7}
+
+.pedido-pendiente-actions .boton-cancelar-pedido{background:#d32f2f;border-color:#d32f2f;color:#fff}
+.pedido-pendiente-actions .boton-cancelar-pedido:hover{background:#b71c1c;border-color:#b71c1c;opacity:1}
+body[data-theme="dark"] .pedido-pendiente-actions .boton-cancelar-pedido{background:#3a2428;border-color:#8a4048;color:#ffc2c7}
+
+body[data-theme="dark"] .main .pedido-pendiente-actions .boton-cancelar-pedido{background:#c62828!important;border-color:#e57373!important;color:#fff!important}
+body[data-theme="dark"] .main .pedido-pendiente-actions .boton-cancelar-pedido:hover{background:#e53935!important}
+
+body[data-theme="dark"] .main .pedido-tabs button.active{background:#0a84ff!important;border-color:#64b5ff;color:#fff!important;box-shadow:0 0 0 1px #64b5ff,0 4px 16px rgba(10,132,255,.55)}
+
+.pedido-tabs{position:relative}
+.pedido-tabs button{position:relative;z-index:1}
+.pedido-tabs button.active{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+.pedido-tab-indicador{background:#007AFF;border-radius:var(--radius);box-shadow:0 2px 8px rgba(0,122,255,.25);left:0;pointer-events:none;position:absolute;top:0;z-index:0}
+.pedido-tab-indicador.listo{transition:transform .35s cubic-bezier(.4,0,.2,1),width .35s cubic-bezier(.4,0,.2,1),height .35s cubic-bezier(.4,0,.2,1)}
+body[data-theme="dark"] .main .pedido-tabs button.active{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+body[data-theme="dark"] .main .pedido-tab-indicador{background:#0a84ff;box-shadow:0 0 0 1px #64b5ff,0 4px 16px rgba(10,132,255,.55)}
+body[data-theme="dark"] .main .pedido-pendiente-actions button[data-cerrar]{background:#2e7d32!important;border-color:#66bb6a!important;color:#fff!important}
+body[data-theme="dark"] .main .pedido-pendiente-actions button[data-cerrar]:hover:not(:disabled){background:#388e3c!important}
+@media(prefers-reduced-motion:reduce){.pedido-tab-indicador.listo{transition-duration:.01ms}}

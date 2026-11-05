@@ -36,7 +36,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         foreach ($idsInsumos as $indice => $valorId) {
             $idInsumo = filter_var($valorId, FILTER_VALIDATE_INT);
             $cantidad = filter_var($cantidades[$indice], FILTER_VALIDATE_FLOAT);
-            if ($idInsumo === false || $idInsumo <= 0 || $cantidad === false || $cantidad <= 0 || isset($idsUsados[$idInsumo])) {
+            $esPorUnidad = false;
+            foreach ($insumos as $insumoLista) {
+                if ((int)$insumoLista["id_insumo"] === $idInsumo && $insumoLista["unidad"] === "Unidad") {
+                    $esPorUnidad = true;
+                    break;
+                }
+            }
+            if ($idInsumo === false || $idInsumo <= 0 || $cantidad === false || $cantidad <= 0 || isset($idsUsados[$idInsumo]) || ($esPorUnidad && floor($cantidad) != $cantidad)) {
                 $componentesValidos = false;
                 break;
             }
@@ -50,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     } elseif ($precio === false || $precio < 0 || $id_categoria === false || $id_categoria <= 0) {
         $mensaje = "El precio o la categoría no son válidos.";
     } elseif (!$componentesValidos) {
-        $mensaje = "Debe indicar al menos un insumo válido y no repetirlo.";
+        $mensaje = "Debe indicar al menos un insumo válido, sin repetirlo. Los insumos medidos por unidad requieren cantidades enteras.";
     } else {
         mysqli_begin_transaction($conexion);
         $correcto = false;
@@ -171,7 +178,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </template>
     <script>
         function agregar() { document.getElementById("componentes").appendChild(document.getElementById("plantilla").content.cloneNode(true)); }
-        function actualizarUnidad(componente) { const opcion = componente.querySelector("select").selectedOptions[0]; componente.querySelector(".unidad-componente").textContent = opcion && opcion.dataset.unidad ? opcion.dataset.unidad : ""; }
+        function actualizarUnidad(componente) { const opcion = componente.querySelector("select").selectedOptions[0]; const unidad = opcion && opcion.dataset.unidad ? opcion.dataset.unidad : ""; componente.querySelector(".unidad-componente").textContent = unidad; const cantidad = componente.querySelector("input[name='cantidad[]']"); if (unidad === "Unidad") { cantidad.step = "1"; cantidad.min = "1"; if (cantidad.value !== "" && !Number.isInteger(Number(cantidad.value))) cantidad.value = Math.max(1, Math.round(Number(cantidad.value))); } else { cantidad.step = "0.01"; cantidad.min = "0.01"; } }
         document.addEventListener("change", (e) => { if (e.target.matches("#componentes select")) actualizarUnidad(e.target.parentElement); });
         document.querySelectorAll("#componentes .componente").forEach(actualizarUnidad);
         function quitar(boton) { if (document.querySelectorAll("#componentes .componente").length > 1) boton.parentElement.remove(); }

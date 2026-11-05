@@ -79,3 +79,13 @@
 .acciones-producto .accion-movimientos { background: #e8eef7; border: 1px solid #e8eef7; color: #001f47; }
 .acciones-producto .accion-editar { background: #001f47; border: 1px solid #001f47; color: #fff; }
 .acciones-producto .accion-desactivar { background: #fff; border: 1px solid #b42318; color: #b42318; }
+
+.insumo-stock-bajo td { background: #fff1e0 !important; color: #8a4b00; }
+.insumo-stock-bajo td:first-child { border-left: 4px solid #f57c00; }
+.stock-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 14px; }
+.stock-legend-item { align-items: center; display: inline-flex; gap: 8px; font-size: 13px; }
+.stock-legend .dot { border-radius: 50%; display: inline-block; height: 12px; width: 12px; }
+.stock-legend .dot.normal { background: #fff; border: 1px solid #9aa5a8; }
+.stock-legend .dot.bajo { background: #f57c00; }
+.stock-legend .dot.negativo { background: #d32f2f; }
+body[data-theme="dark"] .main .insumo-stock-bajo td { background: #4a3314 !important; color: #ffd59e; }

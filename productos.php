@@ -115,8 +115,8 @@ verificar_permiso("productos");
             }, 300);
         }
 
-        function eliminarProducto(id) {
-            if (!confirm("¿Está seguro de que desea desactivar este producto?")) return;
+        async function eliminarProducto(id) {
+            if (!await JBM.confirmar("¿Está seguro de que desea desactivar este producto?", { aceptar: "Desactivar", peligro: true })) return;
             fetch("apis/eliminar.php", {
                 method: "POST",
                 headers: {
@@ -129,7 +129,7 @@ verificar_permiso("productos");
             }).then(response => {
                 if (!response.ok) throw new Error();
                 return response.json();
-            }).then(cargarProductos).catch(() => alert("No se pudo desactivar el producto."));
+            }).then(cargarProductos).catch(() => JBM.avisar("No se pudo desactivar el producto.", "Error"));
         }
 
         function escapeHTML(valor) {
