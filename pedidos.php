@@ -721,7 +721,8 @@ function renderCocina(pedidos) {
     contenedor.innerHTML = pedidos.length ? pedidos.map(p => {
         const completos = p.productos.every(x => Number(x.completado) === 1);
         const productos = p.productos.map(x => `<button type="button" class="producto-cocina ${Number(x.completado) ? "completo" : ""}" data-completar="${Number(p.id_pedido)}" data-producto="${Number(x.id_producto)}" ${Number(x.completado) ? "disabled" : ""}><span>${escapeHTML(x.nombre)} × ${Number(x.cantidad)}</span><strong>${Number(x.completado) ? "Completo" : "Tocar para completar"}</strong></button>`).join("");
-        return `<article class="cocina-pedido"><h3>Pedido #${Number(p.id_pedido)}</h3><p>Mesa: ${escapeHTML(p.mesa || "-")} | <span class="reloj" data-inicio="${escapeHTML(p.fecha_hora_creacion)}"></span></p>${productos}<button type="button" class="boton-accion-pedido" data-listo="${Number(p.id_pedido)}" ${completos ? "" : "disabled"}>Marcar como listo</button></article>`;
+        const descripcion = p.descripcion ? `<p>Detalle: ${escapeHTML(p.descripcion)}</p>` : "";
+        return `<article class="cocina-pedido"><h3>Pedido #${Number(p.id_pedido)}</h3><p>Mesa: ${escapeHTML(p.mesa || "-")} | <span class="reloj" data-inicio="${escapeHTML(p.fecha_hora_creacion)}"></span></p>${descripcion}${productos}<button type="button" class="boton-accion-pedido" data-listo="${Number(p.id_pedido)}" ${completos ? "" : "disabled"}>Marcar como listo</button></article>`;
     }).join("") : '<p class="mensaje-vacio">No hay pedidos en cocina.</p>';
     actualizarRelojes();
 }
