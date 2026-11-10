@@ -58,6 +58,12 @@
     color: #a52b27;
 }
 
+body[data-theme="dark"] .main .alta-panel p.alta-error {
+    background: #48262a;
+    border-color: #d9777f;
+    color: #ffd8dc;
+}
+
 .alta-success {
     background: #effaf1;
     border: 1px solid #4c9a5b;

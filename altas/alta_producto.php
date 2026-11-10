@@ -1,6 +1,7 @@
 <?php
 include_once("../includes/conexionBD.php");
 include_once("../includes/funciones.php");
+require_once __DIR__ . "/../includes/validacion.php";
 verificar_sesion();
 verificar_permiso("productos");
 
@@ -23,8 +24,8 @@ if ($consultaInsumos) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $nombre = trim($_POST["nombre"] ?? "");
-    $precio = filter_var($_POST["precio"] ?? null, FILTER_VALIDATE_FLOAT);
+    $nombre = is_string($_POST["nombre"] ?? null) ? trim($_POST["nombre"]) : "";
+    $precio = validar_precio_producto($_POST["precio"] ?? null);
     $id_categoria = filter_var($_POST["id_categoria"] ?? null, FILTER_VALIDATE_INT);
     $idsInsumos = $_POST["id_insumo"] ?? array();
     $cantidades = $_POST["cantidad"] ?? array();
@@ -35,15 +36,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($componentesValidos) {
         foreach ($idsInsumos as $indice => $valorId) {
             $idInsumo = filter_var($valorId, FILTER_VALIDATE_INT);
-            $cantidad = filter_var($cantidades[$indice], FILTER_VALIDATE_FLOAT);
+            $cantidad = validar_decimal_no_negativo($cantidades[$indice] ?? null);
             $esPorUnidad = false;
+            $insumoActivo = false;
             foreach ($insumos as $insumoLista) {
-                if ((int)$insumoLista["id_insumo"] === $idInsumo && $insumoLista["unidad"] === "Unidad") {
-                    $esPorUnidad = true;
+                if ((int)$insumoLista["id_insumo"] === $idInsumo) {
+                    $insumoActivo = true;
+                    $esPorUnidad = $insumoLista["unidad"] === "Unidad";
                     break;
                 }
             }
-            if ($idInsumo === false || $idInsumo <= 0 || $cantidad === false || $cantidad <= 0 || isset($idsUsados[$idInsumo]) || ($esPorUnidad && floor($cantidad) != $cantidad)) {
+            if ($idInsumo === false || $idInsumo <= 0 || !$insumoActivo || $cantidad === false || $cantidad <= 0 || isset($idsUsados[$idInsumo]) || ($esPorUnidad && floor($cantidad) != $cantidad)) {
                 $componentesValidos = false;
                 break;
             }
@@ -52,10 +55,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
     }
 
-    if ($nombre === "") {
-        $mensaje = "El nombre del producto es obligatorio.";
-    } elseif ($precio === false || $precio < 0 || $id_categoria === false || $id_categoria <= 0) {
-        $mensaje = "El precio o la categoría no son válidos.";
+    if ($nombre === "" || !mb_check_encoding($nombre, "UTF-8") || mb_strlen($nombre, "UTF-8") > 100) {
+        $mensaje = "El nombre del producto es obligatorio y no puede superar los 100 caracteres.";
+    } elseif ($precio === false) {
+        $mensaje = "El precio debe ser mayor que cero y tener hasta dos decimales.";
+    } elseif ($id_categoria === false || $id_categoria <= 0) {
+        $mensaje = "La categoría no es válida.";
+    } elseif (!in_array($id_categoria, array_map("intval", array_column($categorias, "id_categoria")), true)) {
+        $mensaje = "La categoría seleccionada no existe.";
     } elseif (!$componentesValidos) {
         $mensaje = "Debe indicar al menos un insumo válido, sin repetirlo. Los insumos medidos por unidad requieren cantidades enteras.";
     } else {
@@ -129,10 +136,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <form class="alta-form" action="alta_producto.php" method="POST">
         <label for="nombre">Nombre *</label>
         <input type="text" id="nombre" name="nombre" maxlength="100" required
-               value="<?php echo htmlspecialchars($_POST["nombre"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
+               value="<?php echo htmlspecialchars(is_string($_POST["nombre"] ?? null) ? $_POST["nombre"] : "", ENT_QUOTES, "UTF-8"); ?>">
         <label for="precio">Precio *</label>
-        <input type="number" id="precio" name="precio" min="0" step="0.01" required
-               value="<?php echo htmlspecialchars($_POST["precio"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
+        <input type="number" id="precio" name="precio" min="0.01" max="99999999.99" step="0.01" required
+               value="<?php echo htmlspecialchars(is_string($_POST["precio"] ?? null) ? $_POST["precio"] : "", ENT_QUOTES, "UTF-8"); ?>">
         <label for="id_categoria">Categoría *</label>
         <select id="id_categoria" name="id_categoria" required>
             <option value="">Seleccione una opción...</option>
@@ -151,7 +158,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         <option value="<?php echo $insumo["id_insumo"]; ?>" data-unidad="<?php echo htmlspecialchars($insumo["unidad"], ENT_QUOTES, "UTF-8"); ?>"><?php echo htmlspecialchars($insumo["nombre"] . ($insumo["unidad"] !== "" ? " (" . $insumo["unidad"] . ")" : ""), ENT_QUOTES, "UTF-8"); ?></option>
                     <?php endforeach; ?>
                 </select>
-                <input type="number" name="cantidad[]" min="0.01" step="0.01" required>
+                <input type="number" name="cantidad[]" min="0.01" max="99999999.99" step="0.01" required>
                 <span class="unidad-componente"></span><button type="button" onclick="quitar(this)">Quitar</button>
             </div>
         </div>
@@ -172,7 +179,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     <option value="<?php echo $insumo["id_insumo"]; ?>" data-unidad="<?php echo htmlspecialchars($insumo["unidad"], ENT_QUOTES, "UTF-8"); ?>"><?php echo htmlspecialchars($insumo["nombre"] . ($insumo["unidad"] !== "" ? " (" . $insumo["unidad"] . ")" : ""), ENT_QUOTES, "UTF-8"); ?></option>
                 <?php endforeach; ?>
             </select>
-            <input type="number" name="cantidad[]" min="0.01" step="0.01" required>
+            <input type="number" name="cantidad[]" min="0.01" max="99999999.99" step="0.01" required>
             <span class="unidad-componente"></span><button type="button" onclick="quitar(this)">Quitar</button>
         </div>
     </template>

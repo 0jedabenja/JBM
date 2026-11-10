@@ -1,6 +1,7 @@
 <?php
 include_once("includes/conexionBD.php");
 include_once("includes/funciones.php");
+require_once __DIR__ . "/includes/validacion.php";
 verificar_permiso("insumos");
 $id_insumo = filter_input(INPUT_GET, "id", FILTER_VALIDATE_INT);
 if ($id_insumo === false || $id_insumo === null || $id_insumo <= 0) {
@@ -26,18 +27,23 @@ if ($consultaCategorias) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $nombre = trim($_POST["nombre"] ?? "");
-    $stock_minimo = filter_var($_POST["stock_minimo"] ?? null, FILTER_VALIDATE_FLOAT);
-    $costo = filter_var($_POST["costo"] ?? null, FILTER_VALIDATE_FLOAT);
+    $nombre = is_string($_POST["nombre"] ?? null) ? trim($_POST["nombre"]) : "";
+    $stock_minimo = validar_decimal_no_negativo($_POST["stock_minimo"] ?? null);
+    $costo = validar_decimal_no_negativo($_POST["costo"] ?? null);
     $id_medida = filter_var($_POST["id_medida"] ?? null, FILTER_VALIDATE_INT);
-    $categoriaIngresada = trim($_POST["id_categoria"] ?? "");
+    $categoriaIngresada = is_string($_POST["id_categoria"] ?? null) ? trim($_POST["id_categoria"]) : null;
     $id_categoria = $categoriaIngresada === "" ? null : filter_var($categoriaIngresada, FILTER_VALIDATE_INT);
 
-    if ($nombre === "") {
-        $mensaje = "El nombre del insumo es obligatorio.";
+    if ($nombre === "" || !mb_check_encoding($nombre, "UTF-8") || mb_strlen($nombre, "UTF-8") > 100) {
+        $mensaje = "El nombre del insumo es obligatorio y no puede superar los 100 caracteres.";
         $tipoMensaje = "error";
-    } elseif ($stock_minimo === false || $costo === false || $id_medida === false || $id_medida <= 0 || ($categoriaIngresada !== "" && ($id_categoria === false || $id_categoria <= 0))) {
-        $mensaje = "Los valores ingresados no son válidos.";
+    } elseif ($stock_minimo === false || $costo === false || $id_medida === false || $id_medida === null || $id_medida <= 0 || $categoriaIngresada === null || ($categoriaIngresada !== "" && ($id_categoria === false || $id_categoria === null || $id_categoria <= 0))) {
+        $mensaje = "Ingrese valores no negativos con hasta dos decimales y seleccione una unidad y categoría válidas.";
+        $tipoMensaje = "error";
+    } elseif (!in_array($id_medida, array_map("intval", array_column($medidas, "id_medida")), true)
+        || ($id_categoria !== null && !in_array($id_categoria, array_map("intval", array_column($categorias, "id_categoria")), true))
+    ) {
+        $mensaje = "La unidad de medida o la categoría seleccionada no existe.";
         $tipoMensaje = "error";
     } else {
         $sql = "UPDATE Insumo
@@ -155,11 +161,11 @@ if (!$insumo) {
                value="<?php echo htmlspecialchars($insumo["cantidad_actual"], ENT_QUOTES, "UTF-8"); ?>">
 
         <label for="stock_minimo">Stock Mínimo</label>
-        <input type="number" id="stock_minimo" name="stock_minimo" step="0.01" min="0" required
+        <input type="number" id="stock_minimo" name="stock_minimo" step="0.01" min="0" max="99999999.99" required
                value="<?php echo htmlspecialchars($insumo["stock_minimo"], ENT_QUOTES, "UTF-8"); ?>">
 
         <label for="costo">Costo</label>
-        <input type="number" id="costo" name="costo" step="0.01" min="0" required
+        <input type="number" id="costo" name="costo" step="0.01" min="0" max="99999999.99" required
                value="<?php echo htmlspecialchars($insumo["costo"], ENT_QUOTES, "UTF-8"); ?>">
 
         <div class="alta-actions">

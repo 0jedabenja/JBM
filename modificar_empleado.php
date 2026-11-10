@@ -1,6 +1,7 @@
 <?php
 include_once("includes/conexionBD.php");
 include_once("includes/funciones.php");
+require_once __DIR__ . "/includes/validacion.php";
 verificar_permiso("empleados");
 $id_empleado = filter_input(INPUT_GET, "id", FILTER_VALIDATE_INT);
 if ($id_empleado === false || $id_empleado <= 0) mostrar_pagina_error(400);
@@ -9,10 +10,15 @@ $roles = array();
 $consulta = mysqli_query($conexion, "SELECT id_rol, nombre FROM Rol ORDER BY nombre");
 while ($fila = mysqli_fetch_assoc($consulta)) $roles[] = $fila;
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $nombre = trim($_POST["nombre"] ?? ""); $apellido = trim($_POST["apellido"] ?? ""); $usuario = trim($_POST["usuario"] ?? ""); $correo = strtolower(trim($_POST["correo"] ?? "")); $contrasena = $_POST["contrasena"] ?? ""; $id_rol = filter_var($_POST["id_rol"] ?? null, FILTER_VALIDATE_INT);
-    if ($nombre === "" || $apellido === "" || $usuario === "") $mensaje = "Nombre, apellido y usuario son obligatorios.";
-    elseif (strlen($usuario) > 50 || $id_rol === false || $id_rol <= 0) $mensaje = "Los datos del empleado no son válidos.";
-    elseif ($contrasena !== "" && strlen($contrasena) < 8) $mensaje = "La contraseña debe tener al menos 8 caracteres.";
+    $nombre = is_string($_POST["nombre"] ?? null) ? trim($_POST["nombre"]) : "";
+    $apellido = is_string($_POST["apellido"] ?? null) ? trim($_POST["apellido"]) : "";
+    $usuario = is_string($_POST["usuario"] ?? null) ? trim($_POST["usuario"]) : "";
+    $correo = is_string($_POST["correo"] ?? null) ? strtolower(trim($_POST["correo"])) : "";
+    $contrasena = $_POST["contrasena"] ?? "";
+    $id_rol = validar_id_positivo($_POST["id_rol"] ?? null);
+    if (!validar_texto($nombre, 100) || !validar_texto($apellido, 100) || !validar_texto($usuario, 50) || !validar_texto($correo, 255) || !filter_var($correo, FILTER_VALIDATE_EMAIL)) $mensaje = "Nombre, apellido, usuario o correo no son válidos.";
+    elseif ($id_rol === false || !in_array($id_rol, array_map("intval", array_column($roles, "id_rol")), true)) $mensaje = "El rol seleccionado no es válido.";
+    elseif (!is_string($contrasena) || ($contrasena !== "" && !validar_contrasena_nueva($contrasena))) $mensaje = "La contraseña debe tener entre 8 y 72 bytes.";
     else {
         if ($contrasena !== "") {
             $hash = password_hash($contrasena, PASSWORD_DEFAULT);

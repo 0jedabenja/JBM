@@ -1,13 +1,15 @@
 <?php
+require_once __DIR__ . '/includes/validacion.php';
 
 $mensaje = '';
 $tipo_alerta = '';
 $error_recuperacion = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $correo = strtolower(trim($_POST['correo'] ?? ''));
+    $correoEntrada = $_POST['correo'] ?? '';
 
-    if (filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+    if (validar_texto($correoEntrada, 255) && filter_var(trim($correoEntrada), FILTER_VALIDATE_EMAIL)) {
+        $correo = strtolower(trim($correoEntrada));
         require_once __DIR__ . '/includes/conexionBD.php';
 
         $correo_remitente = 'contacto@lodetorres.shop';
@@ -155,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form action="recuperar.php" method="POST">
             <div class="form-group">
                 <label for="correo">Correo electrónico</label>
-                <input type="email" name="correo" id="correo" required autocomplete="email" placeholder="Ingresá tu correo">
+                <input type="email" name="correo" id="correo" maxlength="255" required autocomplete="email" placeholder="Ingresá tu correo">
             </div>
             <button type="submit" class="btn">Enviar Instrucciones</button>
         </form>

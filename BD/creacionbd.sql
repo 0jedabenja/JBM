@@ -127,6 +127,7 @@ CREATE TABLE Producto (
     precio DECIMAL(10,2) NOT NULL,
     id_categoria INT,
     PRIMARY KEY (id_producto),
+    CONSTRAINT chk_producto_precio_positivo CHECK (precio > 0),
     FOREIGN KEY (id_categoria) REFERENCES Categoria(id_categoria) ON DELETE SET NULL ON UPDATE CASCADE
 );
 

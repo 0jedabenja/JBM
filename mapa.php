@@ -62,7 +62,7 @@ $puedeLimpiar = usuario_tiene_permiso("crear_pedido");
             <input id="idMesa" type="hidden">
             <div class="mapa-field">
                 <label for="numeroMesa">Número</label>
-                <input id="numeroMesa" type="number" min="1" step="1" required>
+                <input id="numeroMesa" type="number" min="1" max="2147483647" step="1" required>
             </div>
             <div class="mapa-actions-bar">
                 <button type="button" class="secondary" data-cerrar-dialog="dialogMesa">Cancelar</button>
@@ -113,17 +113,16 @@ $puedeLimpiar = usuario_tiene_permiso("crear_pedido");
 
                 const metodo = idMesa ? "PATCH" : "POST";
                 const body = idMesa ? { ...payload, id_mesa: idMesa } : payload;
-                const respuesta = await fetch("apis/api_mesas.php", { method: metodo, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-                const datos = await respuesta.json();
-
-                if (!respuesta.ok) {
-                    mostrarMensaje(datos.error || "No se pudo guardar la mesa.", true);
-                    return;
+                try {
+                    const respuesta = await fetch("apis/api_mesas.php", { method: metodo, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+                    const datos = await respuesta.json();
+                    if (!respuesta.ok) throw new Error(datos.error || "No se pudo guardar la mesa.");
+                    mostrarMensaje(idMesa ? "Mesa actualizada correctamente." : "Mesa creada correctamente.", false);
+                    cerrarDialog(dialogMesa);
+                    await cargarMapa();
+                } catch (error) {
+                    mostrarMensaje(error.message || "No se pudo guardar la mesa.", true);
                 }
-
-                mostrarMensaje(idMesa ? "Mesa actualizada correctamente." : "Mesa creada correctamente.", false);
-                cerrarDialog(dialogMesa);
-                await cargarMapa();
             });
         }
 

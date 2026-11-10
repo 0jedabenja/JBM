@@ -1,7 +1,9 @@
 <?php
 include_once("../includes/conexionBD.php");
 include_once("../includes/funciones.php");
-//verificar_permiso("empleados");
+require_once __DIR__ . "/../includes/validacion.php";
+verificar_sesion();
+verificar_permiso("empleados");
 $mensaje = "";
 $roles = array();
 
@@ -13,11 +15,12 @@ if ($consulta_roles) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $nombre = trim($_POST["nombre"] ?? "");
-    $apellido = trim($_POST["apellido"] ?? "");
-    $usuario = trim($_POST["usuario"] ?? "");
+    $nombre = is_string($_POST["nombre"] ?? null) ? trim($_POST["nombre"]) : "";
+    $apellido = is_string($_POST["apellido"] ?? null) ? trim($_POST["apellido"]) : "";
+    $usuario = is_string($_POST["usuario"] ?? null) ? trim($_POST["usuario"]) : "";
+    $correo = is_string($_POST["correo"] ?? null) ? strtolower(trim($_POST["correo"])) : "";
     $contrasena = $_POST["contrasena"] ?? "";
-    $id_rol = filter_var($_POST["id_rol"] ?? null, FILTER_VALIDATE_INT);
+    $id_rol = validar_id_positivo($_POST["id_rol"] ?? null);
     $rol_valido = false;
 
     foreach ($roles as $rol) {
@@ -27,24 +30,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
     }
 
-    if ($nombre === "" || $apellido === "" || $usuario === "") {
-        $mensaje = "El nombre, el apellido y el usuario son obligatorios.";
-    } elseif (strlen($nombre) > 100 || strlen($apellido) > 100) {
-        $mensaje = "El nombre y el apellido no pueden superar los 100 caracteres.";
-    } elseif (strlen($usuario) > 50) {
-        $mensaje = "El usuario no puede superar los 50 caracteres.";
-    } elseif (strlen($contrasena) < 8) {
-        $mensaje = "La contraseña debe tener al menos 8 caracteres.";
+    if (!validar_texto($nombre, 100) || !validar_texto($apellido, 100) || !validar_texto($usuario, 50)
+        || !validar_texto($correo, 255) || !filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+        $mensaje = "El nombre, apellido, usuario o correo son inválidos o superan la longitud permitida.";
+    } elseif (!validar_contrasena_nueva($contrasena)) {
+        $mensaje = "La contraseña debe tener entre 8 y 72 bytes.";
     } elseif (!$rol_valido) {
         $mensaje = "Debe seleccionar un tipo de empleado válido.";
     } else {
         $hash = password_hash($contrasena, PASSWORD_DEFAULT);
-        $sql = "INSERT INTO Empleado (nombre, apellido, usuario, contraseña, id_rol)
-                VALUES (?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO Empleado (nombre, apellido, usuario, correo, contraseña, id_rol)
+                VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = mysqli_prepare($conexion, $sql);
 
         if ($stmt) {
-            mysqli_stmt_bind_param($stmt, "ssssi", $nombre, $apellido, $usuario, $hash, $id_rol);
+            mysqli_stmt_bind_param($stmt, "sssssi", $nombre, $apellido, $usuario, $correo, $hash, $id_rol);
             if (mysqli_stmt_execute($stmt)) {
                 $idEmpleadoNuevo = mysqli_insert_id($conexion);
                 mysqli_stmt_close($stmt);
@@ -82,18 +82,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <form action="cargar_empleados.php" method="POST">
             <label for="nombre">Nombre *</label>
             <input type="text" id="nombre" name="nombre" maxlength="100" required
-                   value="<?php echo htmlspecialchars($_POST["nombre"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
+                   value="<?php echo htmlspecialchars(is_string($_POST["nombre"] ?? null) ? $_POST["nombre"] : "", ENT_QUOTES, "UTF-8"); ?>">
 
             <label for="apellido">Apellido *</label>
             <input type="text" id="apellido" name="apellido" maxlength="100" required
-                   value="<?php echo htmlspecialchars($_POST["apellido"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
+                   value="<?php echo htmlspecialchars(is_string($_POST["apellido"] ?? null) ? $_POST["apellido"] : "", ENT_QUOTES, "UTF-8"); ?>">
 
             <label for="usuario">Usuario *</label>
             <input type="text" id="usuario" name="usuario" maxlength="50" required
-                   value="<?php echo htmlspecialchars($_POST["usuario"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
+                   value="<?php echo htmlspecialchars(is_string($_POST["usuario"] ?? null) ? $_POST["usuario"] : "", ENT_QUOTES, "UTF-8"); ?>">
+
+            <label for="correo">Correo electrónico *</label>
+            <input type="email" id="correo" name="correo" maxlength="255" required
+                   value="<?php echo htmlspecialchars(is_string($_POST["correo"] ?? null) ? $_POST["correo"] : "", ENT_QUOTES, "UTF-8"); ?>">
 
             <label for="contrasena">Contraseña *</label>
-            <input type="password" id="contrasena" name="contrasena" minlength="8" required>
+            <input type="password" id="contrasena" name="contrasena" minlength="8" maxlength="72" required>
 
             <label for="id_rol">Tipo de empleado *</label>
             <select id="id_rol" name="id_rol" required>

@@ -18,8 +18,9 @@ function entrada_mesas() {
 }
 
 function coordenada_mesa($valor) {
-    if (!is_numeric($valor) || !is_finite((float)$valor)) return false;
-    return (int)round((float)$valor);
+    if ((!is_string($valor) && !is_int($valor)) || !preg_match('/^[0-9]+$/D', (string)$valor)) return false;
+    $coordenada = filter_var($valor, FILTER_VALIDATE_INT);
+    return $coordenada !== false && $coordenada >= 0 && $coordenada <= 2147483647 ? $coordenada : false;
 }
 
 function posicion_mesa_disponible($x, $y, $ancho, $posiciones) {
@@ -90,8 +91,8 @@ if ($rolActual !== "administrador" && !($marcarLimpia && usuario_tiene_permiso("
 }
 
 if ($metodo === "POST") {
-    $numero = filter_var($entrada["numero"] ?? null, FILTER_VALIDATE_INT);
-    if ($numero === false || $numero <= 0) {
+    $numero = validar_id_positivo($entrada["numero"] ?? null);
+    if ($numero === false) {
         responder_mesas(array("error" => "Los datos de la mesa no son válidos."), 400);
     }
 
@@ -126,7 +127,7 @@ if ($metodo === "POST") {
 }
 
 if ($metodo === "DELETE") {
-    $idMesa = filter_var($entrada["id_mesa"] ?? null, FILTER_VALIDATE_INT);
+    $idMesa = validar_id_positivo($entrada["id_mesa"] ?? null);
     if ($idMesa === false || $idMesa <= 0) responder_mesas(array("error" => "La mesa no es válida."), 400);
 
     $stmt = mysqli_prepare($conexion, "DELETE FROM Mesa WHERE id_mesa = ?");
@@ -141,7 +142,7 @@ if ($metodo === "DELETE") {
 }
 
 if ($metodo === "PATCH") {
-    $idMesa = filter_var($entrada["id_mesa"] ?? null, FILTER_VALIDATE_INT);
+    $idMesa = validar_id_positivo($entrada["id_mesa"] ?? null);
     if ($marcarLimpia) {
         if ($idMesa === false || $idMesa <= 0) {
             responder_mesas(array("error" => "La mesa no es válida."), 400);
@@ -180,7 +181,7 @@ if ($metodo === "PATCH") {
 
     $editaNumero = array_key_exists("numero", $entrada);
     $editaPosicion = array_key_exists("pos_x", $entrada) && array_key_exists("pos_y", $entrada);
-    $numero = $editaNumero ? filter_var($entrada["numero"], FILTER_VALIDATE_INT) : null;
+    $numero = $editaNumero ? validar_id_positivo($entrada["numero"]) : null;
     $posX = $editaPosicion ? coordenada_mesa($entrada["pos_x"]) : null;
     $posY = $editaPosicion ? coordenada_mesa($entrada["pos_y"]) : null;
 

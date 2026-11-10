@@ -81,7 +81,7 @@ verificar_permiso("empleados");
         }
         function cambiarPagina(delta) { paginaActual = Math.max(1, paginaActual + delta); cargarEmpleados(); }
         function buscarEmpleados() { clearTimeout(timeoutBusqueda); timeoutBusqueda = setTimeout(() => { paginaActual = 1; cargarEmpleados(); }, 300); }
-        async function eliminarEmpleado(id) { if (!await JBM.confirmar("¿Está seguro de que desea desactivar este empleado?", { aceptar: "Desactivar", peligro: true })) return; fetch("apis/eliminar.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "empleado", id: Number(id) }) }).then(response => { if (!response.ok) throw new Error(); return response.json(); }).then(cargarEmpleados).catch(() => JBM.avisar("No se pudo desactivar el empleado.", "Error")); }
+        async function eliminarEmpleado(id) { if (!await JBM.confirmar("¿Está seguro de que desea desactivar este empleado?", { aceptar: "Desactivar", peligro: true })) return; fetch("apis/eliminar.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "empleado", id: Number(id) }) }).then(async response => { const datos = await response.json(); if (!response.ok) throw new Error(datos.error || "No se pudo desactivar el empleado."); return datos; }).then(cargarEmpleados).catch(error => JBM.avisar(error.message, "Error")); }
         async function restablecerEmpleado(id) {
             const v = await JBM.pedir({
                 titulo: "Restablecer contraseña",

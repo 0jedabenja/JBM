@@ -272,9 +272,10 @@ if ($entradaEfectivo !== null) {
     }
     if (
         !is_string($entradaEfectivo)
-        || !is_numeric($entradaEfectivo)
+        || !preg_match('/^(?:[0-9]+(?:\.[0-9]{1,2})?|\.[0-9]{1,2})$/', $entradaEfectivo)
         || !is_finite((float)$entradaEfectivo)
         || (float)$entradaEfectivo < 0
+        || (float)$entradaEfectivo > 99999999.99
         || $efectivoCobradoCentavos <= 0
     ) {
         responder_error_boleta("Los datos del pago en efectivo no son válidos.", 400);

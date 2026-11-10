@@ -172,8 +172,8 @@ if ($accion === "abrir") {
             ? "Hay un conteo en curso. Cerralo para poder abrir la caja."
             : "Hay un conteo en curso. Avisá al administrador para que lo termine y así poder abrir la caja."), 409);
     }
-    $montoInicial = filter_var($entrada["monto_inicial"] ?? null, FILTER_VALIDATE_FLOAT);
-    if ($montoInicial === false || $montoInicial < 0) responder_caja(array("error" => "El monto inicial no es válido."), 400);
+    $montoInicial = validar_decimal_no_negativo($entrada["monto_inicial"] ?? null);
+    if ($montoInicial === false) responder_caja(array("error" => "El monto inicial no es válido."), 400);
     $resultado = mysqli_query($conexion, "SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL LIMIT 1");
     if (mysqli_fetch_assoc($resultado)) responder_caja(array("error" => "Ya existe una sesión de caja abierta."), 409);
     $idEmpleado = (int) $_SESSION["usuario_id"];
@@ -187,8 +187,8 @@ if ($accion === "abrir") {
 }
 
 if ($accion === "cerrar") {
-    $montoFinal = filter_var($entrada["monto_final"] ?? null, FILTER_VALIDATE_FLOAT);
-    if ($montoFinal === false || $montoFinal < 0) responder_caja(array("error" => "El monto final no es válido."), 400);
+    $montoFinal = validar_decimal_no_negativo($entrada["monto_final"] ?? null);
+    if ($montoFinal === false) responder_caja(array("error" => "El monto final no es válido."), 400);
     $resultadoPendientes = mysqli_query($conexion, "SELECT p.id_pedido FROM Pedido p INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado WHERE p.id_turno IN (SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL) AND p.cobrado = FALSE AND LOWER(ep.nombre) IN ('en preparación', 'comiendo', 'listo') LIMIT 1");
     if (mysqli_fetch_assoc($resultadoPendientes)) responder_caja(array("error" => "No se puede cerrar la caja mientras haya pedidos en curso o pendientes de cobro."), 409);
 
@@ -224,8 +224,8 @@ if ($accion === "cobrar") {
     $idPedido = filter_var($entrada["id_pedido"] ?? null, FILTER_VALIDATE_INT);
     if ($idPedido === false || $idPedido <= 0) responder_caja(array("error" => "El pedido no es válido."), 400);
 
-    $pagos = $entrada["pagos"] ?? [];
-    if (!is_array($pagos) || count($pagos) === 0) responder_caja(array("error" => "Debe incluir al menos un método de pago."), 400);
+    $pagos = array_key_exists("pagos", $entrada) ? $entrada["pagos"] : array();
+    if (!is_array($pagos) || count($pagos) > 100) responder_caja(array("error" => "La lista de métodos de pago no es válida."), 400);
 
     mysqli_begin_transaction($conexion);
     $transaccionIniciada = true;
@@ -256,12 +256,108 @@ if ($accion === "cobrar") {
         responder_caja(array("error" => "El pedido no está listo para cobrar, ya fue cobrado o no pertenece a la caja abierta."), 409);
     }
 
-    $totalCobro = round((float)$pedido["monto_total"], 2);
+    $tipoDescuento = array_key_exists("tipo_descuento", $entrada) ? $entrada["tipo_descuento"] : "ninguno";
+    $idDescuentoEntrada = $entrada["id_descuento"] ?? null;
+    $porcentajeEntrada = array_key_exists("porcentaje_descuento", $entrada) ? $entrada["porcentaje_descuento"] : 0;
+    $montoDescuentoEntrada = array_key_exists("monto_descuento", $entrada) ? $entrada["monto_descuento"] : 0;
+    $porcentajeTexto = is_string($porcentajeEntrada) || is_int($porcentajeEntrada) || is_float($porcentajeEntrada)
+        ? trim((string)$porcentajeEntrada)
+        : "";
+    $montoDescuentoTexto = is_string($montoDescuentoEntrada) || is_int($montoDescuentoEntrada) || is_float($montoDescuentoEntrada)
+        ? trim((string)$montoDescuentoEntrada)
+        : "";
+    if (
+        !is_string($tipoDescuento)
+        || !in_array($tipoDescuento, array("ninguno", "fijo", "personalizado"), true)
+        || !preg_match('/^(?:[0-9]+(?:\.[0-9]{1,2})?|\.[0-9]{1,2})$/', $porcentajeTexto)
+        || !preg_match('/^(?:[0-9]+(?:\.[0-9]{1,2})?|\.[0-9]{1,2})$/', $montoDescuentoTexto)
+        || !is_finite((float)$porcentajeTexto)
+        || !is_finite((float)$montoDescuentoTexto)
+        || (float)$porcentajeTexto > 100
+        || (float)$montoDescuentoTexto > 99999999.99
+    ) {
+        mysqli_rollback($conexion);
+        responder_caja(array("error" => "Los datos del descuento no son válidos."), 400);
+    }
+
+    $porcentajeDescuento = 0.0;
+    $idDescuento = null;
+    if ($tipoDescuento === "fijo") {
+        $idDescuento = filter_var($idDescuentoEntrada, FILTER_VALIDATE_INT);
+        if ($idDescuento === false || $idDescuento <= 0 || (float)$porcentajeTexto !== 0.0) {
+            mysqli_rollback($conexion);
+            responder_caja(array("error" => "El descuento fijo seleccionado no es válido."), 400);
+        }
+        $stmtDescuento = mysqli_prepare(
+            $conexion,
+            "SELECT valor FROM Descuento WHERE id_descuento = ? AND LOWER(tipo) = 'porcentaje' LIMIT 1"
+        );
+        if (!$stmtDescuento) {
+            mysqli_rollback($conexion);
+            responder_caja(array("error" => "No se pudo validar el descuento seleccionado."), 500);
+        }
+        mysqli_stmt_bind_param($stmtDescuento, "i", $idDescuento);
+        if (!mysqli_stmt_execute($stmtDescuento)) {
+            mysqli_stmt_close($stmtDescuento);
+            mysqli_rollback($conexion);
+            responder_caja(array("error" => "No se pudo validar el descuento seleccionado."), 500);
+        }
+        $resultadoDescuento = mysqli_stmt_get_result($stmtDescuento);
+        $descuentoFijo = $resultadoDescuento ? mysqli_fetch_assoc($resultadoDescuento) : null;
+        mysqli_stmt_close($stmtDescuento);
+        if (!$descuentoFijo || !is_finite((float)$descuentoFijo["valor"])
+            || (float)$descuentoFijo["valor"] < 0 || (float)$descuentoFijo["valor"] > 100
+        ) {
+            mysqli_rollback($conexion);
+            responder_caja(array("error" => "El descuento fijo no existe o no tiene un porcentaje válido."), 400);
+        }
+        $porcentajeDescuento = (float)$descuentoFijo["valor"];
+    } elseif ($tipoDescuento === "personalizado") {
+        if ($idDescuentoEntrada !== null && $idDescuentoEntrada !== ""
+            || (float)$porcentajeTexto <= 0
+        ) {
+            mysqli_rollback($conexion);
+            responder_caja(array("error" => "El descuento personalizado no es válido."), 400);
+        }
+        $porcentajeDescuento = (float)$porcentajeTexto;
+    } elseif (
+        ($idDescuentoEntrada !== null && $idDescuentoEntrada !== "")
+        || (float)$porcentajeTexto !== 0.0
+        || (float)$montoDescuentoTexto !== 0.0
+    ) {
+        mysqli_rollback($conexion);
+        responder_caja(array("error" => "No se pueden enviar importes de descuento sin seleccionar un descuento."), 400);
+    }
+
+    if ($tipoDescuento !== "ninguno" && (int)$pedido["id_cliente"] <= 1) {
+        mysqli_rollback($conexion);
+        responder_caja(array("error" => "Los descuentos solo se pueden aplicar a un cliente registrado."), 409);
+    }
+
+    $subtotal = round((float)$pedido["subtotal"], 2);
+    $montoDescuento = round($subtotal * $porcentajeDescuento / 100, 2);
+    if (round((float)$montoDescuentoTexto, 2) !== $montoDescuento) {
+        mysqli_rollback($conexion);
+        responder_caja(array("error" => "El importe del descuento no coincide con el subtotal y el porcentaje aplicado."), 400);
+    }
+    $totalCobro = round($subtotal - $montoDescuento, 2);
+    if ($totalCobro > 0 && count($pagos) === 0) {
+        mysqli_rollback($conexion);
+        responder_caja(array("error" => "Debe incluir al menos un método de pago."), 400);
+    }
+    if ($totalCobro === 0.0 && count($pagos) > 0) {
+        mysqli_rollback($conexion);
+        responder_caja(array("error" => "Un pedido con total cero no debe incluir pagos."), 400);
+    }
     $sumaPagos = 0;
     $metodosValidos = [];
     foreach ($pagos as $pago) {
-        $idMp = filter_var($pago["id_mp"] ?? null, FILTER_VALIDATE_INT);
-        $monto = filter_var($pago["monto"] ?? null, FILTER_VALIDATE_FLOAT);
+        if (!is_array($pago)) {
+            mysqli_rollback($conexion);
+            responder_caja(array("error" => "Uno o más métodos de pago no son válidos."), 400);
+        }
+        $idMp = validar_id_positivo($pago["id_mp"] ?? null);
+        $monto = validar_decimal_no_negativo($pago["monto"] ?? null);
         if ($idMp === false || $idMp <= 0 || $monto === false || $monto <= 0) {
             mysqli_rollback($conexion);
             responder_caja(array("error" => "Uno o más métodos de pago no son válidos."), 400);
@@ -284,7 +380,7 @@ if ($accion === "cobrar") {
         $metodosValidos[] = array("id_mp" => $idMp, "monto" => $monto, "descripcion" => $metodo["descripcion"]);
     }
 
-    if (abs($sumaPagos - $totalCobro) > 0.01) {
+    if ((int)round($sumaPagos * 100) !== (int)round($totalCobro * 100)) {
         mysqli_rollback($conexion);
         responder_caja(array("error" => "La suma de los pagos no coincide con el total del pedido. Total: $" . number_format($totalCobro, 2) . ", Suma: $" . number_format($sumaPagos, 2)), 400);
     }
@@ -335,9 +431,6 @@ if ($accion === "cobrar") {
         mysqli_rollback($conexion);
         responder_caja(array("error" => "No se pudo preparar el cobro del pedido."), 500);
     }
-    $idDescuento = $entrada["id_descuento"] ?? null;
-    $porcentajeDescuento = $entrada["porcentaje_descuento"] ?? 0;
-    $montoDescuento = $entrada["monto_descuento"] ?? 0;
     mysqli_stmt_bind_param($stmt, "idddi", $idDescuento, $totalCobro, $porcentajeDescuento, $montoDescuento, $idPedido);
     if (!mysqli_stmt_execute($stmt)) {
         $detalleError = mysqli_stmt_error($stmt);
