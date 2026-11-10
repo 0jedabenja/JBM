@@ -16,8 +16,9 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
 }
 if ($_SERVER["REQUEST_METHOD"] !== "POST") { http_response_code(405); echo json_encode(["error"=>"Método no permitido"]); exit; }
 $e=json_decode(file_get_contents("php://input"),true); if(!is_array($e)) $e=$_POST;
-$nombre=trim((string)($e["nombre"]??"")); $apellido=trim((string)($e["apellido"]??"")); $usuario=trim((string)($e["usuario"]??"")); $correo=strtolower(trim((string)($e["correo"]??"")));
-if(!$nombre||!$apellido||!$usuario||!filter_var($correo,FILTER_VALIDATE_EMAIL)) { http_response_code(400); echo json_encode(["error"=>"Datos no válidos"]); exit; }
+$nombre=$e["nombre"]??null; $apellido=$e["apellido"]??null; $usuario=$e["usuario"]??null; $correo=$e["correo"]??null;
+if (!validar_texto($nombre, 100) || !validar_texto($apellido, 100) || !validar_texto($usuario, 50) || !validar_texto($correo, 255) || !filter_var(trim($correo), FILTER_VALIDATE_EMAIL)) { http_response_code(400); echo json_encode(["error"=>"Nombre, apellido, usuario o correo no son válidos."], JSON_UNESCAPED_UNICODE); exit; }
+$nombre=trim($nombre); $apellido=trim($apellido); $usuario=trim($usuario); $correo=strtolower(trim($correo));
 $stmt = mysqli_prepare($conexion, "UPDATE Empleado SET nombre = ?, apellido = ?, usuario = ?, correo = ? WHERE id_empleado = ? AND activo = TRUE");
 mysqli_stmt_bind_param($stmt, "ssssi", $nombre, $apellido, $usuario, $correo, $id);
 try {

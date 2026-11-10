@@ -359,13 +359,18 @@ if ($metodo === "GET") {
 if ($metodo === "POST") {
     $entradaAccion = obtenerEntrada();
     $accion = $entradaAccion["accion"] ?? "";
+    if (array_key_exists("accion", $entradaAccion) && (!is_string($entradaAccion["accion"]) || $accion === "")) {
+        responder(array("error" => "La acción indicada no es válida."), 400);
+    }
 
     if ($accion === "agregar_productos") {
         verificar_permiso("crear_pedido", true);
-        $idPedido = filter_var($entradaAccion["id_pedido"] ?? null, FILTER_VALIDATE_INT);
-        $productos = $entradaAccion["productos"] ?? array();
+        $idPedido = validar_id_positivo($entradaAccion["id_pedido"] ?? null);
+        $productos = validar_lineas_pedido($entradaAccion["productos"] ?? null);
         $forzarStock = ($entradaAccion["forzar_stock"] ?? false) === true;
-        if ($idPedido === false || $idPedido <= 0 || !is_array($productos) || count($productos) === 0) {
+        if ($idPedido === false || $productos === false
+            || array_diff(array_keys($entradaAccion), array("accion", "id_pedido", "productos", "forzar_stock"))
+            || (array_key_exists("forzar_stock", $entradaAccion) && !is_bool($entradaAccion["forzar_stock"]))) {
             responder(array("error" => "Datos del pedido no válidos."), 400);
         }
 
@@ -400,16 +405,8 @@ if ($metodo === "POST") {
         $totalAgregado = 0;
         $hayProductoCocina = false;
         foreach ($productos as $producto) {
-            $idProducto = filter_var($producto["id_producto"] ?? null, FILTER_VALIDATE_INT);
-            $cantidad = filter_var($producto["cantidad"] ?? null, FILTER_VALIDATE_INT);
-            if (
-                $idProducto === false || $idProducto <= 0
-                || $cantidad === false || $cantidad <= 0
-                || isset($productosActualizados[$idProducto])
-            ) {
-                mysqli_rollback($conexion);
-                responder(array("error" => "La lista de productos no es válida."), 400);
-            }
+            $idProducto = $producto["id_producto"];
+            $cantidad = $producto["cantidad"];
 
             $stmtPrecio = mysqli_prepare(
                 $conexion,
@@ -432,12 +429,34 @@ if ($metodo === "POST") {
             }
 
             $precio = (float) $filaPrecio["precio"];
+            if (validar_precio_producto($filaPrecio["precio"]) === false) {
+                mysqli_rollback($conexion);
+                responder(array("error" => "El producto seleccionado tiene un precio inválido. Actualiza su precio antes de agregarlo."), 409);
+            }
             $esBebida = strtolower(trim($filaPrecio["categoria"] ?? "")) === "bebidas";
             if (!$esBebida) {
                 $hayProductoCocina = true;
             }
             $total = $precio * $cantidad;
             $totalAgregado += $total;
+            if (!validar_importe_calculado($total) || !validar_importe_calculado((float)$pedido["monto_total"] + $totalAgregado)) {
+                mysqli_rollback($conexion);
+                responder(array("error" => "El total del pedido supera el importe permitido."), 400);
+            }
+            $stmtExistente = mysqli_prepare($conexion, "SELECT cantidad, total FROM Contiene WHERE id_pedido = ? AND id_producto = ? FOR UPDATE");
+            if (!$stmtExistente) {
+                mysqli_rollback($conexion);
+                responder(array("error" => "No se pudo consultar la línea del pedido."), 500);
+            }
+            mysqli_stmt_bind_param($stmtExistente, "ii", $idPedido, $idProducto);
+            mysqli_stmt_execute($stmtExistente);
+            $lineaExistente = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtExistente));
+            mysqli_stmt_close($stmtExistente);
+            if ($lineaExistente && ((int)$lineaExistente["cantidad"] + $cantidad > 2147483647
+                || !validar_importe_calculado((float)$lineaExistente["total"] + $total))) {
+                mysqli_rollback($conexion);
+                responder(array("error" => "La cantidad o el total de una línea supera el límite permitido."), 400);
+            }
             $productosActualizados[$idProducto] = array(
                 "cantidad" => $cantidad,
                 "precio" => $precio,
@@ -794,6 +813,9 @@ if ($metodo === "POST") {
         registrar_auditoria($conexion, "cancelar_pedido", "pedido", $idPedido, array("insumos_devueltos" => count($devoluciones)));
         responder(array("ok" => true, "estado" => "Cancelado"));
     }
+    if ($accion !== "") {
+        responder(array("error" => "La acción indicada no es válida."), 400);
+    }
 }
 
 if ($metodo !== "POST") {
@@ -802,20 +824,42 @@ if ($metodo !== "POST") {
 
 verificar_permiso("crear_pedido", true);
 $entrada = obtenerEntrada();
-$descripcion = trim($entrada["descripcion"] ?? "");
-$fechaEntrega = trim($entrada["fecha_hora_entrega"] ?? "");
-$fechaEntrega = $fechaEntrega === "" ? null : $fechaEntrega;
-$idMesa = filter_var($entrada["id_mesa"] ?? null, FILTER_VALIDATE_INT);
-$idCliente = empty($entrada["id_cliente"])
-    ? null
-    : filter_var($entrada["id_cliente"], FILTER_VALIDATE_INT);
-$productos = $entrada["productos"] ?? array();
+$descripcionEntrada = $entrada["descripcion"] ?? "";
+$fechaEntrada = $entrada["fecha_hora_entrega"] ?? "";
+if (!validar_texto($descripcionEntrada, 500, false) || !is_string($fechaEntrada)) {
+    responder(array("error" => "El detalle o la fecha de entrega no son válidos."), 400);
+}
+$descripcion = trim($descripcionEntrada);
+$fechaEntrega = trim($fechaEntrada);
+if ($fechaEntrega !== "") {
+    $fechaValida = false;
+    foreach (array("!Y-m-d H:i:s", "!Y-m-d H:i", "!Y-m-d\\TH:i:s", "!Y-m-d\\TH:i") as $formato) {
+        $fecha = DateTimeImmutable::createFromFormat($formato, $fechaEntrega);
+        $errores = DateTimeImmutable::getLastErrors();
+        if ($fecha && (int)$fecha->format("Y") >= 1000 && ($errores === false || ($errores["warning_count"] === 0 && $errores["error_count"] === 0))) {
+            $fechaEntrega = $fecha->format("Y-m-d H:i:s");
+            $fechaValida = true;
+            break;
+        }
+    }
+    if (!$fechaValida) {
+        responder(array("error" => "La fecha y hora de entrega no son válidas."), 400);
+    }
+} else {
+    $fechaEntrega = null;
+}
+$idMesa = validar_id_positivo($entrada["id_mesa"] ?? null);
+$clienteEntrada = $entrada["id_cliente"] ?? null;
+$idCliente = $clienteEntrada === null || $clienteEntrada === ""
+    ? null : validar_id_positivo($clienteEntrada);
+$productos = validar_lineas_pedido($entrada["productos"] ?? null);
 $forzarStock = ($entrada["forzar_stock"] ?? false) === true;
 $idEmpleado = (int) $_SESSION["usuario_id"];
 
 if (
-    $idMesa === false || $idMesa <= 0
-    || !is_array($productos) || count($productos) === 0
+    $idMesa === false || $productos === false
+    || array_diff(array_keys($entrada), array("id_mesa", "id_cliente", "descripcion", "fecha_hora_entrega", "productos", "forzar_stock"))
+    || (array_key_exists("forzar_stock", $entrada) && !is_bool($entrada["forzar_stock"]))
 ) {
     responder(array("error" => "Faltan datos obligatorios del pedido."), 400);
 }
@@ -866,19 +910,11 @@ if (!$estadoPreparacion) {
 $idEstado = (int) $estadoPreparacion["id_estado"];
 
 $lineas = array();
-$idsProductos = array();
 $montoTotal = 0;
 $hayProductoCocina = false;
 foreach ($productos as $producto) {
-    $idProducto = filter_var($producto["id_producto"] ?? null, FILTER_VALIDATE_INT);
-    $cantidad = filter_var($producto["cantidad"] ?? null, FILTER_VALIDATE_INT);
-    if (
-        $idProducto === false || $idProducto <= 0
-        || $cantidad === false || $cantidad <= 0
-        || isset($idsProductos[$idProducto])
-    ) {
-        responder(array("error" => "La lista de productos no es válida."), 400);
-    }
+    $idProducto = $producto["id_producto"];
+    $cantidad = $producto["cantidad"];
 
     $stmtPrecio = mysqli_prepare(
         $conexion,
@@ -900,13 +936,18 @@ foreach ($productos as $producto) {
     }
 
     $precio = (float) $filaPrecio["precio"];
+    if (validar_precio_producto($filaPrecio["precio"]) === false) {
+        responder(array("error" => "El producto seleccionado tiene un precio inválido. Actualiza su precio antes de realizar el pedido."), 409);
+    }
     $esBebida = strtolower(trim($filaPrecio["categoria"] ?? "")) === "bebidas";
     if (!$esBebida) {
         $hayProductoCocina = true;
     }
     $total = $precio * $cantidad;
     $montoTotal += $total;
-    $idsProductos[$idProducto] = true;
+    if (!validar_importe_calculado($total) || !validar_importe_calculado($montoTotal)) {
+        responder(array("error" => "El total del pedido supera el importe permitido."), 400);
+    }
     $lineas[] = array(
         "id_producto" => $idProducto,
         "cantidad" => $cantidad,

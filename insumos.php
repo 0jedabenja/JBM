@@ -95,7 +95,7 @@ verificar_permiso("insumos");
         }
         function cambiarPagina(delta) { paginaActual = Math.max(1, paginaActual + delta); cargarInsumos(); }
         function buscarInsumos() { clearTimeout(timeoutBusqueda); timeoutBusqueda = setTimeout(() => { paginaActual = 1; cargarInsumos(); }, 300); }
-        async function eliminarInsumo(id) { if (!await JBM.confirmar("¿Está seguro de que desea desactivar este insumo?", { aceptar: "Desactivar", peligro: true })) return; fetch("apis/eliminar.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "insumo", id: Number(id) }) }).then(response => { if (!response.ok) throw new Error(); return response.json(); }).then(cargarInsumos).catch(() => JBM.avisar("No se pudo desactivar el insumo.", "Error")); }
+        async function eliminarInsumo(id) { if (!await JBM.confirmar("¿Está seguro de que desea desactivar este insumo?", { aceptar: "Desactivar", peligro: true })) return; fetch("apis/eliminar.php", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "insumo", id: Number(id) }) }).then(async response => { const datos = await response.json(); if (!response.ok) throw new Error(datos.error || "No se pudo desactivar el insumo."); return datos; }).then(cargarInsumos).catch(error => JBM.avisar(error.message, "Error")); }
         function escapeHTML(valor) { if (valor === null || valor === undefined) return ""; return String(valor).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;"); }
     </script>
 </body>

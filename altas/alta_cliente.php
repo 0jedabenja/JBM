@@ -1,6 +1,7 @@
 <?php
 include_once("../includes/conexionBD.php");
 include_once("../includes/funciones.php");
+require_once __DIR__ . "/../includes/validacion.php";
 verificar_sesion();
 verificar_permiso("clientes");
 
@@ -8,16 +9,19 @@ $mensaje = "";
 $rutaBase = "../";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $nombre = trim($_POST["nombre"] ?? "");
-    $apellido = trim($_POST["apellido"] ?? "");
-    $telefono = trim($_POST["telefono"] ?? "");
-    $direccion = trim($_POST["direccion"] ?? "");
+    $nombreEntrada = $_POST["nombre"] ?? "";
+    $apellidoEntrada = $_POST["apellido"] ?? "";
+    $telefonoEntrada = $_POST["telefono"] ?? "";
+    $direccionEntrada = $_POST["direccion"] ?? "";
 
-    if ($nombre === "" || $apellido === "") {
-        $mensaje = "El nombre y el apellido son obligatorios.";
-    } elseif (strlen($telefono) > 20 || strlen($direccion) > 255) {
-        $mensaje = "El teléfono o la dirección superan la longitud permitida.";
+    if (!validar_texto($nombreEntrada, 100) || !validar_texto($apellidoEntrada, 100)
+        || !validar_texto($telefonoEntrada, 20, false) || !validar_texto($direccionEntrada, 255, false)) {
+        $mensaje = "Revise el nombre, apellido, teléfono y dirección; algunos datos son inválidos o superan la longitud permitida.";
     } else {
+        $nombre = trim($nombreEntrada);
+        $apellido = trim($apellidoEntrada);
+        $telefono = trim($telefonoEntrada);
+        $direccion = trim($direccionEntrada);
         $sql = "INSERT INTO Cliente (nombre, apellido, telefono, direccion)
                 VALUES (?, ?, ?, ?)";
         $stmt = mysqli_prepare($conexion, $sql);
@@ -72,19 +76,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <form class="alta-form" action="alta_cliente.php" method="POST">
                     <label for="nombre">Nombre *</label>
                     <input type="text" id="nombre" name="nombre" maxlength="100" required
-                           value="<?php echo htmlspecialchars($_POST["nombre"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
+                           value="<?php echo htmlspecialchars(is_string($_POST["nombre"] ?? null) ? $_POST["nombre"] : "", ENT_QUOTES, "UTF-8"); ?>">
 
                     <label for="apellido">Apellido *</label>
                     <input type="text" id="apellido" name="apellido" maxlength="100" required
-                           value="<?php echo htmlspecialchars($_POST["apellido"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
+                           value="<?php echo htmlspecialchars(is_string($_POST["apellido"] ?? null) ? $_POST["apellido"] : "", ENT_QUOTES, "UTF-8"); ?>">
 
                     <label for="telefono">Teléfono</label>
                     <input type="text" id="telefono" name="telefono" maxlength="20"
-                           value="<?php echo htmlspecialchars($_POST["telefono"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
+                           value="<?php echo htmlspecialchars(is_string($_POST["telefono"] ?? null) ? $_POST["telefono"] : "", ENT_QUOTES, "UTF-8"); ?>">
 
                     <label for="direccion">Dirección</label>
                     <input type="text" id="direccion" name="direccion" maxlength="255"
-                           value="<?php echo htmlspecialchars($_POST["direccion"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
+                           value="<?php echo htmlspecialchars(is_string($_POST["direccion"] ?? null) ? $_POST["direccion"] : "", ENT_QUOTES, "UTF-8"); ?>">
 
                     <div class="alta-actions">
                         <button type="submit">Guardar cliente</button>

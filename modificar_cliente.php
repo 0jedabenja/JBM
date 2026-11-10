@@ -1,18 +1,21 @@
 <?php
 include_once("includes/conexionBD.php");
 include_once("includes/funciones.php");
+require_once __DIR__ . "/includes/validacion.php";
 verificar_permiso("clientes");
 $id_cliente = filter_input(INPUT_GET, "id", FILTER_VALIDATE_INT);
 if ($id_cliente === false || $id_cliente <= 0) mostrar_pagina_error(400);
 $mensaje = "";
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $nombre = trim($_POST["nombre"] ?? "");
-    $apellido = trim($_POST["apellido"] ?? "");
-    $telefono = trim($_POST["telefono"] ?? "");
-    $direccion = trim($_POST["direccion"] ?? "");
-    if ($nombre === "" || $apellido === "") $mensaje = "El nombre y el apellido son obligatorios.";
-    elseif (strlen($telefono) > 20 || strlen($direccion) > 255) $mensaje = "El teléfono o la dirección superan la longitud permitida.";
+    $nombreEntrada = $_POST["nombre"] ?? "";
+    $apellidoEntrada = $_POST["apellido"] ?? "";
+    $telefonoEntrada = $_POST["telefono"] ?? "";
+    $direccionEntrada = $_POST["direccion"] ?? "";
+    if (!validar_texto($nombreEntrada, 100) || !validar_texto($apellidoEntrada, 100)
+        || !validar_texto($telefonoEntrada, 20, false) || !validar_texto($direccionEntrada, 255, false)) $mensaje = "Revise el nombre, apellido, teléfono y dirección; algunos datos son inválidos o superan la longitud permitida.";
     else {
+        $nombre = trim($nombreEntrada); $apellido = trim($apellidoEntrada);
+        $telefono = trim($telefonoEntrada); $direccion = trim($direccionEntrada);
         $stmt = mysqli_prepare($conexion, "UPDATE Cliente SET nombre = ?, apellido = ?, telefono = ?, direccion = ? WHERE id_cliente = ? AND activo = TRUE");
         mysqli_stmt_bind_param($stmt, "ssssi", $nombre, $apellido, $telefono, $direccion, $id_cliente);
         if (mysqli_stmt_execute($stmt)) {

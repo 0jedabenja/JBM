@@ -1,6 +1,7 @@
 <?php
 include_once "includes/conexionBD.php";
 include_once "includes/funciones.php";
+require_once __DIR__ . "/includes/validacion.php";
 
 iniciar_sesion_segura();
 $mensaje = "";
@@ -16,7 +17,8 @@ if (!isset($_SESSION["login_captcha_a"]) || !isset($_SESSION["login_captcha_b"])
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $usuario = trim($_POST["username"] ?? "");
+    $usuarioEntrada = $_POST["username"] ?? "";
+    $usuario = is_string($usuarioEntrada) ? trim($usuarioEntrada) : "";
     $contrasena = $_POST["password"] ?? "";
     $token_csrf = $_POST["csrf_token"] ?? "";
     $captchaRespuesta = $_POST["captcha_respuesta"] ?? "";
@@ -26,10 +28,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $mensaje = "La solicitud no es válida. Intente nuevamente.";
     } elseif (!$captchaValido) {
         $mensaje = "La respuesta de verificación no es correcta. Intente nuevamente.";
-    } elseif ($usuario === "" || $contrasena === "") {
+    } elseif (!validar_texto($usuarioEntrada, 50) || !is_string($contrasena) || $contrasena === "" || strlen($contrasena) > 1024) {
         $mensaje = "Ingrese su usuario y contraseña.";
-    } elseif (strlen($usuario) > 50) {
-        $mensaje = "El usuario no es válido.";
     } else {
         $sql = "SELECT e.id_empleado, e.nombre, e.apellido, e.usuario, e.contraseña, e.id_rol,
                    r.nombre AS rol
@@ -97,7 +97,7 @@ $captchaNumeroB = (int) $_SESSION["login_captcha_b"];
                 value="<?php echo htmlspecialchars(obtener_token_csrf(), ENT_QUOTES, "UTF-8"); ?>">
             <div class="input-container">
                 <input type="text" name="username" placeholder="Usuario" maxlength="50" required
-                    value="<?php echo htmlspecialchars($_POST["username"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
+                    value="<?php echo htmlspecialchars(is_string($_POST["username"] ?? null) ? $_POST["username"] : "", ENT_QUOTES, "UTF-8"); ?>">
                 <img src="assets/img/login/light-user.svg" class="icon-user">
             </div>
             <div class="input-container">

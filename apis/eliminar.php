@@ -46,6 +46,14 @@ if (!is_array($entrada)) $entrada = $_POST;
         echo json_encode(array("error" => "No se pudo completar la operación."), JSON_UNESCAPED_UNICODE);
         exit();
     }
+
+    if (mysqli_stmt_affected_rows($stmt) !== 1) {
+        mysqli_stmt_close($stmt);
+        http_response_code(404);
+        echo json_encode(array("error" => ucfirst($tipo) . " no encontrado o ya desactivado."), JSON_UNESCAPED_UNICODE);
+        exit();
+    }
+
     mysqli_stmt_close($stmt);
     registrar_auditoria($conexion, "desactivar_" . $tipo, $tipo, $id);
     echo json_encode(ucfirst($tipo) . " " . $id . " desactivado", JSON_UNESCAPED_UNICODE);

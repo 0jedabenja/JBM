@@ -1,8 +1,10 @@
 <?php
 require_once __DIR__ . '/includes/conexionBD.php';
 require_once __DIR__ . '/includes/funciones.php';
+require_once __DIR__ . '/includes/validacion.php';
 
-$token = trim($_GET['token'] ?? $_POST['token'] ?? '');
+$tokenEntrada = $_GET['token'] ?? $_POST['token'] ?? '';
+$token = is_string($tokenEntrada) ? trim($tokenEntrada) : '';
 $mensaje = '';
 $tipo_alerta = '';
 $exito = false;
@@ -15,8 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nueva_password = $_POST['nueva_password'] ?? '';
     $confirmar_password = $_POST['confirmar_password'] ?? '';
 
-    if (strlen($nueva_password) < 8) {
-        $mensaje = "La contraseña debe tener al menos 8 caracteres.";
+    if (!validar_contrasena_nueva($nueva_password) || !is_string($confirmar_password)) {
+        $mensaje = "La contraseña debe tener entre 8 y 72 bytes.";
         $tipo_alerta = "error";
     } elseif ($nueva_password !== $confirmar_password) {
         $mensaje = "Las contraseñas no coinciden.";
@@ -120,12 +122,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 <div class="form-group">
                     <label for="nueva_password">Nueva Contraseña</label>
-                    <input type="password" name="nueva_password" id="nueva_password" required minlength="8" placeholder="Mínimo 8 caracteres">
+                    <input type="password" name="nueva_password" id="nueva_password" required minlength="8" maxlength="72" placeholder="Mínimo 8 caracteres">
                 </div>
 
                 <div class="form-group">
                     <label for="confirmar_password">Confirmar Contraseña</label>
-                    <input type="password" name="confirmar_password" id="confirmar_password" required minlength="8" placeholder="Repetí la contraseña">
+                    <input type="password" name="confirmar_password" id="confirmar_password" required minlength="8" maxlength="72" placeholder="Repetí la contraseña">
                 </div>
 
                 <button type="submit" class="btn">Actualizar Clave</button>

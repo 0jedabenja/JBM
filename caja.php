@@ -455,7 +455,7 @@ async function confirmarCobroEfectivo(evento) {
     const tipoSeleccionado = document.getElementById("tipoDescuento").value;
     const pagos = obtenerPagosActuales();
     
-    if (pagos.length === 0) {
+    if (pagos.length === 0 && cobroEfectivoActual.total > 0) {
         document.getElementById("errorCobroEfectivo").textContent = "Debes agregar al menos un método de pago.";
         return;
     }

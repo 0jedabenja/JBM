@@ -147,6 +147,28 @@ if ($accion === "iniciar") {
         $tipo = "categoria";
     }
 
+    if ($idCategoria !== null) {
+        $stmtCategoria = mysqli_prepare($conexion, "SELECT id_categoria FROM Categoria WHERE id_categoria = ? LIMIT 1");
+        if (!$stmtCategoria) {
+            responder_conteo(array("error" => "No se pudo validar la categoría."), 500);
+        }
+        mysqli_stmt_bind_param($stmtCategoria, "i", $idCategoria);
+        if (!mysqli_stmt_execute($stmtCategoria)) {
+            mysqli_stmt_close($stmtCategoria);
+            responder_conteo(array("error" => "No se pudo validar la categoría."), 500);
+        }
+        $resultadoCategoria = mysqli_stmt_get_result($stmtCategoria);
+        if (!$resultadoCategoria) {
+            mysqli_stmt_close($stmtCategoria);
+            responder_conteo(array("error" => "No se pudo validar la categoría."), 500);
+        }
+        $categoriaExistente = mysqli_fetch_assoc($resultadoCategoria);
+        mysqli_stmt_close($stmtCategoria);
+        if (!$categoriaExistente) {
+            responder_conteo(array("error" => "La categoría seleccionada no existe."), 400);
+        }
+    }
+
     $resultadoCaja = mysqli_query($conexion, "SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL LIMIT 1");
     if (!$resultadoCaja) {
         error_log("No se pudo consultar la caja abierta: " . mysqli_error($conexion));

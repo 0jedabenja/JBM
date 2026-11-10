@@ -123,6 +123,8 @@ function obtener_parametro_get($nombre, $predeterminado = "") {
 }
 
 function obtener_listado_api($conexion, $entidad, $filtro, $campo, $limite, $offset) {
+    $limite = max(1, min(1000, (int)$limite));
+    $offset = max(0, min(999000, (int)$offset));
     $definiciones = array(
         "clientes" => array(
             "select" => "SELECT c.id_cliente, c.nombre, c.apellido, c.telefono, c.direccion FROM Cliente c",

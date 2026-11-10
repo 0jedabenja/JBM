@@ -1,6 +1,7 @@
 <?php
 include_once __DIR__ . "/../includes/conexionBD.php";
 include_once __DIR__ . "/../includes/funciones.php";
+require_once __DIR__ . "/../includes/validacion.php";
 verificar_sesion();
 verificar_permiso("insumos");
 $mensaje = "";
@@ -24,18 +25,23 @@ if ($consultaCategorias) {
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     
-    $nombre = trim($_POST["nombre"] ?? '');
-    $cantidad_actual = filter_var($_POST["cantidad_actual"] ?? 0, FILTER_VALIDATE_FLOAT);
-    $stock_minimo = filter_var($_POST["stock_minimo"] ?? 0, FILTER_VALIDATE_FLOAT);
-    $costo = filter_var($_POST["costo"] ?? 0, FILTER_VALIDATE_FLOAT);
+    $nombre = is_string($_POST["nombre"] ?? null) ? trim($_POST["nombre"]) : "";
+    $cantidad_actual = validar_decimal_no_negativo($_POST["cantidad_actual"] ?? null);
+    $stock_minimo = validar_decimal_no_negativo($_POST["stock_minimo"] ?? null);
+    $costo = validar_decimal_no_negativo($_POST["costo"] ?? null);
     $id_medida = filter_var($_POST["id_medida"] ?? 0, FILTER_VALIDATE_INT);
     $id_categoria = filter_var($_POST["id_categoria"] ?? null, FILTER_VALIDATE_INT);
 
-    if (empty($nombre)) {
-        $mensaje = "El nombre del insumo es obligatorio.";
+    if ($nombre === "" || !mb_check_encoding($nombre, "UTF-8") || mb_strlen($nombre, "UTF-8") > 100) {
+        $mensaje = "El nombre del insumo es obligatorio y no puede superar los 100 caracteres.";
         $tipoMensaje = "error";
-    } elseif ($cantidad_actual === false || $stock_minimo === false || $costo === false || $id_medida === false || $id_categoria === false || $id_categoria <= 0) {
-        $mensaje = "Los valores numéricos ingresados no son válidos.";
+    } elseif ($cantidad_actual === false || $stock_minimo === false || $costo === false || $id_medida === false || $id_medida === null || $id_medida <= 0 || $id_categoria === false || $id_categoria === null || $id_categoria <= 0) {
+        $mensaje = "Ingrese cantidades y costos no negativos, con hasta dos decimales, y seleccione una unidad y categoría válidas.";
+        $tipoMensaje = "error";
+    } elseif (!in_array($id_medida, array_map("intval", array_column($medidas, "id_medida")), true)
+        || !in_array($id_categoria, array_map("intval", array_column($categorias, "id_categoria")), true)
+    ) {
+        $mensaje = "La unidad de medida o la categoría seleccionada no existe.";
         $tipoMensaje = "error";
     } else {
         mysqli_begin_transaction($conexion);
@@ -136,17 +142,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             <div class="campo">
                 <label for="cantidad_actual">Cantidad Inicial</label>
-                <input type="number" id="cantidad_actual" name="cantidad_actual" step="0.01" min="0" value="0">
+                <input type="number" id="cantidad_actual" name="cantidad_actual" step="0.01" min="0" max="99999999.99" value="0" required>
             </div>
 
             <div class="campo">
                 <label for="stock_minimo">Stock Mínimo (Aviso)</label>
-                <input type="number" id="stock_minimo" name="stock_minimo" step="0.01" min="0" value="0">
+                <input type="number" id="stock_minimo" name="stock_minimo" step="0.01" min="0" max="99999999.99" value="0" required>
             </div>
 
             <div class="campo">
                 <label for="costo">Costo ($)</label>
-                <input type="number" id="costo" name="costo" step="0.01" min="0" value="0">
+                <input type="number" id="costo" name="costo" step="0.01" min="0" max="99999999.99" value="0" required>
             </div>
 
             <div class="alta-actions">

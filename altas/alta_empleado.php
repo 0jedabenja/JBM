@@ -1,6 +1,7 @@
 <?php
 include_once("../includes/conexionBD.php");
 include_once("../includes/funciones.php");
+require_once __DIR__ . "/../includes/validacion.php";
 verificar_sesion();
 verificar_permiso("empleados");
 
@@ -15,22 +16,20 @@ if ($consultaRoles) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $nombre = trim($_POST["nombre"] ?? "");
-    $apellido = trim($_POST["apellido"] ?? "");
-    $usuario = trim($_POST["usuario"] ?? "");
-    $correo = strtolower(trim($_POST["correo"] ?? ""));
+    $nombre = is_string($_POST["nombre"] ?? null) ? trim($_POST["nombre"]) : "";
+    $apellido = is_string($_POST["apellido"] ?? null) ? trim($_POST["apellido"]) : "";
+    $usuario = is_string($_POST["usuario"] ?? null) ? trim($_POST["usuario"]) : "";
+    $correo = is_string($_POST["correo"] ?? null) ? strtolower(trim($_POST["correo"])) : "";
     $contrasena = $_POST["contrasena"] ?? "";
-    $id_rol = filter_var($_POST["id_rol"] ?? null, FILTER_VALIDATE_INT);
+    $id_rol = validar_id_positivo($_POST["id_rol"] ?? null);
 
-    if ($nombre === "" || $apellido === "" || $usuario === "" || $correo === "") {
-        $mensaje = "El nombre, el apellido, el usuario y el correo son obligatorios.";
+    if (!validar_texto($nombre, 100) || !validar_texto($apellido, 100) || !validar_texto($usuario, 50) || !validar_texto($correo, 255)) {
+        $mensaje = "El nombre, apellido, usuario o correo son inválidos o superan la longitud permitida.";
     } elseif (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
         $mensaje = "Ingrese un correo electrónico válido.";
-    } elseif (strlen($usuario) > 50) {
-        $mensaje = "El usuario no puede superar los 50 caracteres.";
-    } elseif (strlen($contrasena) < 8) {
-        $mensaje = "La contraseña debe tener al menos 8 caracteres.";
-    } elseif ($id_rol === false || $id_rol <= 0) {
+    } elseif (!validar_contrasena_nueva($contrasena)) {
+        $mensaje = "La contraseña debe tener entre 8 y 72 bytes.";
+    } elseif ($id_rol === false || !in_array($id_rol, array_map("intval", array_column($roles, "id_rol")), true)) {
         $mensaje = "Debe seleccionar un rol válido.";
     } else {
         $hash = password_hash($contrasena, PASSWORD_DEFAULT);
@@ -88,22 +87,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <form class="alta-form" action="alta_empleado.php" method="POST">
         <label for="nombre">Nombre *</label>
         <input type="text" id="nombre" name="nombre" maxlength="100" required
-               value="<?php echo htmlspecialchars($_POST["nombre"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
+               value="<?php echo htmlspecialchars(is_string($_POST["nombre"] ?? null) ? $_POST["nombre"] : "", ENT_QUOTES, "UTF-8"); ?>">
 
         <label for="apellido">Apellido *</label>
         <input type="text" id="apellido" name="apellido" maxlength="100" required
-               value="<?php echo htmlspecialchars($_POST["apellido"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
+               value="<?php echo htmlspecialchars(is_string($_POST["apellido"] ?? null) ? $_POST["apellido"] : "", ENT_QUOTES, "UTF-8"); ?>">
 
         <label for="usuario">Usuario *</label>
         <input type="text" id="usuario" name="usuario" maxlength="50" required
-               value="<?php echo htmlspecialchars($_POST["usuario"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
+               value="<?php echo htmlspecialchars(is_string($_POST["usuario"] ?? null) ? $_POST["usuario"] : "", ENT_QUOTES, "UTF-8"); ?>">
 
         <label for="correo">Correo electrónico *</label>
         <input type="email" id="correo" name="correo" maxlength="255" required
-               value="<?php echo htmlspecialchars($_POST["correo"] ?? "", ENT_QUOTES, "UTF-8"); ?>">
+               value="<?php echo htmlspecialchars(is_string($_POST["correo"] ?? null) ? $_POST["correo"] : "", ENT_QUOTES, "UTF-8"); ?>">
 
         <label for="contrasena">Contraseña *</label>
-        <input type="password" id="contrasena" name="contrasena" minlength="8" required>
+        <input type="password" id="contrasena" name="contrasena" minlength="8" maxlength="72" required>
 
         <label for="id_rol">Rol *</label>
         <select id="id_rol" name="id_rol" required>
