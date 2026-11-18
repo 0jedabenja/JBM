@@ -189,7 +189,7 @@ if ($accion === "abrir") {
 if ($accion === "cerrar") {
     $montoFinal = validar_decimal_no_negativo($entrada["monto_final"] ?? null);
     if ($montoFinal === false) responder_caja(array("error" => "El monto final no es válido."), 400);
-    $resultadoPendientes = mysqli_query($conexion, "SELECT p.id_pedido FROM Pedido p INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado WHERE p.id_turno IN (SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL) AND p.cobrado = FALSE AND LOWER(ep.nombre) IN ('en preparación', 'comiendo', 'listo') LIMIT 1");
+    $resultadoPendientes = mysqli_query($conexion, "SELECT p.id_pedido FROM Pedido p INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado WHERE p.id_turno IN (SELECT id_turno FROM Turno_caja WHERE fecha_hora_cierre IS NULL) AND p.cobrado = FALSE AND LOWER(ep.nombre) IN ('en preparación', 'para levantar', 'comiendo', 'listo') LIMIT 1");
     if (mysqli_fetch_assoc($resultadoPendientes)) responder_caja(array("error" => "No se puede cerrar la caja mientras haya pedidos en curso o pendientes de cobro."), 409);
 
     $resultadoTurno = mysqli_query($conexion, "SELECT id_turno, monto_inicial FROM Turno_caja WHERE fecha_hora_cierre IS NULL LIMIT 1");

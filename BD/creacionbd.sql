@@ -283,7 +283,8 @@ INSERT INTO Estado_Pedido (nombre) VALUES
 ('Comiendo'),
 ('Listo'),
 ('Entregado'),
-('Cancelado');
+('Cancelado'),
+('Para levantar');
 
 INSERT INTO Descuento (tipo, valor) VALUES
 ('porcentaje', 0.00),

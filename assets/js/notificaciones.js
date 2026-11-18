@@ -1,4 +1,9 @@
 (() => {
+    if (window.AlertasJBM) return;
+    const urlScript = document.currentScript?.src || "";
+    const urlApiPedidos = urlScript ? new URL("../../apis/api_pedidos.php?avisos=levantar", urlScript).href : "apis/api_pedidos.php?avisos=levantar";
+    const urlPaginaPedidos = urlScript ? new URL("../../pedidos.php", urlScript).href : "pedidos.php";
+    const avisadosKey = "jbm:pedidos-levantar-avisados";
     const sonidos = {
         pedido: "assets/sounds/pedido-creado.mp3",
         cocina: "assets/sounds/pedido-cocina.mp3",
@@ -104,17 +109,51 @@
         actualizarBoton();
     }
 
+    function mostrarAvisoLevantar(texto) {
+        const aviso = document.createElement("a");
+        aviso.className = "jbm-aviso-levantar";
+        aviso.href = urlPaginaPedidos;
+        aviso.setAttribute("role", "alert");
+        aviso.textContent = texto;
+        document.body.appendChild(aviso);
+        window.setTimeout(() => aviso.remove(), 15000);
+    }
+
+    async function revisarPedidosParaLevantar() {
+        if (document.visibilityState !== "visible") return;
+        try {
+            const respuesta = await fetch(urlApiPedidos, { cache: "no-store" });
+            if (!respuesta.ok) return;
+            const pedidos = (await respuesta.json()).pedidos || [];
+            let avisados = [];
+            try { avisados = JSON.parse(localStorage.getItem(avisadosKey) || "[]"); } catch (error) { avisados = []; }
+            localStorage.setItem(avisadosKey, JSON.stringify(pedidos.map(p => Number(p.id_pedido))));
+            pedidos.filter(p => !avisados.includes(Number(p.id_pedido))).forEach(p => {
+                const texto = `Tu pedido #${p.id_pedido}${p.mesa ? ` (mesa ${p.mesa})` : ""} está listo para levantar en cocina.`;
+                mostrarAvisoLevantar(texto);
+                reproducir("listo");
+                navegador("Pedido para levantar", texto);
+            });
+        } catch (error) {
+            console.warn("No se pudo consultar los pedidos para levantar.", error);
+        }
+    }
+
     function instalarEstilos() {
         if (document.getElementById("jbm-alertas-estilos")) return;
         const estilos = document.createElement("style");
         estilos.id = "jbm-alertas-estilos";
-        estilos.textContent = `.jbm-alertas-control{position:fixed;right:18px;bottom:18px;z-index:9999;border:0;border-radius:999px;padding:11px 16px;background:#1f2937;color:#fff;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.25);cursor:pointer}`;
+        estilos.textContent = `.jbm-alertas-control{position:fixed;right:18px;bottom:18px;z-index:9999;border:0;border-radius:999px;padding:11px 16px;background:#1f2937;color:#fff;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.25);cursor:pointer}.jbm-aviso-levantar{position:fixed;right:18px;top:18px;z-index:10000;max-width:360px;padding:14px 18px;border-radius:12px;background:#b45309;color:#fff;font-weight:700;text-decoration:none;box-shadow:0 6px 22px rgba(0,0,0,.3)}.jbm-aviso-levantar~.jbm-aviso-levantar{top:90px}`;
         document.head.appendChild(estilos);
     }
 
     document.addEventListener("DOMContentLoaded", () => {
         instalarEstilos();
         crearBoton();
+        if (window.JBM_AVISOS_LEVANTAR) {
+            revisarPedidosParaLevantar();
+            window.setInterval(revisarPedidosParaLevantar, 4000);
+        }
     });
     document.addEventListener("pointerdown", desbloquear, { once: true, capture: true });
     document.addEventListener("keydown", desbloquear, { once: true, capture: true });
