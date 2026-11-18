@@ -198,7 +198,7 @@ function marcarProductoPedidoProcesado($conexion, $idPedido, $idProducto, $tipoE
     $esBebida = $linea && $linea["categoria"] === "bebidas";
     $tipoCorrecto = $tipoEsperado === "bebida" ? $esBebida : !$esBebida;
     $estadosPermitidos = $tipoEsperado === "bebida"
-        ? array("en preparación", "comiendo")
+        ? array("en preparación", "para levantar", "comiendo")
         : array("en preparación");
     if (
         !$linea
@@ -288,9 +288,26 @@ if ($vista === "cocina") {
                         )";
 } elseif ($vista === "pendientes") {
     $condicionVista = " AND p.cobrado = FALSE
-                        AND LOWER(ep.nombre) IN ('en preparación', 'comiendo', 'listo')";
+                        AND LOWER(ep.nombre) IN ('en preparación', 'para levantar', 'comiendo', 'listo')";
 }
 if ($metodo === "GET") {
+    if (obtener_parametro_get("avisos") === "levantar") {
+        $stmtAvisos = mysqli_prepare(
+            $conexion,
+            "SELECT p.id_pedido, m.numero AS mesa
+             FROM Pedido p
+             INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado
+             LEFT JOIN Mesa m ON m.id_mesa = p.id_mesa
+             WHERE p.id_empleado = ? AND p.cobrado = FALSE AND LOWER(ep.nombre) = 'para levantar'
+             ORDER BY p.id_pedido"
+        );
+        $idUsuarioAviso = (int) $_SESSION["usuario_id"];
+        mysqli_stmt_bind_param($stmtAvisos, "i", $idUsuarioAviso);
+        mysqli_stmt_execute($stmtAvisos);
+        $avisos = mysqli_fetch_all(mysqli_stmt_get_result($stmtAvisos), MYSQLI_ASSOC);
+        mysqli_stmt_close($stmtAvisos);
+        responder(array("pedidos" => $avisos));
+    }
     if (obtener_parametro_get("caja") === "estado") {
         $sqlCaja = "SELECT id_turno, fecha_hora_apertura
                     FROM Turno_caja
@@ -379,7 +396,7 @@ if ($metodo === "POST") {
                       FROM Pedido p
                       INNER JOIN Estado_Pedido ep ON ep.id_estado = p.id_estado
                       WHERE p.id_pedido = ?
-                        AND LOWER(ep.nombre) IN ('en preparación', 'comiendo')
+                        AND LOWER(ep.nombre) IN ('en preparación', 'para levantar', 'comiendo')
                         AND p.cobrado = FALSE
                         AND p.id_turno IN (
                             SELECT id_turno
@@ -617,7 +634,7 @@ if ($metodo === "POST") {
                 SET id_estado = (
                     SELECT id_estado
                     FROM Estado_Pedido
-                    WHERE LOWER(nombre) = 'comiendo'
+                    WHERE LOWER(nombre) = 'para levantar'
                     LIMIT 1
                 )
                 WHERE id_pedido = ?
@@ -653,6 +670,35 @@ if ($metodo === "POST") {
             responder(array("error" => "Todos los productos deben estar completos."), 409);
         }
         registrar_auditoria($conexion, "marcar_pedido_listo", "pedido", $idPedido);
+        responder(array("ok" => true, "estado" => "Para levantar"));
+    }
+
+    if ($accion === "levantar_pedido") {
+        verificar_permiso("crear_pedido", true);
+        $idPedido = filter_var($entradaAccion["id_pedido"] ?? null, FILTER_VALIDATE_INT);
+        if ($idPedido === false || $idPedido <= 0) {
+            responder(array("error" => "Pedido no válido."), 400);
+        }
+        $idUsuario = (int) $_SESSION["usuario_id"];
+        $esAdmin = obtener_rol_sesion() === "administrador";
+        $stmtLevantar = mysqli_prepare(
+            $conexion,
+            "UPDATE Pedido
+             SET id_estado = (SELECT id_estado FROM Estado_Pedido WHERE LOWER(nombre) = 'comiendo' LIMIT 1)
+             WHERE id_pedido = ?
+               AND cobrado = FALSE
+               AND (id_empleado = ? OR ?)
+               AND id_estado = (SELECT id_estado FROM Estado_Pedido WHERE LOWER(nombre) = 'para levantar' LIMIT 1)"
+        );
+        $esAdminInt = $esAdmin ? 1 : 0;
+        mysqli_stmt_bind_param($stmtLevantar, "iii", $idPedido, $idUsuario, $esAdminInt);
+        mysqli_stmt_execute($stmtLevantar);
+        $levantado = mysqli_stmt_affected_rows($stmtLevantar) > 0;
+        mysqli_stmt_close($stmtLevantar);
+        if (!$levantado) {
+            responder(array("error" => "El pedido no está para levantar o fue creado por otro mozo."), 409);
+        }
+        registrar_auditoria($conexion, "levantar_pedido", "pedido", $idPedido);
         responder(array("ok" => true, "estado" => "Comiendo"));
     }
 
@@ -751,7 +797,7 @@ if ($metodo === "POST") {
             mysqli_stmt_execute($stmtPedido);
             $pedido = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtPedido));
             mysqli_stmt_close($stmtPedido);
-            if (!$pedido || (bool)$pedido["cobrado"] || !in_array($pedido["estado"], array("pendiente", "en preparación", "comiendo", "listo"), true)) {
+            if (!$pedido || (bool)$pedido["cobrado"] || !in_array($pedido["estado"], array("pendiente", "en preparación", "para levantar", "comiendo", "listo"), true)) {
                 mysqli_rollback($conexion);
                 responder(array("error" => "Solo se pueden cancelar pedidos activos que no estén cobrados."), 409);
             }

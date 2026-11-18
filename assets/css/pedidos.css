@@ -59,6 +59,7 @@ body[data-theme="dark"] .mapa-dialog-head p{color:var(--color-text-secondary)}
 .estado-pedido--pendiente{background:#e8eefc;color:#1f4fb4}
 .estado-pedido--en-preparacion{background:#fff1e0;color:#a85a00}
 .estado-pedido--comiendo{background:#efe5fa;color:#6a2fb0}
+.estado-pedido--para-levantar{background:#fff7cc;color:#8a6d00}
 .estado-pedido--listo{background:#e1f4e8;color:#16723b}
 .estado-pedido--cancelado{background:#fde4e2;color:#b3261e}
 

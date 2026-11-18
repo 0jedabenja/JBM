@@ -67,13 +67,23 @@ let descuentosFijos = [];
 let cobroEfectivoActual = null;
 const pagosEfectivoTemporales = new Map();
 let pedidosListosCajaAnteriores = null;
+let firmaCaja = "";
+let cargandoCaja = false;
 
-async function cargarCaja(pagina = paginaHistorial) {
+async function cargarCaja(pagina = paginaHistorial, silencioso = false) {
+    if (cargandoCaja) {
+        if (silencioso) return;
+        while (cargandoCaja) await new Promise(resolver => setTimeout(resolver, 50));
+    }
+    cargandoCaja = true;
     paginaHistorial = pagina;
     try {
-        const respuesta = await fetch(`apis/api_caja.php?pagina=${pagina}`);
+        const respuesta = await fetch(`apis/api_caja.php?pagina=${pagina}`, { cache: "no-store" });
         const datos = await respuesta.json();
         if (!respuesta.ok) throw new Error(datos.error || "No se pudo consultar la caja.");
+        const firma = JSON.stringify(datos);
+        if (silencioso && firma === firmaCaja) return;
+        firmaCaja = firma;
         sesionAbierta = datos.abierta;
         conteoEnCurso = Boolean(datos.conteo_en_curso);
         metodosPago = datos.metodos_pago || [];
@@ -83,8 +93,11 @@ async function cargarCaja(pagina = paginaHistorial) {
         renderizarSesiones(datos.sesiones_propias || []);
         if (esAdministrador) renderizarHistorial(datos);
     } catch (error) {
+        if (silencioso) return;
         mostrarMensaje(error.message, true);
         document.getElementById("resumenTurno").textContent = "No se pudo cargar la información de caja.";
+    } finally {
+        cargandoCaja = false;
     }
 }
 
@@ -595,7 +608,10 @@ document.addEventListener("click", async evento => {
     if (botonCerrarDialogo) cerrarDialogo(botonCerrarDialogo.dataset.cerrarDialog);
 });
 setInterval(actualizarTiempoCaja, 1000);
-setInterval(() => cargarCaja(), 30000);
+setInterval(() => {
+    if (document.visibilityState !== "visible" || document.querySelector("dialog[open]")) return;
+    cargarCaja(paginaHistorial, true);
+}, 3000);
 cargarCaja();
 </script>
 </body>

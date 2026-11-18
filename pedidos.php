@@ -61,6 +61,8 @@ $puedeCocina = in_array($rolActual, array("administrador", "cocina"), true);
 <script>
 const puedeCrear = <?php echo $puedeCrear ? "true" : "false"; ?>;
 const puedeCocina = <?php echo $puedeCocina ? "true" : "false"; ?>;
+const idUsuarioActual = <?php echo (int) ($_SESSION["usuario_id"] ?? 0); ?>;
+const esAdministradorPedidos = <?php echo $rolActual === "administrador" ? "true" : "false"; ?>;
 let carrito = [];
 let contextoAudio = null;
 let cajaAbierta = false;
@@ -602,16 +604,6 @@ function cargarPedidos(vista) {
     });
 }
 function renderPendientes(pedidos) {
-    if (estadosPendientesAnteriores) {
-        pedidos.forEach(pedido => {
-            const anterior = estadosPendientesAnteriores.get(Number(pedido.id_pedido));
-            if (anterior === "en preparación" && String(pedido.estado).toLowerCase() === "comiendo") {
-                mostrarNotificacion(`Pedido #${pedido.id_pedido} está pronto para el mozo.`);
-                emitirAlerta("listo");
-                window.AlertasJBM?.navegador("Pedido listo para levantar", `El pedido #${pedido.id_pedido} está listo.`);
-            }
-        });
-    }
     estadosPendientesAnteriores = new Map(pedidos.map(p => [Number(p.id_pedido), String(p.estado).toLowerCase()]));
     const contenedor = document.getElementById("listaPendientes");
     contenedor.innerHTML = pedidos.length ? pedidos.map(p => {
@@ -620,14 +612,14 @@ function renderPendientes(pedidos) {
         const productos = p.productos.map(x => {
             if (Number(x.es_bebida) !== 1) return `<li>${escapeHTML(x.nombre)} × ${Number(x.cantidad)}</li>`;
             const pickeada = Number(x.completado) === 1;
-            const control = ["en preparación", "comiendo"].includes(estado)
+            const control = ["en preparación", "para levantar", "comiendo"].includes(estado)
                 ? `<button type="button" class="boton-accion-pedido boton-bebida-pickeada" data-pickear-bebida="${Number(p.id_pedido)}" data-producto="${Number(x.id_producto)}" ${pickeada ? "disabled" : ""}>${pickeada ? "Pickeada" : "Pickear bebida"}</button>`
                 : `<span class="estado-bebida">${pickeada ? "Pickeada" : "Pendiente de retirar"}</span>`;
             return `<li class="pedido-bebida"><span>${escapeHTML(x.nombre)} × ${Number(x.cantidad)} · Bebida</span>${control}</li>`;
         }).join("");
         const descripcion = p.descripcion ? `<p>Detalle: ${escapeHTML(p.descripcion)}</p>` : "";
         const avisoBebidas = estado === "comiendo" && bebidasPendientes ? '<p class="aviso-bebidas">Marca todas las bebidas como pickeadas para poder cerrar el pedido.</p>' : "";
-        const acciones = `<div class="pedido-pendiente-actions">${estado !== "listo" ? `<button type="button" class="boton-accion-pedido" data-agregar="${Number(p.id_pedido)}">Agregar productos</button>` : ""}${estado === "comiendo" ? `<button type="button" class="boton-accion-pedido" data-cerrar="${Number(p.id_pedido)}" ${bebidasPendientes ? "disabled" : ""}>Cerrar pedido</button>` : ""}<button type="button" class="boton-accion-pedido boton-cancelar-pedido" data-cancelar="${Number(p.id_pedido)}">Cancelar pedido</button></div>`;
+        const acciones = `<div class="pedido-pendiente-actions">${estado !== "listo" ? `<button type="button" class="boton-accion-pedido" data-agregar="${Number(p.id_pedido)}">Agregar productos</button>` : ""}${estado === "para levantar" && (esAdministradorPedidos || Number(p.id_empleado) === idUsuarioActual) ? `<button type="button" class="boton-accion-pedido" data-levantar="${Number(p.id_pedido)}">Levantar pedido</button>` : ""}${estado === "comiendo" ? `<button type="button" class="boton-accion-pedido" data-cerrar="${Number(p.id_pedido)}" ${bebidasPendientes ? "disabled" : ""}>Cerrar pedido</button>` : ""}<button type="button" class="boton-accion-pedido boton-cancelar-pedido" data-cancelar="${Number(p.id_pedido)}">Cancelar pedido</button></div>`;
         return `<article class="pedido-panel"><h3>Pedido #${Number(p.id_pedido)} <span class="estado-pedido estado-pedido--${String(p.estado || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-")}">${escapeHTML(p.estado)}</span></h3><p>Mesa: ${escapeHTML(p.mesa || "-")} | Creado: ${escapeHTML(p.fecha_hora_creacion)}</p>${descripcion}<ul class="pedido-productos">${productos}</ul>${avisoBebidas}${acciones}</article>`;
     }).join("") : '<p class="mensaje-vacio">No hay pedidos pendientes.</p>';
 }
@@ -644,8 +636,27 @@ function manejarAccionesPendientes(evento) {
     }
     const botonCancelar = evento.target.closest("button[data-cancelar]");
     if (botonCancelar) { cancelarPedido(Number(botonCancelar.dataset.cancelar)); return; }
+    const botonLevantar = evento.target.closest("button[data-levantar]");
+    if (botonLevantar) { levantarPedido(Number(botonLevantar.dataset.levantar), botonLevantar); return; }
     const botonCerrar = evento.target.closest("button[data-cerrar]");
     if (botonCerrar) cerrarPedido(Number(botonCerrar.dataset.cerrar));
+}
+async function levantarPedido(idPedido, boton) {
+    boton.disabled = true;
+    try {
+        const respuesta = await fetch("apis/api_pedidos.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ accion: "levantar_pedido", id_pedido: idPedido })
+        });
+        const datos = await respuesta.json();
+        if (!respuesta.ok) throw new Error(datos.error || "No se pudo levantar el pedido.");
+        mostrarNotificacion(`Pedido #${idPedido} levantado. Ahora está en Comiendo.`);
+        await cargarPedidos("pendientes");
+    } catch (error) {
+        boton.disabled = false;
+        mostrarNotificacion(error.message, true);
+    }
 }
 async function cancelarPedido(idPedido) {
     if (!await JBM.confirmar(`¿Cancelar el pedido #${idPedido}? Se devolverá al stock lo ya consumido y la mesa quedará libre.`, { aceptar: "Cancelar pedido", cancelar: "Volver", peligro: true })) return;

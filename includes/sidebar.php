@@ -48,6 +48,10 @@ $rutaFavicon = in_array($faviconSeccion, array("favicon.svg", "favicon-sistema.s
 <link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/css/theme.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/theme.css'); ?>">
 <link rel="stylesheet" href="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/css/sin-seleccion.css">
 <script src="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/js/theme.js"></script>
+<?php if (usuario_tiene_permiso("crear_pedido")): ?>
+<script>window.JBM_AVISOS_LEVANTAR = true;</script>
+<script src="<?php echo htmlspecialchars($rutaBase ?? '', ENT_QUOTES, 'UTF-8'); ?>assets/js/notificaciones.js" defer></script>
+<?php endif; ?>
 <script>
 (function () {
     var favicon = document.querySelector('link[rel="icon"]');
