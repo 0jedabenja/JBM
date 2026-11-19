@@ -13,20 +13,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $nombre = is_string($_POST["nombre"] ?? null) ? trim($_POST["nombre"]) : "";
     $apellido = is_string($_POST["apellido"] ?? null) ? trim($_POST["apellido"]) : "";
     $usuario = is_string($_POST["usuario"] ?? null) ? trim($_POST["usuario"]) : "";
-    $correo = is_string($_POST["correo"] ?? null) ? strtolower(trim($_POST["correo"])) : "";
     $contrasena = $_POST["contrasena"] ?? "";
     $id_rol = validar_id_positivo($_POST["id_rol"] ?? null);
-    if (!validar_texto($nombre, 100) || !validar_texto($apellido, 100) || !validar_texto($usuario, 50) || !validar_texto($correo, 255) || !filter_var($correo, FILTER_VALIDATE_EMAIL)) $mensaje = "Nombre, apellido, usuario o correo no son válidos.";
+    if (!validar_texto($nombre, 100) || !validar_texto($apellido, 100) || !validar_texto($usuario, 50)) $mensaje = "Nombre, apellido o usuario no son válidos.";
     elseif ($id_rol === false || !in_array($id_rol, array_map("intval", array_column($roles, "id_rol")), true)) $mensaje = "El rol seleccionado no es válido.";
     elseif (!is_string($contrasena) || ($contrasena !== "" && !validar_contrasena_nueva($contrasena))) $mensaje = "La contraseña debe tener entre 8 y 72 bytes.";
     else {
         if ($contrasena !== "") {
             $hash = password_hash($contrasena, PASSWORD_DEFAULT);
-            $stmt = mysqli_prepare($conexion, "UPDATE Empleado SET nombre = ?, apellido = ?, usuario = ?, correo = ?, contraseña = ?, id_rol = ? WHERE id_empleado = ? AND activo = TRUE");
-            mysqli_stmt_bind_param($stmt, "sssssii", $nombre, $apellido, $usuario, $correo, $hash, $id_rol, $id_empleado);
+            $stmt = mysqli_prepare($conexion, "UPDATE Empleado SET nombre = ?, apellido = ?, usuario = ?, contraseña = ?, id_rol = ? WHERE id_empleado = ? AND activo = TRUE");
+            mysqli_stmt_bind_param($stmt, "ssssii", $nombre, $apellido, $usuario, $hash, $id_rol, $id_empleado);
         } else {
-            $stmt = mysqli_prepare($conexion, "UPDATE Empleado SET nombre = ?, apellido = ?, usuario = ?, correo = ?, id_rol = ? WHERE id_empleado = ? AND activo = TRUE");
-            mysqli_stmt_bind_param($stmt, "ssssii", $nombre, $apellido, $usuario, $correo, $id_rol, $id_empleado);
+            $stmt = mysqli_prepare($conexion, "UPDATE Empleado SET nombre = ?, apellido = ?, usuario = ?, id_rol = ? WHERE id_empleado = ? AND activo = TRUE");
+            mysqli_stmt_bind_param($stmt, "sssii", $nombre, $apellido, $usuario, $id_rol, $id_empleado);
         }
         if (mysqli_stmt_execute($stmt)) {
             mysqli_stmt_close($stmt);
@@ -37,10 +36,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $mensaje = "No se pudo actualizar el empleado. Verifique que el usuario no esté repetido."; mysqli_stmt_close($stmt);
     }
 }
-$stmt = mysqli_prepare($conexion, "SELECT id_empleado, nombre, apellido, usuario, correo, id_rol FROM Empleado WHERE id_empleado = ? AND activo = TRUE");
+$stmt = mysqli_prepare($conexion, "SELECT id_empleado, nombre, apellido, usuario, id_rol FROM Empleado WHERE id_empleado = ? AND activo = TRUE");
 mysqli_stmt_bind_param($stmt, "i", $id_empleado); mysqli_stmt_execute($stmt); $resultado = mysqli_stmt_get_result($stmt); $empleado = mysqli_fetch_assoc($resultado); mysqli_stmt_close($stmt);
 if (!$empleado) mostrar_pagina_error(404);
 ?>
 <!DOCTYPE html><html lang="es"><head>
     <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg"><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Modificar empleado</title><link rel="stylesheet" href="assets/css/alta.css"><script src="assets/js/sidebar.js" defer></script><link rel="stylesheet" href="assets/css/modificar_empleado.css"></head>
-<body><?php include_once "includes/sidebar.php"; ?><div class="main"><div class="topbar"><div class="toggle"><img src="assets/img/sidebar/dark-menu.svg" alt="Abrir menú"></div><?php include_once "includes/profile.php"; ?></div><main class="alta-content"><section class="alta-panel"><h1>Modificar empleado</h1><p>Actualiza los datos del empleado. Deja la contraseña vacía para conservarla.</p><?php if ($mensaje !== ""): ?><p class="alta-error" role="alert"><?php echo htmlspecialchars($mensaje, ENT_QUOTES, "UTF-8"); ?></p><?php endif; ?><form class="alta-form" method="POST"><label for="nombre">Nombre *</label><input id="nombre" name="nombre" maxlength="100" required value="<?php echo htmlspecialchars($empleado["nombre"], ENT_QUOTES, "UTF-8"); ?>"><label for="apellido">Apellido *</label><input id="apellido" name="apellido" maxlength="100" required value="<?php echo htmlspecialchars($empleado["apellido"], ENT_QUOTES, "UTF-8"); ?>"><label for="usuario">Usuario *</label><input id="usuario" name="usuario" maxlength="50" required value="<?php echo htmlspecialchars($empleado["usuario"], ENT_QUOTES, "UTF-8"); ?>"><label for="correo">Correo electrónico *</label><input id="correo" name="correo" type="email" maxlength="255" required value="<?php echo htmlspecialchars($empleado["correo"], ENT_QUOTES, "UTF-8"); ?>"><label for="contrasena">Nueva contraseña</label><input id="contrasena" name="contrasena" type="password" minlength="8"><label for="id_rol">Rol *</label><select id="id_rol" name="id_rol" required><?php foreach ($roles as $rol): ?><option value="<?php echo (int)$rol["id_rol"]; ?>" <?php echo (int)$rol["id_rol"] === (int)$empleado["id_rol"] ? "selected" : ""; ?>><?php echo htmlspecialchars($rol["nombre"], ENT_QUOTES, "UTF-8"); ?></option><?php endforeach; ?></select><div class="alta-actions"><button type="submit">Guardar cambios</button><a href="empleados.php">Volver al listado</a></div></form></section></main></div></body></html>
+<body><?php include_once "includes/sidebar.php"; ?><div class="main"><div class="topbar"><div class="toggle"><img src="assets/img/sidebar/dark-menu.svg" alt="Abrir menú"></div><?php include_once "includes/profile.php"; ?></div><main class="alta-content"><section class="alta-panel"><h1>Modificar empleado</h1><p>Actualiza los datos del empleado. Deja la contraseña vacía para conservarla.</p><?php if ($mensaje !== ""): ?><p class="alta-error" role="alert"><?php echo htmlspecialchars($mensaje, ENT_QUOTES, "UTF-8"); ?></p><?php endif; ?><form class="alta-form" method="POST"><label for="nombre">Nombre *</label><input id="nombre" name="nombre" maxlength="100" required value="<?php echo htmlspecialchars($empleado["nombre"], ENT_QUOTES, "UTF-8"); ?>"><label for="apellido">Apellido *</label><input id="apellido" name="apellido" maxlength="100" required value="<?php echo htmlspecialchars($empleado["apellido"], ENT_QUOTES, "UTF-8"); ?>"><label for="usuario">Usuario *</label><input id="usuario" name="usuario" maxlength="50" required value="<?php echo htmlspecialchars($empleado["usuario"], ENT_QUOTES, "UTF-8"); ?>"><label for="contrasena">Nueva contraseña</label><input id="contrasena" name="contrasena" type="password" minlength="8"><label for="id_rol">Rol *</label><select id="id_rol" name="id_rol" required><?php foreach ($roles as $rol): ?><option value="<?php echo (int)$rol["id_rol"]; ?>" <?php echo (int)$rol["id_rol"] === (int)$empleado["id_rol"] ? "selected" : ""; ?>><?php echo htmlspecialchars($rol["nombre"], ENT_QUOTES, "UTF-8"); ?></option><?php endforeach; ?></select><div class="alta-actions"><button type="submit">Guardar cambios</button><a href="empleados.php">Volver al listado</a></div></form></section></main></div></body></html>

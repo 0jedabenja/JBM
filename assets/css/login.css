@@ -144,21 +144,6 @@ form:hover {
     opacity: 0.7;
 }
 
-.forgot-password {
-    align-self: flex-start;
-    margin-bottom: 1.5rem;
-    color: var(--accent);
-    font-size: 0.85rem;
-    text-decoration: none;
-    opacity: 1;
-    transition: opacity 0.3s;
-}
-
-.forgot-password:hover {
-    text-decoration: underline;
-    opacity: 0.8;
-}
-
 .btn-login {
     width: 100%;
     margin-bottom: 1rem;

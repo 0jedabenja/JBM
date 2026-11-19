@@ -286,9 +286,11 @@ try {
     $pdf->SetAutoPageBreak(true, 15);
     $pdf->AddPage();
     $diferenciaValorizadaTotal = 0;
+    $diferenciaCantidadCentesimas = 0;
     foreach ($items as $item) {
         if ($tipo === "diferencias") {
             $diferenciaValorizadaTotal += round((float)$item["diferencia"] * (float)$item["costo"], 2);
+            $diferenciaCantidadCentesimas += (int)round((float)$item["diferencia"] * 100);
             $pdf->FilaDiferencia($item);
         } else {
             $saldo = number_format((float)$item["cantidad_sistema"], 2, ",", ".");
@@ -303,6 +305,10 @@ try {
     if ($tipo === "diferencias") {
         $pdf->Ln(3);
         $pdf->SetFont("Arial", "B", 10);
+        $pdf->ComprobarSalto(7);
+        $pdf->Cell(218, 7, texto_pdf("Diferencia neta de unidades"), 1, 0, "R");
+        $pdf->Cell(59, 7, texto_pdf($pdf->FormatearCantidadConSigno($diferenciaCantidadCentesimas / 100)), 1, 1, "R");
+        $pdf->ComprobarSalto(7);
         $pdf->Cell(218, 7, texto_pdf("Diferencia valorizada neta"), 1, 0, "R");
         $pdf->Cell(59, 7, texto_pdf("$ " . $pdf->FormatearCantidadConSigno($diferenciaValorizadaTotal)), 1, 1, "R");
     }

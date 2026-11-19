@@ -78,6 +78,7 @@ verificar_permiso("conteos");
                     <ul>
                         <li id="resumenFaltantes"></li>
                         <li id="resumenSobrantes"></li>
+                        <li id="resumenDiferenciaCantidad"></li>
                         <li id="resumenDiferenciaValorizada"></li>
                     </ul>
                     <label for="contrasenaAdministrador">Contraseña del administrador conectado
@@ -362,6 +363,7 @@ verificar_permiso("conteos");
         let cantidadFaltantes = 0;
         let cantidadSobrantes = 0;
         let diferenciaValorizada = 0;
+        let diferenciaCantidadCentesimas = 0;
         itemsConteo.forEach((item) => {
             const diferencia = Math.round((Number(item.cantidad_contada) - Number(item.cantidad_sistema)) * 100) / 100;
             if (diferencia < 0) {
@@ -370,9 +372,11 @@ verificar_permiso("conteos");
                 cantidadSobrantes++;
             }
             diferenciaValorizada += Math.round(diferencia * Number(item.costo || 0) * 100) / 100;
+            diferenciaCantidadCentesimas += Math.round(diferencia * 100);
         });
         document.getElementById("resumenFaltantes").textContent = `Insumos con faltantes: ${cantidadFaltantes}`;
         document.getElementById("resumenSobrantes").textContent = `Insumos con sobrantes: ${cantidadSobrantes}`;
+        document.getElementById("resumenDiferenciaCantidad").textContent = `Diferencia neta de unidades: ${diferenciaCantidadCentesimas > 0 ? "+" : ""}${(diferenciaCantidadCentesimas / 100).toLocaleString("es-AR", { maximumFractionDigits: 2 })}`;
         diferenciaValorizada = Math.round(diferenciaValorizada * 100) / 100;
         const signoDiferencia = diferenciaValorizada > 0 ? "+" : "";
         document.getElementById("resumenDiferenciaValorizada").textContent = `Diferencia valorizada neta: $ ${signoDiferencia}${Number(diferenciaValorizada).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

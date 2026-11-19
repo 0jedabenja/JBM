@@ -27,10 +27,7 @@ CREATE TABLE Empleado (
     apellido VARCHAR(100) NOT NULL,
     activo BOOLEAN NOT NULL DEFAULT TRUE,
     usuario VARCHAR(50) NOT NULL UNIQUE,
-    correo VARCHAR(255) NOT NULL UNIQUE,
     contraseña VARCHAR(255) NOT NULL,
-    token_recuperacion VARCHAR(64) DEFAULT NULL,
-    token_expiracion DATETIME DEFAULT NULL,
     id_rol INT NOT NULL,
     PRIMARY KEY (id_empleado),
     FOREIGN KEY (id_rol) REFERENCES Rol(id_rol) ON UPDATE CASCADE
@@ -299,7 +296,7 @@ INSERT INTO Metodo_pago (descripcion) VALUES
 ('Transferencia bancaria');
 
 INSERT INTO Empleado (nombre, apellido, activo, usuario, contraseña, id_rol) VALUES
-('Luis', 'Torres', TRUE, 'Luistorres', '$2y$10$ygA54RXXYRe0oHhRJaxGPOkYN3JHXPsrySdJ7ztzY155nTHUiQhDS', 1)
+('Luis', 'Torres', TRUE, 'Luistorres', '$2y$10$ygA54RXXYRe0oHhRJaxGPOkYN3JHXPsrySdJ7ztzY155nTHUiQhDS', 1);
 
 -- Objetos reutilizados por las APIs del sistema.
 DELIMITER $$
@@ -307,15 +304,15 @@ CREATE PROCEDURE sp_listar_empleados(IN p_filtro VARCHAR(200), IN p_campo VARCHA
 BEGIN
   SET @q = CONVERT(CONCAT('%', COALESCE(p_filtro, ''), '%') USING utf8mb4) COLLATE utf8mb4_general_ci;
   IF COALESCE(p_filtro, '') = '' THEN
-    SELECT id_empleado, nombre, apellido, usuario, correo, id_rol, rol
+    SELECT id_empleado, nombre, apellido, usuario, id_rol, rol
     FROM v_empleados WHERE activo = TRUE ORDER BY apellido, nombre LIMIT p_limite OFFSET p_offset;
-  ELSEIF p_campo IN ('id_empleado','nombre','apellido','usuario','correo','rol') THEN
-    SELECT id_empleado, nombre, apellido, usuario, correo, id_rol, rol FROM v_empleados WHERE activo = TRUE
-    AND CASE p_campo WHEN 'id_empleado' THEN CAST(id_empleado AS CHAR) WHEN 'nombre' THEN nombre WHEN 'apellido' THEN apellido WHEN 'usuario' THEN usuario WHEN 'correo' THEN correo ELSE rol END LIKE @q
+  ELSEIF p_campo IN ('id_empleado','nombre','apellido','usuario','rol') THEN
+    SELECT id_empleado, nombre, apellido, usuario, id_rol, rol FROM v_empleados WHERE activo = TRUE
+    AND CASE p_campo WHEN 'id_empleado' THEN CAST(id_empleado AS CHAR) WHEN 'nombre' THEN nombre WHEN 'apellido' THEN apellido WHEN 'usuario' THEN usuario ELSE rol END LIKE @q
     ORDER BY apellido, nombre LIMIT p_limite OFFSET p_offset;
   ELSE
-    SELECT id_empleado, nombre, apellido, usuario, correo, id_rol, rol FROM v_empleados WHERE activo = TRUE
-    AND (CAST(id_empleado AS CHAR) LIKE @q OR nombre LIKE @q OR apellido LIKE @q OR usuario LIKE @q OR correo LIKE @q OR rol LIKE @q)
+    SELECT id_empleado, nombre, apellido, usuario, id_rol, rol FROM v_empleados WHERE activo = TRUE
+    AND (CAST(id_empleado AS CHAR) LIKE @q OR nombre LIKE @q OR apellido LIKE @q OR usuario LIKE @q OR rol LIKE @q)
     ORDER BY apellido, nombre LIMIT p_limite OFFSET p_offset;
   END IF;
 END$$
@@ -362,24 +359,24 @@ END$$
 CREATE PROCEDURE sp_password_hash(IN p_id INT)
 BEGIN SELECT contraseña FROM Empleado WHERE id_empleado=p_id AND activo=TRUE; END$$
 
-CREATE PROCEDURE sp_actualizar_perfil(IN p_id INT, IN p_nombre VARCHAR(100), IN p_apellido VARCHAR(100), IN p_usuario VARCHAR(50), IN p_correo VARCHAR(255))
+CREATE PROCEDURE sp_actualizar_perfil(IN p_id INT, IN p_nombre VARCHAR(100), IN p_apellido VARCHAR(100), IN p_usuario VARCHAR(50))
 BEGIN
-  UPDATE Empleado SET nombre=p_nombre, apellido=p_apellido, usuario=p_usuario, correo=p_correo WHERE id_empleado=p_id AND activo=TRUE;
+  UPDATE Empleado SET nombre=p_nombre, apellido=p_apellido, usuario=p_usuario WHERE id_empleado=p_id AND activo=TRUE;
 END$$
 
 CREATE PROCEDURE sp_datos_usuario(IN p_id INT)
-BEGIN SELECT id_empleado,nombre,apellido,usuario,correo,id_rol,rol FROM v_empleados WHERE id_empleado=p_id AND activo=TRUE; END$$
+BEGIN SELECT id_empleado,nombre,apellido,usuario,id_rol,rol FROM v_empleados WHERE id_empleado=p_id AND activo=TRUE; END$$
 
 CREATE PROCEDURE sp_reestablecer_password_admin(IN p_id INT, IN p_hash VARCHAR(255))
 BEGIN
-  UPDATE Empleado SET contraseña=p_hash, token_recuperacion=NULL, token_expiracion=NULL WHERE id_empleado=p_id AND activo=TRUE;
+  UPDATE Empleado SET contraseña=p_hash WHERE id_empleado=p_id AND activo=TRUE;
   SELECT ROW_COUNT() AS filas_afectadas;
 END$$
 DELIMITER ;
 
 -- Vista v_empleados: reúne datos de empleados junto con el nombre de su rol.
 CREATE VIEW v_empleados AS
-SELECT e.id_empleado,e.nombre,e.apellido,e.activo,e.usuario,e.correo,e.id_rol,r.nombre rol
+SELECT e.id_empleado,e.nombre,e.apellido,e.activo,e.usuario,e.id_rol,r.nombre rol
 FROM Empleado e JOIN Rol r ON r.id_rol=e.id_rol;
 
 -- Vista v_clientes: expone únicamente los clientes activos y sus datos básicos.
@@ -395,16 +392,4 @@ SELECT p.id_producto,p.nombre,p.activo,p.precio,p.id_categoria,c.titulo categori
                          WHERE co.id_producto=p.id_producto AND (i.id_insumo IS NULL OR i.activo<>TRUE OR co.cantidad<=0 OR i.cantidad_actual<co.cantidad)) THEN 0 ELSE 1 END disponible
 FROM Producto p LEFT JOIN Categoria c ON c.id_categoria=p.id_categoria WHERE p.activo=TRUE;
 
--- Trigger trg_empleado_correo_bi: al insertar un empleado, elimina espacios del correo y lo convierte a minúsculas.
-DELIMITER $$
-CREATE TRIGGER trg_empleado_correo_bi BEFORE INSERT ON Empleado FOR EACH ROW
-BEGIN
-  IF NEW.correo IS NOT NULL THEN SET NEW.correo=LOWER(TRIM(NEW.correo)); END IF;
-END$$
-
--- Trigger trg_empleado_correo_bu: al modificar un empleado, elimina espacios del correo y lo convierte a minúsculas.
-CREATE TRIGGER trg_empleado_correo_bu BEFORE UPDATE ON Empleado FOR EACH ROW
-BEGIN
-  IF NEW.correo IS NOT NULL THEN SET NEW.correo=LOWER(TRIM(NEW.correo)); END IF;
-END$$
 DELIMITER ;

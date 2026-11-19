@@ -41,9 +41,6 @@ $rutaBase = '';
                     <label for="usuarioCuenta">Usuario</label>
                     <input id="usuarioCuenta" name="usuario" type="text" maxlength="50" required autocomplete="username">
 
-                    <label for="correoCuenta">Correo electrónico</label>
-                    <input id="correoCuenta" name="correo" type="email" maxlength="255" required autocomplete="email">
-
                     <div class="alta-actions">
                         <button id="guardarCuenta" type="submit" data-testid="guardar-cuenta">Guardar cambios</button>
                         <a href="index.php" class="alta-button-secondary">Volver al inicio</a>
@@ -79,7 +76,7 @@ async function cargarCuenta() {
     try {
         const respuesta = await fetch('apis/api_cuenta.php', { cache: 'no-store' });
         const usuario = await leerRespuestaCuenta(respuesta);
-        ['nombre', 'apellido', 'usuario', 'correo'].forEach(campo => {
+        ['nombre', 'apellido', 'usuario'].forEach(campo => {
             formularioCuenta.elements[campo].value = usuario[campo] || '';
         });
     } catch (error) {

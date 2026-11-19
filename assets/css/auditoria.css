@@ -105,6 +105,11 @@
             font-size: 14px;
         }
 
+        #auditoriaSubir {
+            display: block;
+            margin: 16px auto 0 0;
+        }
+
         .navigation ul li.menu-auditoria {
             background-color: #fff;
         }

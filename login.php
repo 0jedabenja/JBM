@@ -122,7 +122,6 @@ $captchaNumeroB = (int) $_SESSION["login_captcha_b"];
                     required
                 >
             </div>
-            <a href="recuperar.php" class="forgot-password">¿Olvidaste tu contraseña?</a>
             <button type="submit" class="btn-login">Iniciar sesión</button>
         </form>
     </div>

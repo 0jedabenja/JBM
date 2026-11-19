@@ -49,6 +49,7 @@
     const textos = new WeakMap();
 
     function revisar(el) {
+        if (el.hasAttribute("data-no-auto-scroll")) return;
         const texto = el.textContent.trim();
         if (textos.get(el) === texto) return;
         textos.set(el, texto);

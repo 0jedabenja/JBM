@@ -58,12 +58,13 @@ verificar_permiso("auditoria");
                     <tr><td colspan="6">Cargando registros...</td></tr>
                 </tbody>
             </table>
-            <p id="mensajeAuditoria" class="auditoria-status" role="status" aria-live="polite"></p>
+            <p id="mensajeAuditoria" class="auditoria-status" role="status" aria-live="polite" data-no-auto-scroll></p>
             <nav class="pagination" aria-label="Paginación de auditoría">
                 <button id="auditoriaAnterior" class="button button--secondary" type="button" disabled>Anterior</button>
                 <span id="paginaAuditoria">Página 1</span>
                 <button id="auditoriaSiguiente" class="button button--secondary" type="button" disabled>Siguiente</button>
             </nav>
+            <button id="auditoriaSubir" class="button button--secondary" type="button">Volver arriba</button>
         </main>
     </div>
     <script>
@@ -72,6 +73,7 @@ verificar_permiso("auditoria");
     const mensajeAuditoria = document.getElementById("mensajeAuditoria");
     const botonAuditoriaAnterior = document.getElementById("auditoriaAnterior");
     const botonAuditoriaSiguiente = document.getElementById("auditoriaSiguiente");
+    document.getElementById("auditoriaSubir").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
     botonAuditoriaAnterior.addEventListener("click", () => {
         if (paginaAuditoriaActual > 1) {
