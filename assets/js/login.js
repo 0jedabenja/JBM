@@ -89,7 +89,6 @@ function applyLanguage(language) {
 	document.querySelector('input[name="password"]').placeholder = translation.password;
 	document.querySelector('.captcha-label span').textContent = translation.captcha;
 	document.querySelector('#captcha-respuesta').placeholder = translation.captchaPlaceholder;
-	document.querySelector('.forgot-password').textContent = translation.help;
 	document.querySelector('.btn-login').textContent = translation.button;
 	document.querySelector('.about-us').textContent = translation['about-us'];
 	document.querySelector('.popup-title').textContent = translation['about-us'];

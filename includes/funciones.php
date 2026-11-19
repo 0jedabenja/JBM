@@ -175,7 +175,7 @@ function obtener_listado_api($conexion, $entidad, $filtro, $campo, $limite, $off
             "todos" => array("CAST(i.id_insumo AS CHAR)", "i.nombre", "m.unidad", "CAST(i.cantidad_actual AS CHAR)", "CAST(i.stock_minimo AS CHAR)", "CAST(i.costo AS CHAR)")
         ),
         "empleados" => array(
-            "select" => "SELECT e.id_empleado, e.nombre, e.apellido, e.usuario, e.correo, e.id_rol, r.nombre AS rol
+            "select" => "SELECT e.id_empleado, e.nombre, e.apellido, e.usuario, e.id_rol, r.nombre AS rol
                          FROM Empleado e INNER JOIN Rol r ON r.id_rol = e.id_rol",
             "where" => "e.activo = TRUE",
             "order" => "e.apellido, e.nombre",
@@ -184,10 +184,9 @@ function obtener_listado_api($conexion, $entidad, $filtro, $campo, $limite, $off
                 "nombre" => "e.nombre",
                 "apellido" => "e.apellido",
                 "usuario" => "e.usuario",
-                "correo" => "e.correo",
                 "rol" => "r.nombre"
             ),
-            "todos" => array("CAST(e.id_empleado AS CHAR)", "e.nombre", "e.apellido", "e.usuario", "e.correo", "r.nombre")
+            "todos" => array("CAST(e.id_empleado AS CHAR)", "e.nombre", "e.apellido", "e.usuario", "r.nombre")
         )
     );
 

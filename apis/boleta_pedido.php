@@ -311,7 +311,7 @@ try {
     $altoDescuento = !$esCompra && (float)$comprobante["monto_descuento"] > 0 ? 10 : 0;
     $altoEfectivo = $efectivoRecibido !== null ? 11 : 0;
     $altoPagos = $esCompra ? 0 : 8 + 5 * count($comprobante["pagos"]);
-    $altoBoleta = max(145, 120 + 5 * $lineasDetalles + $altoProductos + $altoDescuento + $altoEfectivo + $altoPagos);
+    $altoBoleta = max(145, 130 + 5 * $lineasDetalles + $altoProductos + $altoDescuento + $altoEfectivo + $altoPagos);
     $pdf->SetAutoPageBreak(true, 13);
     $pdf->AddPage("P", array(80, $altoBoleta));
     $pdf->SetFont("Arial", "", 8);
@@ -354,6 +354,14 @@ try {
         $pdf->Cell(34, 5, texto_boleta($etiquetaDescuento), 0, 0, "L");
         $pdf->Cell(34, 5, texto_boleta("- $ " . number_format((float)$comprobante["monto_descuento"], 2, ",", ".")), 0, 1, "R");
     }
+    $totalCentavos = (int)round((float)$comprobante["total"] * 100);
+    $subtotalSinIvaCentavos = (int)round($totalCentavos / 1.22);
+    $ivaCentavos = $totalCentavos - $subtotalSinIvaCentavos;
+    $pdf->SetFont("Arial", "", 8);
+    $pdf->Cell(34, 5, texto_boleta("Subtotal sin IVA"), 0, 0, "L");
+    $pdf->Cell(34, 5, texto_boleta("$ " . number_format($subtotalSinIvaCentavos / 100, 2, ",", ".")), 0, 1, "R");
+    $pdf->Cell(34, 5, texto_boleta("IVA incluido (22%)"), 0, 0, "L");
+    $pdf->Cell(34, 5, texto_boleta("$ " . number_format($ivaCentavos / 100, 2, ",", ".")), 0, 1, "R");
     $pdf->SetFont("Arial", "B", 10);
     $pdf->Cell(34, 6, texto_boleta("TOTAL"), 0, 0, "L");
     $pdf->Cell(34, 6, texto_boleta("$ " . number_format((float)$comprobante["total"], 2, ",", ".")), 0, 1, "R");

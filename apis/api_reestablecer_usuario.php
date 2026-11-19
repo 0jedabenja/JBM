@@ -17,7 +17,7 @@ $stmt = mysqli_prepare($conexion, "SELECT contraseña FROM Empleado WHERE id_emp
 mysqli_stmt_bind_param($stmt, "i", $_SESSION["usuario_id"]);
 mysqli_stmt_execute($stmt); $resultado = mysqli_stmt_get_result($stmt); $fila = $resultado ? mysqli_fetch_assoc($resultado) : null; mysqli_stmt_close($stmt);
 if (!$fila || !password_verify($admin, $fila["contraseña"])) { http_response_code(403); echo json_encode(["error"=>"La contraseña del administrador no es válida"]); exit; }
-$stmt = mysqli_prepare($conexion, "UPDATE Empleado SET contraseña = ?, token_recuperacion = NULL, token_expiracion = NULL WHERE id_empleado = ? AND activo = TRUE");
+$stmt = mysqli_prepare($conexion, "UPDATE Empleado SET contraseña = ? WHERE id_empleado = ? AND activo = TRUE");
 $hash = password_hash($nueva, PASSWORD_DEFAULT);
 mysqli_stmt_bind_param($stmt, "si", $hash, $id);
 mysqli_stmt_execute($stmt);

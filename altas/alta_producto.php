@@ -116,6 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <link rel="stylesheet" href="../assets/css/alta.css">
     <script src="../assets/js/sidebar.js" defer></script>
     <link rel="stylesheet" href="../assets/css/alta_producto.css">
+    <link rel="stylesheet" href="../assets/css/filtrar_insumos.css">
 </head>
 <body>
     <?php include_once "../includes/sidebar.php"; ?>
@@ -152,12 +153,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <h3>Insumos del producto</h3>
         <div id="componentes" class="componentes">
             <div class="componente">
-                <select name="id_insumo[]" required>
+                <div class="filtro-insumos">
+                <select name="id_insumo[]" required aria-label="Insumo">
                     <option value="">Seleccione un insumo...</option>
                     <?php foreach ($insumos as $insumo): ?>
                         <option value="<?php echo $insumo["id_insumo"]; ?>" data-unidad="<?php echo htmlspecialchars($insumo["unidad"], ENT_QUOTES, "UTF-8"); ?>"><?php echo htmlspecialchars($insumo["nombre"] . ($insumo["unidad"] !== "" ? " (" . $insumo["unidad"] . ")" : ""), ENT_QUOTES, "UTF-8"); ?></option>
                     <?php endforeach; ?>
                 </select>
+                </div>
                 <input type="number" name="cantidad[]" min="0.01" max="99999999.99" step="0.01" required>
                 <span class="unidad-componente"></span><button type="button" onclick="quitar(this)">Quitar</button>
             </div>
@@ -173,21 +176,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </div>
     <template id="plantilla">
         <div class="componente">
-            <select name="id_insumo[]" required>
+            <div class="filtro-insumos">
+            <select name="id_insumo[]" required aria-label="Insumo">
                 <option value="">Seleccione un insumo...</option>
                 <?php foreach ($insumos as $insumo): ?>
                     <option value="<?php echo $insumo["id_insumo"]; ?>" data-unidad="<?php echo htmlspecialchars($insumo["unidad"], ENT_QUOTES, "UTF-8"); ?>"><?php echo htmlspecialchars($insumo["nombre"] . ($insumo["unidad"] !== "" ? " (" . $insumo["unidad"] . ")" : ""), ENT_QUOTES, "UTF-8"); ?></option>
                 <?php endforeach; ?>
             </select>
+            </div>
             <input type="number" name="cantidad[]" min="0.01" max="99999999.99" step="0.01" required>
             <span class="unidad-componente"></span><button type="button" onclick="quitar(this)">Quitar</button>
         </div>
     </template>
+    <script src="../assets/js/filtrar_insumos.js"></script>
     <script>
-        function agregar() { document.getElementById("componentes").appendChild(document.getElementById("plantilla").content.cloneNode(true)); }
+        function agregar() { const componente = document.getElementById("plantilla").content.firstElementChild.cloneNode(true); document.getElementById("componentes").appendChild(componente); iniciarFiltroInsumos(componente.querySelector(".filtro-insumos")); }
         function actualizarUnidad(componente) { const opcion = componente.querySelector("select").selectedOptions[0]; const unidad = opcion && opcion.dataset.unidad ? opcion.dataset.unidad : ""; componente.querySelector(".unidad-componente").textContent = unidad; const cantidad = componente.querySelector("input[name='cantidad[]']"); if (unidad === "Unidad") { cantidad.step = "1"; cantidad.min = "1"; if (cantidad.value !== "" && !Number.isInteger(Number(cantidad.value))) cantidad.value = Math.max(1, Math.round(Number(cantidad.value))); } else { cantidad.step = "0.01"; cantidad.min = "0.01"; } }
-        document.addEventListener("change", (e) => { if (e.target.matches("#componentes select")) actualizarUnidad(e.target.parentElement); });
+        document.addEventListener("change", (e) => { if (e.target.matches("#componentes select")) actualizarUnidad(e.target.closest(".componente")); });
         document.querySelectorAll("#componentes .componente").forEach(actualizarUnidad);
+        document.querySelectorAll("#componentes .filtro-insumos").forEach(iniciarFiltroInsumos);
         function quitar(boton) { if (document.querySelectorAll("#componentes .componente").length > 1) boton.parentElement.remove(); }
     </script>
 </body>

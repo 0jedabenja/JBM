@@ -12,6 +12,7 @@ $tokenCsrf = obtener_token_csrf();
     <title>Compras</title>
     <script src="assets/js/sidebar.js" defer></script>
     <link rel="stylesheet" href="assets/css/compras.css">
+    <link rel="stylesheet" href="assets/css/filtrar_insumos.css">
 </head>
 <body>
     <?php include_once "includes/sidebar.php"; ?>
@@ -63,7 +64,7 @@ $tokenCsrf = obtener_token_csrf();
     </div>
     <template id="plantillaItemCompra">
         <tr class="compra-item">
-            <td><select class="compra-insumo" required aria-label="Insumo"></select></td>
+            <td><div class="filtro-insumos"><select class="compra-insumo" required aria-label="Insumo"></select></div></td>
             <td class="compra-stock">-</td>
             <td><input class="compra-cantidad" type="number" min="0.01" step="0.01" required aria-label="Cantidad comprada"></td>
             <td><input class="compra-costo" type="number" min="0.01" step="0.01" required aria-label="Costo por unidad"></td>
@@ -71,6 +72,7 @@ $tokenCsrf = obtener_token_csrf();
             <td><button class="compra-quitar" type="button" aria-label="Quitar insumo">Quitar</button></td>
         </tr>
     </template>
+    <script src="assets/js/filtrar_insumos.js"></script>
     <script>
     const tokenCsrfCompra = <?php echo json_encode($tokenCsrf, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     let insumosCompra = [];
@@ -133,6 +135,7 @@ $tokenCsrf = obtener_token_csrf();
             .map((insumo) => `<option value="${escaparCompra(insumo.id_insumo)}">${escaparCompra(insumo.nombre)} (${escaparCompra(insumo.unidad)})</option>`)
             .join("");
         filasCompra.appendChild(fila);
+        iniciarFiltroInsumos(fila.querySelector(".filtro-insumos"));
     }
 
     function actualizarFilaCompra(fila) {

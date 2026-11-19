@@ -61,6 +61,10 @@
     overflow-x: auto;
 }
 
+.compras-table .filtro-insumos {
+    min-width: 180px;
+}
+
 .compras-table {
     border-collapse: collapse;
     min-width: 720px;

@@ -69,7 +69,7 @@ verificar_permiso("empleados");
                     } else {
                         empleados.forEach(empleado => {
                             const fila = document.createElement("tr");
-                            const reset = <?php echo $_SESSION["rol"] === "administrador" ? "true" : "false"; ?>;
+                            const reset = <?php echo strtolower(trim($_SESSION["rol"])) === "administrador" ? "true" : "false"; ?>;
                             fila.innerHTML = `<td>${escapeHTML(empleado.id_empleado)}</td><td>${escapeHTML(empleado.nombre)}</td><td>${escapeHTML(empleado.apellido)}</td><td>${escapeHTML(empleado.usuario)}</td><td>${escapeHTML(empleado.rol)}</td><td class="acciones-producto"><a class="accion accion-editar" href="modificar_empleado.php?id=${encodeURIComponent(empleado.id_empleado)}">Editar</a>${reset ? `<button type="button" class="accion" onclick="restablecerEmpleado(${empleado.id_empleado})">Restablecer contraseña</button>` : ""}<button type="button" class="accion accion-desactivar" onclick="eliminarEmpleado(${empleado.id_empleado})">Desactivar</button></td>`;
                             tbody.appendChild(fila);
                         });
